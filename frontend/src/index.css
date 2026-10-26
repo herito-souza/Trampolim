@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #F2F4F2;
+  --color-paper: #0B1421;
+  --color-brand-yellow: #D6FF38;
+  --color-brand-red: #F2B47B;
+  --color-brand-green: #BFE65A;
+  --color-brand-blue: #91B8DC;
+  --color-brand-white: #F2F4F2;
+  --color-surface: #121C2B;
+  --color-surface-raised: #19263A;
+  
+  --font-sans: 'DM Sans', sans-serif;
+  --font-serif: 'Barlow Condensed', sans-serif;
+}
+
+@layer base {
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    background-image: radial-gradient(ellipse at 85% 0%, rgb(31 56 82 / 24%), transparent 36rem);
+  }
+
+  button, input, select, textarea { max-width: 100%; }
+
+  .mobile-nav-scroll { scrollbar-width: thin; scrollbar-color: rgb(191 207 226 / 35%) transparent; }
+
+  @media (max-width: 640px) {
+    button { min-height: 44px; }
+    input, select, textarea { font-size: 16px; }
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.025em;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-brand-blue);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .bg-paper { background-color: var(--color-paper); }
+  .bg-ink { background-color: var(--color-surface); }
+  .bg-brand-white, .bg-white { background-color: var(--color-surface); }
+  .bg-brand-yellow.text-ink, .bg-brand-green.text-white, .bg-brand-red.text-white { color: #101725; }
+  .bg-brand-white.text-ink { color: #101725; }
+  .text-\[\#3a4560\], .text-\[\#5a6480\], .text-\[\#a5a08f\] { color: rgb(226 232 240 / 68%); }
+  .border-\[\#e7e0d0\] { border-color: rgb(191 207 226 / 16%); }
+  .bg-\[\#e7e0d0\] { background-color: rgb(191 207 226 / 18%); }
+  .bg-\[\#e9f5ee\] { background-color: rgb(191 230 90 / 16%); }
+  .bg-\[\#fdf6e3\] { background-color: rgb(214 255 56 / 10%); }
+  .bg-red-50 { background-color: rgb(239 68 68 / 12%); }
+  .bg-green-50 { background-color: rgb(34 197 94 / 12%); }
+  .bg-white input, input.bg-white, select.bg-white, textarea.bg-white,
+  input, select, textarea { color: #111827; background-color: #F5F7FA; }
+  input::placeholder, textarea::placeholder { color: #687386; }
+}
