@@ -45,6 +45,8 @@ public class AppUser {
     @Column(nullable = false, columnDefinition = "integer default 0")
     private int tokenVersion;
 
+    private Instant lastLoginAt;
+
     @Column(nullable = false, length = 120)
     private String fullName;
 

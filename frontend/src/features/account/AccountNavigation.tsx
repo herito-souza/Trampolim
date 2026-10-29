@@ -1,21 +1,25 @@
-export type AccountDestination = 'opportunities' | 'courses' | 'jobs' | 'profile' | 'diagnostic' | 'premium' | 'admin';
+export type AccountDestination = 'home' | 'companies' | 'opportunities' | 'courses' | 'jobs' | 'profile' | 'diagnostic' | 'premium' | 'admin' | 'admin-capacita' | 'admin-saas' | 'association' | 'capacita';
 
 interface AccountNavigationProps {
   active: AccountDestination;
   onNavigate: (destination: AccountDestination) => void;
   canManage?: boolean;
+  hasAssociation?: boolean;
 }
 
 const links: { destination: AccountDestination; label: string }[] = [
+  { destination: 'home', label: 'Início' },
+  { destination: 'companies', label: 'Empresas' },
   { destination: 'diagnostic', label: 'Diagnóstico' },
   { destination: 'opportunities', label: 'Oportunidades' },
   { destination: 'courses', label: 'Cursos' },
   { destination: 'jobs', label: 'Vagas' },
   { destination: 'premium', label: 'Premium' },
+  { destination: 'capacita', label: 'Capacita' },
 ];
 
-export function AccountNavigation({ active, onNavigate, canManage = false }: AccountNavigationProps) {
-  const destinations = canManage ? [...links, { destination: 'admin' as const, label: 'Administração' }] : links;
+export function AccountNavigation({ active, onNavigate, canManage = false, hasAssociation = false }: AccountNavigationProps) {
+  const destinations = [...links, ...(hasAssociation ? [{ destination: 'association' as const, label: 'Associação' }] : []), ...(canManage ? [{ destination: 'admin' as const, label: 'Administração' }, { destination: 'admin-capacita' as const, label: 'Conteúdos Capacita' }, { destination: 'admin-saas' as const, label: 'Gestão SaaS' }] : [])];
 
   return (
     <nav aria-label="Navegação da conta" className="border-b border-white/10 bg-[#0b1421] px-0 py-3">

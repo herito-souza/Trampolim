@@ -8,7 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trampolim.api.auth.AuthController;
 import com.trampolim.api.config.ClientErrorController;
 import com.trampolim.api.catalog.*;
-import com.trampolim.api.security.JwtUtil;
+import com.trampolim.api.security.TrailTokenService;
+import com.trampolim.api.security.TrailTokenService.Trail;
 import com.trampolim.api.user.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -32,14 +33,14 @@ class CriticalFlowsTest {
     void loginNormalizesEmailAndReturnsSessionToken() {
         AppUserRepository users = mock(AppUserRepository.class);
         PasswordEncoder encoder = mock(PasswordEncoder.class);
-        JwtUtil jwt = mock(JwtUtil.class);
+        TrailTokenService tokens = mock(TrailTokenService.class);
         ObjectProvider<JavaMailSender> mail = mock(ObjectProvider.class);
         AppUser user = new AppUser(); user.setId(7L); user.setEmail("person@example.com"); user.setFullName("Pessoa"); user.setPasswordHash("hash");
         when(users.findByEmail("person@example.com")).thenReturn(Optional.of(user));
         when(encoder.matches("senha-segura", "hash")).thenReturn(true);
-        when(jwt.generateToken("person@example.com", 0)).thenReturn("session-token");
+        when(tokens.issue(Trail.OPORTUNIDADES, "person@example.com", 7L, 0)).thenReturn("session-token");
 
-        AuthController controller = new AuthController(users, encoder, jwt, mail, mock(org.springframework.jdbc.core.JdbcTemplate.class));
+        AuthController controller = new AuthController(users, encoder, tokens, mail, mock(org.springframework.jdbc.core.JdbcTemplate.class));
         var response = controller.login(new AuthController.Credentials(" PERSON@EXAMPLE.COM ", "senha-segura"), request());
 
         assertEquals("session-token", response.token());
@@ -89,7 +90,7 @@ class CriticalFlowsTest {
         CatalogItem expired = item(2L, true, "APPROVED", LocalDate.now().minusDays(1));
         CatalogItem pending = item(3L, false, "PENDING", null);
         when(items.findAllByKindAndActiveTrueOrderByCreatedAtDesc("job")).thenReturn(List.of(active, expired, pending));
-        CatalogController controller = new CatalogController(items, mock(JobApplicationRepository.class), mock(OpportunityAlertService.class));
+        CatalogController controller = new CatalogController(items, mock(JobApplicationRepository.class), mock(OpportunityAlertService.class), mock(com.trampolim.api.security.PlatformAccess.class));
 
         var result = controller.list("job");
 
@@ -124,7 +125,7 @@ class CriticalFlowsTest {
         when(items.findById(12L)).thenReturn(Optional.of(job));
         when(reports.existsByItem_IdAndReporter_IdAndCreatedAtAfter(eq(12L), eq(4L), any())).thenReturn(false);
         when(reports.save(any(CatalogReport.class))).thenAnswer(call -> call.getArgument(0));
-        var controller = new CatalogReportController(reports, items, users);
+        var controller = new CatalogReportController(reports, items, users, mock(com.trampolim.api.security.PlatformAccess.class));
 
         controller.report(user.getEmail(), "job", 12L, new CatalogReportController.ReportInput("BROKEN_LINK", "   Link dá erro   "));
 

@@ -1,3 +1,8 @@
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) { super(message); this.name = 'ApiError'; this.status = status; }
+}
+
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 export interface UserSummary {
@@ -9,7 +14,7 @@ export interface AuthResponse {
   token: string;
   user: UserSummary;
   emailVerified: boolean;
-  accountType?: 'PERSON' | 'COMPANY';
+  accountType?: 'PERSON' | 'COMPANY' | 'STUDENT';
 }
 
 export interface Profile {
@@ -31,6 +36,7 @@ export interface CatalogItem {
 export interface AlertPreferences { enabled: boolean; areas: string[]; frequency: 'immediate' | 'daily' | 'weekly'; city: string; modality: string; contractType: string; workSchedule: string; keywords: string; useDistance: boolean; latitude: number | null; longitude: number | null; radiusKm: number | null }
 export interface Application { id: number; itemId: number; title: string; provider: string; location: string | null; url: string; status: string; createdAt: string; updatedAt: string; notes: string | null; followUpDate: string | null }
 export interface PublicProfile { name: string; location: string | null; summary: string | null; experiences: Experience[]; educations: Education[]; summaryShared: boolean; experiencesShared: boolean; educationShared: boolean }
+export interface CapacitaContentInput { categoryId: number; title: string; summary: string; difficulty: string; resourceType: string; sourceUrl: string; isFree: boolean; hasCertificate: boolean; durationMinutes: number | null }
 
 export async function publicApi<T>(path: string): Promise<T> {
   const response = await fetch(`${API_URL}${path}`);
@@ -76,7 +82,7 @@ export async function api<T>(path: string, token: string, options: RequestInit =
   const response = await fetch(`${API_URL}${path}`, { ...options, headers });
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
-    throw new Error(errorBody?.detail || errorBody?.message || 'Não foi possível concluir a solicitação.');
+    throw new ApiError(errorBody?.detail || errorBody?.message || errorBody?.error || 'Não foi possível concluir a solicitação.', response.status);
   }
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
@@ -95,8 +101,43 @@ export async function authenticate(mode: 'login' | 'cadastro' | 'company-cadastr
   return body as AuthResponse;
 }
 
+export type AuthTrail = 'oportunidades' | 'empresas' | 'capacita';
+
+export async function revokeTrailSession(trail: AuthTrail, token: string): Promise<void> {
+  const endpoint = trail === 'oportunidades' ? '/auth/logout' : `/${trail}/session/logout`;
+  await api<void>(endpoint, token, { method: 'POST' });
+}
+
+export async function authenticateTrail(trail: Exclude<AuthTrail, 'oportunidades'>, mode: 'login' | 'cadastro' | 'company-join', payload: Record<string, string | boolean>): Promise<AuthResponse> {
+  const prefix = trail === 'empresas' ? '/empresas/auth' : '/capacita/auth';
+  const action = mode === 'login' ? 'login' : mode === 'company-join' ? 'join' : 'register';
+  const response = await fetch(`${API_URL}${prefix}/${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error(await readApiError(response, mode === 'login' ? 'login' : 'cadastro'));
+  const body = await response.json().catch(() => null);
+  if (!body || typeof body !== 'object') throw new Error('O servidor respondeu em um formato inesperado. Tente novamente.');
+  return body as AuthResponse;
+}
+
 export async function acceptCompanyInvite(inviteToken: string, token: string): Promise<void> {
   await api<{ accountType: string }>('/company/invites/accept', token, { method: 'POST', body: JSON.stringify({ token: inviteToken }) });
+}
+
+export async function registerOrganizationInvite(payload: { token: string; name: string; email: string; password: string; termsAccepted: boolean }): Promise<AuthResponse> {
+  const response = await fetch(`${API_URL}/empresas/auth/organization-invite/register`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error(await readApiError(response, 'cadastro'));
+  const body = await response.json().catch(() => null);
+  if (!body || typeof body !== 'object') throw new Error('O servidor respondeu em um formato inesperado. Tente novamente.');
+  return body as AuthResponse;
+}
+
+export async function acceptOrganizationInvite(inviteToken: string, token: string): Promise<void> {
+  await api<void>('/empresas/organizations/invites/accept', token, { method: 'POST', body: JSON.stringify({ token: inviteToken }) });
 }
 
 async function readApiError(response: Response, flow: 'login' | 'cadastro'): Promise<string> {
@@ -129,15 +170,17 @@ async function readApiError(response: Response, flow: 'login' | 'cadastro'): Pro
   return `Não foi possível concluir: o servidor respondeu com o código ${response.status}.`;
 }
 
-export async function requestPasswordReset(email: string): Promise<string> {
-  const response = await fetch(`${API_URL}/auth/password/reset-request`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+export async function requestPasswordReset(email: string, trail: AuthTrail = 'oportunidades'): Promise<string> {
+  const path = trail === 'oportunidades' ? '/auth/password/reset-request' : `/${trail}/auth/password/reset-request`;
+  const response = await fetch(`${API_URL}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
   const body = await response.json().catch(() => null);
   if (!response.ok) throw new Error(body?.detail || 'Não foi possível solicitar a redefinição.');
   return body.message as string;
 }
 
-export async function resetPassword(token: string, password: string): Promise<string> {
-  const response = await fetch(`${API_URL}/auth/password/reset`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, password }) });
+export async function resetPassword(token: string, password: string, trail: AuthTrail = 'oportunidades'): Promise<string> {
+  const path = trail === 'oportunidades' ? '/auth/password/reset' : `/${trail}/auth/password/reset`;
+  const response = await fetch(`${API_URL}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, password }) });
   const body = await response.json().catch(() => null);
   if (!response.ok) throw new Error(body?.detail || 'Não foi possível alterar a senha.');
   return body.message as string;
@@ -150,8 +193,16 @@ export async function confirmEmail(token: string): Promise<string> {
   return body.message as string;
 }
 
-export async function resendEmailConfirmation(email: string): Promise<string> {
-  const response = await fetch(`${API_URL}/auth/email/resend`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+export async function confirmTrailEmail(token: string, trail: Exclude<AuthTrail, 'oportunidades'>): Promise<string> {
+  const response = await fetch(`${API_URL}/${trail}/auth/email/verify?token=${encodeURIComponent(token)}`);
+  const body = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(body?.detail || 'Não foi possível confirmar este e-mail.');
+  return body.message as string;
+}
+
+export async function resendEmailConfirmation(email: string, trail: AuthTrail = 'oportunidades'): Promise<string> {
+  const path = trail === 'oportunidades' ? '/auth/email/resend' : `/${trail}/auth/email/resend`;
+  const response = await fetch(`${API_URL}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
   const body = await response.json().catch(() => null);
   if (!response.ok) throw new Error(body?.detail || 'Não foi possível reenviar o link.');
   return body.message as string;

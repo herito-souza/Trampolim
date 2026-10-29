@@ -10,7 +10,7 @@ export function Hero() {
       <div aria-hidden="true" className="pointer-events-none absolute -right-36 top-6 -z-10 h-[34rem] w-[34rem] rounded-full border border-brand-yellow/20 shadow-[0_0_120px_rgba(214,255,56,0.08)]" />
       <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.08fr_0.92fr]">
         <div>
-          <p className="mb-5 flex items-center gap-3 text-xs font-extrabold uppercase tracking-[0.22em] text-brand-yellow"><span className="h-px w-9 bg-brand-yellow" />Capacitação · carreira · oportunidade</p>
+          <p className="mb-5 flex items-center gap-3 text-xs font-extrabold uppercase tracking-[0.22em] text-brand-yellow"><span className="h-px w-9 bg-brand-yellow" />Trampolim Oportunidades · carreira · emprego</p>
           <h1 className="max-w-4xl text-[clamp(4rem,10vw,8.4rem)] font-extrabold uppercase leading-[0.82] tracking-[-0.04em]">
             Seu próximo<br />passo <span className="text-brand-yellow">começa</span><br />aqui.
           </h1>

@@ -23,7 +23,7 @@ export function Home({ onAuth, onDiagnosticComplete, isAuthenticated = false, ha
         <DiagnosticQuiz onContinue={onAuth} onDiagnosticComplete={onDiagnosticComplete} isAuthenticated={isAuthenticated} hasPreviousDiagnostic={hasPreviousDiagnostic} startNewTest={startNewTest} />
         <JobsList />
       </main>
-      <Footer />
+      <Footer showDiagnosticCta />
     </>
   );
 }

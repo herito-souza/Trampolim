@@ -5,6 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import com.trampolim.api.security.PlatformAccess;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CatalogMetricController {
     private final CatalogMetricRepository metrics;
     private final CatalogItemRepository items;
-    @Value("${app.admin.emails:}") private String adminEmails;
+    private final PlatformAccess platformAccess;
     private final ConcurrentHashMap<String, RateWindow> eventRates = new ConcurrentHashMap<>();
     private record RateWindow(Instant expiresAt, int count) {}
 
@@ -56,8 +57,7 @@ public class CatalogMetricController {
 
     @GetMapping("/admin/metrics")
     public List<MetricSummary> summaries(@AuthenticationPrincipal String email) {
-        boolean allowed = Arrays.stream(adminEmails.split(",")).map(String::trim).anyMatch(value -> value.equalsIgnoreCase(email));
-        if (!allowed) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso restrito à administração.");
+        if (!platformAccess.isSuperAdmin(email)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso restrito à administração.");
         return metrics.summarizeSince(Instant.now().minus(30, ChronoUnit.DAYS)).stream()
                 .map(row -> new MetricSummary(row.getDay(), row.getKind(), row.getEventType(), row.getItemTitle(), row.getTotal())).toList();
     }

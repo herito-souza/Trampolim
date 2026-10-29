@@ -110,6 +110,12 @@ O questionário serve para explorar interesses profissionais e orientar buscas. 
 
 ### Recursos adicionais
 
+Para a arquitetura SaaS, escopos de acesso, rotas administrativas e limitações conhecidas, consulte [SAAS_ARCHITECTURE.md](SAAS_ARCHITECTURE.md).
+
+- A entrada principal apresenta o ecossistema Trampolim e direciona para **Oportunidades**, **Empresas** e **Capacita**. A área anterior segue acessível por `#como-funciona`, `#diagnostico` e `#vagas`, além de `#oportunidades`.
+- **Capacita** organiza etapas de ensino, categorias, materiais, progresso e vagas de estágio. A migração Flyway `V11__capacita_and_internship_payments.sql` cria as estruturas e categorias iniciais; materiais não são inventados e podem ser cadastrados pela área administrativa, com revisão antes da publicação.
+- A divulgação de estágio custa **R$ 50,00** por anúncio. Para ativar o checkout, configure `MERCADOPAGO_ACCESS_TOKEN` e `MERCADOPAGO_WEBHOOK_SECRET` no ambiente seguro do backend. Cadastre no Mercado Pago um webhook de Orders apontando para `https://<dominio-da-api>/api/webhooks/mercadopago` e mantenha essa rota publicamente acessível por HTTPS. O pagamento só libera a vaga depois que o servidor valida a assinatura da notificação e consulta a ordem no provedor; sem as credenciais, o checkout retorna indisponível e não marca a vaga como paga.
+
 - Confirmação de e-mail no cadastro, recuperação de senha, alertas e lembretes usam SMTP. Para ativá-los, defina `MAIL_ENABLED=true`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH=true` e `SMTP_STARTTLS=true` antes de iniciar o backend. Em PowerShell, use `$env:SMTP_HOST = "smtp.seuprovedor.com"` (repita para as demais variáveis) na mesma janela em que inicia o Maven. Com o e-mail desativado, contas locais são confirmadas automaticamente para desenvolvimento.
 - Para habilitar o painel administrativo, configure `ADMIN_EMAILS` no backend como uma lista de e-mails separada por vírgulas. Exemplo no PowerShell: `$env:ADMIN_EMAILS = "admin@exemplo.com"`. No frontend, crie `frontend/.env.local` com `VITE_ADMIN_EMAILS=admin@exemplo.com` e reinicie o Vite. O servidor verifica o e-mail da conta independentemente da visibilidade do botão.
 - No painel **Admin**, cadastre cursos e vagas confirmados. Novas publicações e edições ficam pendentes até a revisão. Revise o link, empresa, requisitos, acessibilidade e data limite antes de aprovar; anúncios vencidos deixam de aparecer no catálogo. O painel registra autoria e revisão e avisa quando uma publicação está perto do prazo.

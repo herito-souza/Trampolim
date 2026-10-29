@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
@@ -12,5 +11,41 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  postgres-empresas:
+    image: postgres:15-alpine
+    container_name: trampolim-empresas-db
+    environment:
+      POSTGRES_DB: ${EMPRESAS_DB_NAME:-trampolim_empresas_db}
+      POSTGRES_USER: ${EMPRESAS_DB_USERNAME:-trampolim_empresas}
+      POSTGRES_PASSWORD: ${EMPRESAS_DB_PASSWORD:-dev_empresas_only}
+    ports:
+      - "5433:5432"
+    volumes:
+      - empresas_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${EMPRESAS_DB_USERNAME:-trampolim_empresas} -d ${EMPRESAS_DB_NAME:-trampolim_empresas_db}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-capacita:
+    image: postgres:15-alpine
+    container_name: trampolim-capacita-db
+    environment:
+      POSTGRES_DB: ${CAPACITA_DB_NAME:-trampolim_capacita_db}
+      POSTGRES_USER: ${CAPACITA_DB_USERNAME:-trampolim_capacita}
+      POSTGRES_PASSWORD: ${CAPACITA_DB_PASSWORD:-dev_capacita_only}
+    ports:
+      - "5434:5432"
+    volumes:
+      - capacita_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CAPACITA_DB_USERNAME:-trampolim_capacita} -d ${CAPACITA_DB_NAME:-trampolim_capacita_db}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
   postgres_data:
+  empresas_postgres_data:
+  capacita_postgres_data:

@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.Instant;
 import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
+import com.trampolim.api.security.PlatformAccess;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,7 +22,7 @@ public class CatalogController {
     private final CatalogItemRepository items;
     private final JobApplicationRepository applications;
     private final OpportunityAlertService alerts;
-    @Value("${app.admin.emails:}") private String adminEmails;
+    private final PlatformAccess platformAccess;
 
     public record ItemInput(String kind, String title, String provider, String description, String url, String area,
                             String location, String modality, String experienceLevel, String salary, String accessibility,
@@ -155,8 +156,7 @@ public class CatalogController {
     private void validateKind(String kind) { if (!List.of("course", "job").contains(kind)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST); }
     private LocalDate todayBrazil() { return LocalDate.now(ZoneId.of("America/Sao_Paulo")); }
     private void requireAdmin(String email) {
-        boolean allowed = Arrays.stream(adminEmails.split(",")).map(String::trim).anyMatch(value -> value.equalsIgnoreCase(email));
-        if (!allowed) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso restrito à administração.");
+        if (!platformAccess.isSuperAdmin(email)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso restrito à administração.");
     }
     private boolean blank(String value) { return value == null || value.isBlank(); }
     private String clean(String value) { return blank(value) ? null : value.trim(); }

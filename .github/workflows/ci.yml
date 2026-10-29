@@ -50,6 +50,32 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      postgres-empresas:
+        image: postgres:16
+        env:
+          POSTGRES_DB: trampolim_empresas_db
+          POSTGRES_USER: trampolim_empresas
+          POSTGRES_PASSWORD: dev_empresas_only
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U trampolim_empresas -d trampolim_empresas_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      postgres-capacita:
+        image: postgres:16
+        env:
+          POSTGRES_DB: trampolim_capacita_db
+          POSTGRES_USER: trampolim_capacita
+          POSTGRES_PASSWORD: dev_capacita_only
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U trampolim_capacita -d trampolim_capacita_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATABASE_URL: jdbc:postgresql://localhost:5432/trampolim_db
       DATABASE_USERNAME: root
@@ -62,5 +88,5 @@ jobs:
           java-version: '21'
           cache: maven
           cache-dependency-path: backend/pom.xml
-      - run: mvn --batch-mode test
+      - run: mvn --batch-mode -Dspring.jpa.hibernate.ddl-auto=validate test
         working-directory: backend

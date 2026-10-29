@@ -1,3 +1,4 @@
+import { CompanyOpportunities } from './CompanyOpportunities';
 import { useCallback, useEffect, useState } from 'react';
 import { getRecommendationReason, getRecommendationScore, getRecommendations, loadDiagnosticResult } from '../diagnostic/recommendations';
 import type { Opportunity, Skill } from '../diagnostic/recommendations';
@@ -238,7 +239,7 @@ export function CatalogPage({ kind, token, profile, onLogout, onRetakeDiagnostic
         </div>
         {!catalogLoading && filteredItems.length === 0 && visiblePublished.length === 0 && <p role="status" className="rounded-2xl bg-brand-white p-6 text-ink/65">Nenhuma opção encontrada. Ajuste ou limpe os filtros para ver outras opções.</p>}
         {!isCourse && <p className="mt-8 text-sm text-ink/55">As áreas sugeridas apontam caminhos de busca. Vagas com empresa, localidade e candidatura são publicadas pela administração da plataforma e identificadas no catálogo.</p>}
-      </main>
+      {kind === 'job' && <CompanyOpportunities />}</main>
     </div>
   );
 }

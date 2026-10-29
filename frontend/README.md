@@ -30,3 +30,7 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Contato público de privacidade
+
+Defina VITE_PRIVACY_RESPONSIBLE com o nome público do responsável e VITE_PRIVACY_CONTACT_EMAIL com o e-mail público de atendimento. Os valores aparecem no aviso de cadastro das três trilhas; não são credenciais SMTP e não devem conter segredos. Campos vazios não geram contatos fictícios. O e-mail só recebe link quando possui formato válido. Reinicie o Vite em desenvolvimento ou refaça o build para aplicar alterações, pois variáveis VITE são públicas e incorporadas ao frontend. A definição desses dados não substitui a revisão dos documentos jurídicos, proteção de adolescentes e retenção antes da publicação.

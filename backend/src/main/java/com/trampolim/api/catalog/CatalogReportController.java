@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import com.trampolim.api.security.PlatformAccess;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,7 @@ public class CatalogReportController {
     private final CatalogReportRepository reports;
     private final CatalogItemRepository items;
     private final AppUserRepository users;
-    @Value("${app.admin.emails:}") private String adminEmails;
+    private final PlatformAccess platformAccess;
 
     public record ReportInput(String reason, String details) {}
     public record ReportData(Long id, Long itemId, String itemTitle, String kind, String reason, String details, String status, Instant createdAt) {}
@@ -66,7 +67,6 @@ public class CatalogReportController {
                 report.getReason(), report.getDetails(), report.getStatus(), report.getCreatedAt());
     }
     private void requireAdmin(String email) {
-        boolean allowed = email != null && Arrays.stream(adminEmails.split(",")).map(String::trim).anyMatch(value -> value.equalsIgnoreCase(email));
-        if (!allowed) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso restrito à administração.");
+        if (!platformAccess.isSuperAdmin(email)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso restrito à administração.");
     }
 }

@@ -43,13 +43,18 @@ async function expectNoSevereAccessibilityIssues(page: import('@playwright/test'
   expect(result.violations.filter(issue => issue.impact === 'critical' || issue.impact === 'serious')).toEqual([]);
 }
 
+async function openOpportunities(page: import('@playwright/test').Page) {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Explorar oportunidades' }).click();
+}
+
 test('login abre o diagnóstico e a navegação percorre catálogo e perfil em tela estreita', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockApi(page);
-  await page.goto('/');
+  await openOpportunities(page);
   await page.getByRole('button', { name: 'Entrar' }).first().click();
   await page.getByLabel('E-mail').fill('pessoa@example.com');
-  await page.getByLabel('Senha').fill('senha-segura');
+  await page.getByLabel('Senha', { exact: true }).fill('senha-segura');
   await page.getByRole('button', { name: 'Entrar na minha conta' }).click();
   await expect(page.getByRole('navigation', { name: 'Navegação da conta' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Navegação da conta' }).getByRole('button', { name: 'Diagnóstico' })).toHaveAttribute('aria-current', 'page');
@@ -62,14 +67,14 @@ test('login abre o diagnóstico e a navegação percorre catálogo e perfil em t
   await expect(page.getByRole('heading', { name: /Vagas e áreas para explorar/ })).toBeVisible();
   await expectNoSevereAccessibilityIssues(page);
   await page.getByRole('button', { name: 'Meu perfil' }).click();
-  await expect(page.getByRole('heading', { name: 'Monte seu perfil' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Meu perfil' })).toBeVisible();
   await expectNoSevereAccessibilityIssues(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
 test('falha de login mostra mensagem acessível sem criar sessão', async ({ page }) => {
   await mockApi(page, 401);
-  await page.goto('/');
+  await openOpportunities(page);
   await page.getByRole('button', { name: 'Entrar' }).first().click();
   await page.getByLabel('E-mail').fill('pessoa@example.com');
   await page.getByLabel('Senha').fill('senha-errada');
@@ -78,8 +83,27 @@ test('falha de login mostra mensagem acessível sem criar sessão', async ({ pag
   expect(await page.evaluate(() => localStorage.getItem('trampolim_token'))).toBeNull();
 });
 
+test('cadastro bloqueia senhas divergentes antes de enviar credenciais', async ({ page }) => {
+  await mockApi(page);
+  const registrationRequests: string[] = [];
+  page.on('request', request => {
+    if (request.method() === 'POST' && request.url().endsWith('/auth/cadastro')) registrationRequests.push(request.url());
+  });
+  await openOpportunities(page);
+  await page.getByRole('button', { name: 'Entrar' }).first().click();
+  await page.getByRole('button', { name: 'Criar conta' }).click();
+  await page.getByLabel('Nome completo').fill('Pessoa de Teste');
+  await page.getByLabel('E-mail').fill('pessoa@example.com');
+  await page.getByLabel('Senha', { exact: true }).fill('senha-segura');
+  await page.getByLabel('Confirme sua senha').fill('senha-diferente');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Criar meu perfil' }).click();
+  await expect(page.getByRole('alert')).toHaveText('A confirmação da senha não confere.');
+  expect(registrationRequests).toHaveLength(0);
+});
+
 test('diagnóstico percorre as dez perguntas, permite confirmar e exibe recomendações', async ({ page }) => {
-  await page.goto('/');
+  await openOpportunities(page);
   const quiz = page.locator('#diagnostico');
   await expect(quiz.getByRole('heading', { name: 'O que você mais gosta de fazer no dia a dia?' })).toBeVisible();
   for (let question = 0; question < 10; question += 1) {
@@ -93,7 +117,7 @@ test('diagnóstico percorre as dez perguntas, permite confirmar e exibe recomend
 
 test('pessoa salva uma vaga, acompanha a candidatura e sinaliza um anúncio', async ({ page }) => {
   await mockApi(page);
-  await page.goto('/');
+  await openOpportunities(page);
   await page.getByRole('button', { name: 'Entrar' }).first().click();
   await page.getByLabel('E-mail').fill('pessoa@example.com');
   await page.getByLabel('Senha').fill('senha-segura');
@@ -116,7 +140,7 @@ test('pessoa salva uma vaga, acompanha a candidatura e sinaliza um anúncio', as
 
 test('tela de oportunidades não tem violações graves WCAG A/AA', async ({ page }) => {
   await mockApi(page);
-  await page.goto('/');
+  await openOpportunities(page);
   await page.getByRole('button', { name: 'Entrar' }).first().click();
   await page.getByLabel('E-mail').fill('pessoa@example.com');
   await page.getByLabel('Senha').fill('senha-segura');
@@ -125,4 +149,60 @@ test('tela de oportunidades não tem violações graves WCAG A/AA', async ({ pag
   await navigation.getByRole('button', { name: 'Oportunidades' }).click();
   await expect(page.getByRole('heading', { name: /Oportunidades para você/ })).toBeVisible();
   await expectNoSevereAccessibilityIssues(page);
+});
+
+test('catálogo consulta vagas empresariais sem compartilhar token do candidato', async ({ page }) => {
+  await page.addInitScript(() => { localStorage.setItem('trampolim_token', 'candidate-session'); localStorage.setItem('trampolim_profile_step', 'welcome'); });
+  await mockApi(page);
+  let publicAuthorization: string | undefined;
+  await page.route('http://localhost:8080/api/public/companies/opportunities', async route => {
+    publicAuthorization = route.request().headers().authorization;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ id: 9, companySlug: 'fixture-company', companyName: 'Empresa de teste', title: 'Vaga empresarial integrada', area: 'Tecnologia', description: 'Anúncio de teste', requirements: 'Requisitos de teste', location: 'Recife', modality: 'Remoto', internship: true }]) });
+  });
+  await page.goto('/#oportunidades');
+  await page.getByRole('navigation', { name: 'Navegação da conta' }).getByRole('button', { name: 'Vagas', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Vaga empresarial integrada' })).toBeVisible();
+  expect(publicAuthorization).toBeUndefined();
+  await expect(page.getByRole('link', { name: 'Ver vaga na empresa' })).toHaveAttribute('href', '/?empresa=fixture-company');
+  await page.getByLabel('Buscar nas vagas empresariais').fill('inexistente');
+  await expect(page.getByText('Nenhuma vaga empresarial encontrada.')).toBeVisible();
+});
+
+test('administração altera somente a trilha selecionada com justificativa', async ({ page }) => {
+  await page.addInitScript(() => { localStorage.setItem('trampolim_token', 'platform-admin-session'); localStorage.setItem('trampolim_profile_step', 'welcome'); });
+  await mockApi(page);
+  const changes: { path: string; status: string; reason: string }[] = [];
+  await page.route('http://localhost:8080/api/admin/**', async route => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    if (request.method() === 'PUT' && path.endsWith('/status')) {
+      changes.push({ path, ...request.postDataJSON() });
+      expect(request.headers().authorization).toBe('Bearer platform-admin-session');
+      return route.fulfill({ status: 204 });
+    }
+    if (path === '/api/admin/trail-accounts/capacita/22/audit') {
+      expect(request.headers().authorization).toBe('Bearer platform-admin-session');
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ id: 1, userId: 22, actor: 'admin@example.test', previousStatus: 'ACTIVE', newStatus: 'SUSPENDED', reason: 'Histórico estudantil de teste', createdAt: '2026-10-28T12:00:00Z' }]) });
+    }
+    if (path.startsWith('/api/admin/trail-accounts/')) {
+      const student = path.endsWith('/capacita');
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ id: student ? 22 : 11, email: student ? 'student@example.test' : 'company@example.test', name: student ? 'Student' : 'Company', status: 'ACTIVE', emailVerified: true, createdAt: '2026-10-28' }]) });
+    }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: path.endsWith('/overview') ? JSON.stringify({ users: 0, verifiedUsers: 0, activeUsers30d: 0, companies: 0, associations: 0, associationLinks: 0, publishedJobs: 0, publishedInternships: 0, publishedLearningContents: 0, applications: 0, pendingPublications: 0, paidInternshipPayments: 0, internshipRevenueCents: 0, revenueByMonth: [] }) : path.endsWith('/preview') ? '{}' : '[]' });
+  });
+  await page.goto('/#oportunidades');
+  await page.getByRole('button', { name: 'Gestão SaaS', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Contas por trilha' })).toBeVisible();
+  await expect(page.getByText(/company@example.test/)).toBeVisible();
+  await page.getByLabel('Trilha administrada').selectOption('capacita');
+  await expect(page.getByText(/student@example.test/)).toBeVisible();
+  await page.getByRole('button', { name: 'Histórico', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Histórico da conta' })).toContainText('Histórico estudantil de teste');
+  await page.getByRole('button', { name: 'Fechar histórico' }).click();
+  await page.getByRole('button', { name: 'Suspender', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Confirmar alteração' })).toBeDisabled();
+  await page.getByLabel('Justificativa', { exact: true }).fill('Revisão de segurança de teste');
+  await page.getByRole('button', { name: 'Confirmar alteração' }).click();
+  await expect.poll(() => changes.length).toBe(1);
+  expect(changes[0]).toEqual({ path: '/api/admin/trail-accounts/capacita/22/status', status: 'SUSPENDED', reason: 'Revisão de segurança de teste' });
 });

@@ -35,9 +35,19 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/empresas/auth/**", "/api/capacita/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
+                        // Allow Spring's sanitized error response to be rendered after a failed
+                        // authenticated request; otherwise the error dispatch can mask the real status.
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/monitoring/client-errors").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/webhooks/mercadopago").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/empresas/session/logout", "/api/capacita/session/logout").authenticated()
+                        .requestMatchers("/api/capacita/account/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/capacita/progress").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/capacita/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/profiles/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/companies/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/public/companies/**").permitAll()

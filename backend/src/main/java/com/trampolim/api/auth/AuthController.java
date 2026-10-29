@@ -1,6 +1,7 @@
 package com.trampolim.api.auth;
 
-import com.trampolim.api.security.JwtUtil;
+import com.trampolim.api.security.TrailTokenService;
+import com.trampolim.api.security.TrailTokenService.Trail;
 import com.trampolim.api.user.AppUser;
 import com.trampolim.api.user.AppUserRepository;
 import java.nio.charset.StandardCharsets;
@@ -37,14 +38,15 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthController {
     private final AppUserRepository users;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+    private final TrailTokenService trailTokens;
     private final ObjectProvider<JavaMailSender> mailSenders;
     private final JdbcTemplate jdbc;
     @Value("${app.frontend-url:http://localhost:5173}") private String frontendUrl;
     @Value("${app.mail.enabled:false}") private boolean mailEnabled;
+    @Value("${trails.auth.legacy-company.enabled:false}") private boolean legacyCompanyAuthEnabled;
 
     public record Credentials(String email, String password) {}
-    public record Registration(String name, String email, String password) {}
+    public record Registration(String name, String email, String password, boolean termsAccepted) {}
     public record CompanyRegistration(String name, String email, String password, String legalName, String tradeName, String cnpj, String phone, String website, String industry, String address, String city, String state) {}
     public record CompanyInviteRegistration(String token, String name, String email, String password) {}
     public record AuthResponse(String token, UserSummary user, boolean emailVerified, String accountType) {}
@@ -62,7 +64,8 @@ public class AuthController {
         String password = request.password() == null ? "" : request.password();
         if (name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome completo: preencha este campo.");
         if (!validEmail(email)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail: informe um endereço válido.");
-        if (password.length() < 8) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Senha: use pelo menos 8 caracteres.");
+        PasswordPolicy.validate(password);
+        if (!request.termsAccepted()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Aceite os termos para criar sua conta.");
         if (users.existsByEmail(email)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Este e-mail já está cadastrado.");
         }
@@ -82,20 +85,23 @@ public class AuthController {
             user.setEmailVerificationExpiresAt(Instant.now().plus(24, ChronoUnit.HOURS));
         }
         users.save(user);
+        jdbc.update("UPDATE app_users SET terms_accepted_at=CURRENT_TIMESTAMP WHERE id=?", user.getId());
         log.info("auth_registration_created userId={} emailConfirmationRequired={}", user.getId(), mailEnabled);
         if (mailEnabled) sendVerificationMail(user, verificationToken, configuredMailSender);
         return responseFor(user);
     }
 
     @PostMapping("/company/cadastro")
+    @Transactional
     public AuthResponse registerCompany(@RequestBody CompanyRegistration request, HttpServletRequest servletRequest) {
+        if (!legacyCompanyAuthEnabled) throw new ResponseStatusException(HttpStatus.GONE, "O cadastro empresarial agora utiliza o ambiente independente Trampolim Empresas.");
         limitRequests("company-register:" + servletRequest.getRemoteAddr(), 10, 60);
         String name = clean(request.name()); String email = normalizeEmail(request.email());
         String password = request.password() == null ? "" : request.password();
         String cnpj = request.cnpj() == null ? "" : request.cnpj().replaceAll("[^A-Za-z0-9]", "").toUpperCase();
         if (name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome completo do responsável: preencha este campo.");
         if (!validEmail(email)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail: informe um endereço válido.");
-        if (password.length() < 8) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Senha: use pelo menos 8 caracteres.");
+        PasswordPolicy.validate(password);
         if (clean(request.legalName()).isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Razão social: preencha este campo.");
         if (clean(request.tradeName()).isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome fantasia: preencha este campo.");
         if (cnpj.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CNPJ: preencha este campo para identificar a empresa.");
@@ -112,7 +118,6 @@ public class AuthController {
                     Long.class, user.getId(), request.legalName().trim(), request.tradeName().trim(), cnpj, request.phone().trim(), clean(request.website()), request.industry().trim(), request.address().trim(), request.city().trim(), request.state().toUpperCase());
             jdbc.update("INSERT INTO company_members(company_id, user_id, role) VALUES (?, ?, 'OWNER')", companyId, user.getId());
         } catch (org.springframework.dao.DuplicateKeyException exception) {
-            users.delete(user);
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Este CNPJ já possui uma conta empresarial.");
         }
         return responseFor(user);
@@ -121,13 +126,14 @@ public class AuthController {
     @PostMapping("/company/join")
     @Transactional
     public AuthResponse joinCompany(@RequestBody CompanyInviteRegistration request, HttpServletRequest servletRequest) {
+        if (!legacyCompanyAuthEnabled) throw new ResponseStatusException(HttpStatus.GONE, "O aceite de convites deve ser feito pelo ambiente independente Trampolim Empresas.");
         limitRequests("company-join:" + servletRequest.getRemoteAddr(), 10, 60);
         String name = clean(request.name()), email = normalizeEmail(request.email());
         String password = request.password() == null ? "" : request.password();
         String tokenHash = hashToken(clean(request.token()));
         if (name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome completo: preencha este campo.");
         if (!validEmail(email)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail: informe um endereço válido.");
-        if (password.length() < 8) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Senha: use pelo menos 8 caracteres.");
+        PasswordPolicy.validate(password);
         var invites = jdbc.query("SELECT id, company_id, email, role FROM company_invites WHERE token_hash=? AND accepted_at IS NULL AND expires_at > CURRENT_TIMESTAMP", (rs, row) -> new Object[]{rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getString(4)}, tokenHash);
         if (invites.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Este convite expirou ou já foi utilizado. Solicite um novo à empresa.");
         Object[] invite = invites.get(0);
@@ -151,6 +157,15 @@ public class AuthController {
         return Map.of("message", "Se a conta precisar de confirmação, enviaremos um novo link para o endereço informado.");
     }
 
+    @PostMapping("/logout")
+    @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
+    public void logout(@org.springframework.security.core.annotation.AuthenticationPrincipal String email) {
+        if (email == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sessão inválida.");
+        AppUser user = users.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sessão inválida."));
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        users.save(user);
+    }
+
     @PostMapping("/login")
     public AuthResponse login(@RequestBody Credentials request, HttpServletRequest servletRequest) {
         limitRequests("login:" + servletRequest.getRemoteAddr(), 10, 15);
@@ -158,10 +173,7 @@ public class AuthController {
         AppUser user = users.findByEmail(email).orElse(null);
         if (user == null || request.password() == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             if (user != null) {
-                int attempts = user.getFailedLoginAttempts() + 1;
-                user.setFailedLoginAttempts(attempts);
-                if (attempts >= 5) { user.setLoginLockedUntil(Instant.now().plus(15, ChronoUnit.MINUTES)); user.setFailedLoginAttempts(0); log.warn("auth_account_locked userId={} durationMinutes=15", user.getId()); }
-                users.save(user);
+                jdbc.update("UPDATE app_users SET failed_login_attempts=CASE WHEN failed_login_attempts+1>=5 THEN 0 ELSE failed_login_attempts+1 END,login_locked_until=CASE WHEN failed_login_attempts+1>=5 THEN CURRENT_TIMESTAMP+INTERVAL '15 minutes' ELSE login_locked_until END WHERE id=?",user.getId());
             }
             log.warn("auth_login_failed knownAccount={}", user != null);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-mail ou senha incorretos. Confira os dois campos e tente novamente.");
@@ -169,8 +181,10 @@ public class AuthController {
         if (user.getLoginLockedUntil() != null && user.getLoginLockedUntil().isAfter(Instant.now())) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Muitas tentativas. Aguarde 15 minutos antes de tentar novamente.");
         }
+        if ("COMPANY".equalsIgnoreCase(user.getAccountType()) && !legacyCompanyAuthEnabled)
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Esta é uma conta empresarial. Entre pelo Trampolim Empresas.");
         if (!user.isEmailVerified()) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Confirme seu e-mail pelo link enviado antes de entrar.");
-        user.setFailedLoginAttempts(0); user.setLoginLockedUntil(null); users.save(user);
+        user.setFailedLoginAttempts(0); user.setLoginLockedUntil(null); user.setLastLoginAt(Instant.now()); users.save(user);
         log.info("auth_login_success userId={}", user.getId());
         return responseFor(user);
     }
@@ -206,11 +220,12 @@ public class AuthController {
     }
 
     @PostMapping("/password/reset")
+    @Transactional(transactionManager = "oportunidadesTransactionManager")
     public Map<String, String> resetPassword(@RequestBody ResetPassword request) {
         String token = request.token() == null ? "" : request.token().trim();
         String password = request.password() == null ? "" : request.password();
-        if (password.length() < 8) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A senha deve ter pelo menos 8 caracteres.");
-        AppUser user = users.findByPasswordResetTokenHash(hashToken(token))
+        PasswordPolicy.validate(password);
+        AppUser user = users.findResetAccountForUpdate(hashToken(token))
                 .filter(found -> found.getPasswordResetExpiresAt() != null && found.getPasswordResetExpiresAt().isAfter(Instant.now()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "O link expirou ou já foi utilizado. Solicite outro."));
         user.setPasswordHash(passwordEncoder.encode(password));
@@ -224,11 +239,10 @@ public class AuthController {
     }
 
     private AuthResponse responseFor(AppUser user) {
-        String token = user.isEmailVerified() ? jwtUtil.generateToken(user.getEmail(), user.getTokenVersion()) : "";
-        String accountType = user.getAccountType();
-        Integer memberships = jdbc.queryForObject("SELECT COUNT(*) FROM company_members WHERE user_id=?", Integer.class, user.getId());
-        if (memberships != null && memberships > 0) accountType = "COMPANY";
-        return new AuthResponse(token, new UserSummary(user.getFullName(), user.getEmail()), user.isEmailVerified(), accountType);
+        String token = user.isEmailVerified() ? trailTokens.issue(Trail.OPORTUNIDADES, user.getEmail(), user.getId(), user.getTokenVersion()) : "";
+        // Membership in the retired single-database company schema must never turn an
+        // Oportunidades identity into an Empresas identity during login.
+        return new AuthResponse(token, new UserSummary(user.getFullName(), user.getEmail()), user.isEmailVerified(), user.getAccountType());
     }
 
     private String normalizeEmail(String email) {

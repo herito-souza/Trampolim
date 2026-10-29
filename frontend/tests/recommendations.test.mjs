@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDiagnosticResult, getRecommendationReason, getRecommendationScore, getRecommendations } from '../src/features/diagnostic/recommendations.ts';
+import { createDiagnosticResult, getRecommendationReason, getRecommendationScore, getRecommendations, opportunities } from '../src/features/diagnostic/recommendations.ts';
 
 test('diagnóstico gera trilha e recomendações compatíveis com as respostas', () => {
   const result = createDiagnosticResult([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
@@ -28,7 +28,7 @@ test('pontuação personalizada não duplica competências repetidas', () => {
   assert.equal(getRecommendationScore(result, ['service', 'service']), result.scores.service);
 });
 
-test('sem diagnóstico, catálogo mantém todas as opções do tipo', () => {
-  assert.equal(getRecommendations(null, 'course').length, 34);
-  assert.equal(getRecommendations(null, 'job').length, 33);
+test('sem diagnóstico, catálogo mantém todas as opções cadastradas de cada tipo', () => {
+  assert.deepEqual(getRecommendations(null, 'course').map(item => item.id), opportunities.filter(item => item.kind === 'course').map(item => item.id));
+  assert.deepEqual(getRecommendations(null, 'job').map(item => item.id), opportunities.filter(item => item.kind === 'job').map(item => item.id));
 });
