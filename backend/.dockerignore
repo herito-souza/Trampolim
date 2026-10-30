@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+target
+.maven-cache
+storage
+.git
+migration

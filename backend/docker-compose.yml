@@ -7,9 +7,15 @@ services:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
     ports:
-      - "5432:5432"
+      - "${DB_BIND_ADDRESS:-127.0.0.1}:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d trampolim_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   postgres-empresas:
     image: postgres:15-alpine
@@ -19,7 +25,7 @@ services:
       POSTGRES_USER: ${EMPRESAS_DB_USERNAME:-trampolim_empresas}
       POSTGRES_PASSWORD: ${EMPRESAS_DB_PASSWORD:-dev_empresas_only}
     ports:
-      - "5433:5432"
+      - "${DB_BIND_ADDRESS:-127.0.0.1}:5433:5432"
     volumes:
       - empresas_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -36,7 +42,7 @@ services:
       POSTGRES_USER: ${CAPACITA_DB_USERNAME:-trampolim_capacita}
       POSTGRES_PASSWORD: ${CAPACITA_DB_PASSWORD:-dev_capacita_only}
     ports:
-      - "5434:5432"
+      - "${DB_BIND_ADDRESS:-127.0.0.1}:5434:5432"
     volumes:
       - capacita_postgres_data:/var/lib/postgresql/data
     healthcheck:

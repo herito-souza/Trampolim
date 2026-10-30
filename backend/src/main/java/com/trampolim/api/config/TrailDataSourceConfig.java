@@ -38,6 +38,7 @@ public class TrailDataSourceConfig {
 
     @org.springframework.context.annotation.DependsOn("trailDatabaseIsolationGuard")
     @Bean(name = "dataSource", destroyMethod = "close")
+    @ConfigurationProperties("spring.datasource.hikari")
     @Primary
     public HikariDataSource oportunidadesDataSource(
             @Qualifier("oportunidadesDataSourceProperties") DataSourceProperties properties) {
@@ -70,6 +71,7 @@ public class TrailDataSourceConfig {
 
     @org.springframework.context.annotation.DependsOn("trailDatabaseIsolationGuard")
     @Bean(name = "empresasDataSource", destroyMethod = "close")
+    @ConfigurationProperties("trampolim.datasource.empresas.hikari")
     @ConditionalOnProperty(name = "trampolim.datasource.empresas.enabled", havingValue = "true")
     public HikariDataSource empresasDataSource(
             @Qualifier("empresasDataSourceProperties") DataSourceProperties properties) {
@@ -103,6 +105,7 @@ public class TrailDataSourceConfig {
 
     @org.springframework.context.annotation.DependsOn("trailDatabaseIsolationGuard")
     @Bean(name = "capacitaDataSource", destroyMethod = "close")
+    @ConfigurationProperties("trampolim.datasource.capacita.hikari")
     @ConditionalOnProperty(name = "trampolim.datasource.capacita.enabled", havingValue = "true")
     public HikariDataSource capacitaDataSource(
             @Qualifier("capacitaDataSourceProperties") DataSourceProperties properties) {

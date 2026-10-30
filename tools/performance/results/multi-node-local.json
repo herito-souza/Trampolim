@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "multiNode": {
+    "executed": true,
+    "nodes": 2,
+    "deliveryAcrossNodes": true,
+    "offlineRecoveryOnOtherNode": true,
+    "crossNodeRevocation": true,
+    "independentCorporateSessionPreserved": true
+  },
+  "jarBytes": 69762095,
+  "jarSHA256": "71d69fa68dc72ed3718b4cb680e65e412f96a46a81c1dcdcd71f4feec97c647c",
+  "monitoring": {
+    "available": true,
+    "unauthenticatedStatus": 403,
+    "authorizedStatus": 200,
+    "livenessStatus": 200,
+    "sseGaugePresent": true,
+    "poolGaugePresent": true
+  },
+  "environment": {
+    "os": "Windows-10-10.0.19045-SP0",
+    "logicalCPUs": 6,
+    "heapMaximumMiB": 768,
+    "backendInstances": 1,
+    "database": "three local development PostgreSQL containers, disposable schemas",
+    "accounts": 3,
+    "course": {
+      "subjects": 20,
+      "modules": 200,
+      "lessons": 1000
+    },
+    "mediaDistributionIncluded": false,
+    "clientsShareSyntheticAccounts": true
+  },
+  "loginSamples": [
+    {
+      "route": "/auth/login",
+      "status": 200,
+      "milliseconds": 113.9
+    },
+    {
+      "route": "/empresas/auth/login",
+      "status": 200,
+      "milliseconds": 107.71
+    },
+    {
+      "route": "/capacita/auth/login",
+      "status": 200,
+      "milliseconds": 99.32
+    }
+  ],
+  "crossTrailIsolation": [
+    {
+      "route": "/company/dashboard",
+      "status": 403,
+      "rejected": true
+    },
+    {
+      "route": "/capacita/learning/me",
+      "status": 403,
+      "rejected": true
+    },
+    {
+      "route": "/profile",
+      "status": 403,
+      "rejected": true
+    }
+  ],
+  "stages": []
+}

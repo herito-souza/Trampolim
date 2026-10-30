@@ -1,0 +1,5 @@
+export type Row = Record<string, unknown>;
+export type Page = { items: Row[]; nextCursor: number | null };
+export type ProfileInput = { institutionName: string; legalName: string; legalIdentifier: string; contactEmail: string; contactPhone: string; responsibleName: string; publicSlug: string; headline: string; about: string; accentColor: string; published: boolean; revision: number };
+export const profileInput = (r: Row = {}): ProfileInput => ({ institutionName: String(r.name || ''), legalName: String(r.legal_name || ''), legalIdentifier: String(r.legal_identifier || ''), contactEmail: String(r.contact_email || ''), contactPhone: String(r.contact_phone || ''), responsibleName: String(r.responsible_name || ''), publicSlug: String(r.public_slug || ''), headline: String(r.headline || ''), about: String(r.about || ''), accentColor: String(r.accent_color || '#9bc3e5'), published: Boolean(r.published), revision: Number(r.revision || 0) });
+export const bandLabel = (value: unknown): string => value && typeof value === 'object' && 'label' in value ? String(value.label) : 'Indisponível';

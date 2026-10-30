@@ -1,0 +1,20 @@
+[
+  {
+    "database": "trampolim_db",
+    "interruptedTestSchemasRemoved": 0,
+    "ownTestSchemasRemaining": 0,
+    "localPublicMigrationVersion": "13"
+  },
+  {
+    "database": "trampolim_empresas_db",
+    "interruptedTestSchemasRemoved": 0,
+    "ownTestSchemasRemaining": 0,
+    "localPublicMigrationVersion": "10"
+  },
+  {
+    "database": "trampolim_capacita_db",
+    "interruptedTestSchemasRemoved": 1,
+    "ownTestSchemasRemaining": 0,
+    "localPublicMigrationVersion": "15"
+  }
+]

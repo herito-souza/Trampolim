@@ -80,6 +80,8 @@ jobs:
       DATABASE_URL: jdbc:postgresql://localhost:5432/trampolim_db
       DATABASE_USERNAME: root
       DATABASE_PASSWORD: root
+      CAPACITA_FFMPEG: ffmpeg
+      CAPACITA_FFPROBE: ffprobe
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -88,5 +90,17 @@ jobs:
           java-version: '21'
           cache: maven
           cache-dependency-path: backend/pom.xml
+      - name: Install video validation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
       - run: mvn --batch-mode -Dspring.jpa.hibernate.ddl-auto=validate test
         working-directory: backend
+
+      - name: Preserve synthetic query-plan evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-audit-evidence
+          path: backend/target/audit
+          if-no-files-found: ignore

@@ -53,6 +53,8 @@ public class StudentAccountController {
         if (accounts.size() != 1 || !passwords.matches(request.password(), (String) accounts.get(0).get("password_hash")))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Não foi possível confirmar as credenciais.");
         // Progress references the student with ON DELETE CASCADE. No other trail is accessed.
+        if(students.queryForObject("SELECT count(*) FROM learning_courses WHERE teacher_id=?",Long.class,accounts.get(0).get("id"))>0)
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"Sua conta é responsável por cursos. Transfira os cursos com a administração antes de excluir o acesso.");
         students.update("DELETE FROM student_users WHERE id=?", accounts.get(0).get("id"));
     }
     private void limitAttempts(String email) {

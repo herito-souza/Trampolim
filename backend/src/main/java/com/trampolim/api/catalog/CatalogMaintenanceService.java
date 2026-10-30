@@ -15,8 +15,11 @@ public class CatalogMaintenanceService {
     private final CatalogItemRepository items;
     private final CatalogMetricRepository metrics;
 
+    @org.springframework.beans.factory.annotation.Value("${operations.catalog-jobs-enabled:true}") private boolean jobsEnabled=true;
+
     @Scheduled(cron = "0 15 8 * * *", zone = "America/Sao_Paulo")
     public void flagListingsForReview() {
+        if (!jobsEnabled) return;
         LocalDate today = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
         Instant now = Instant.now();
         items.findAll().stream().filter(CatalogItem::isActive).filter(item -> "job".equals(item.getKind()))

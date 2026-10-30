@@ -66,12 +66,13 @@ public class EnterpriseOrganizationController {
                 """, (rs,row)->new OrganizationView(rs.getLong(1),rs.getString(2),rs.getString(3),rs.getString(4),null,rs.getLong(6),rs.getLong(7),rs.getTimestamp(8).toInstant().toString()),email);
     }
 
+    @org.springframework.transaction.annotation.Transactional("empresasTransactionManager")
     @PostMapping("/organizations/invites/accept")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void acceptOrganizationInvite(@AuthenticationPrincipal String email,@RequestBody InviteToken request) {
         requireCompanyAccount(email);
         String token=clean(request==null?null:request.token());
-        List<Object[]> invites=jdbc.query("SELECT i.id,i.organization_id,i.role FROM enterprise_organization_invites i JOIN enterprise_organizations o ON o.id=i.organization_id AND o.status='ACTIVE' WHERE i.token_hash=? AND LOWER(i.email)=LOWER(?) AND i.accepted_at IS NULL AND i.expires_at>CURRENT_TIMESTAMP",(rs,row)->new Object[]{rs.getLong(1),rs.getLong(2),rs.getString(3)},sha256(token),email);
+        List<Object[]> invites=jdbc.query("SELECT i.id,i.organization_id,i.role FROM enterprise_organization_invites i JOIN enterprise_organizations o ON o.id=i.organization_id AND o.status='ACTIVE' WHERE i.token_hash=? AND LOWER(i.email)=LOWER(?) AND i.accepted_at IS NULL AND i.expires_at>CURRENT_TIMESTAMP FOR UPDATE OF i",(rs,row)->new Object[]{rs.getLong(1),rs.getLong(2),rs.getString(3)},sha256(token),email);
         if(invites.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"O convite expirou, já foi usado ou pertence a outro e-mail.");
         Object[] invite=invites.get(0);
         jdbc.update("INSERT INTO enterprise_organization_members(organization_id,email,full_name,role) SELECT ?,LOWER(u.email),u.full_name,? FROM company_users u WHERE LOWER(u.email)=LOWER(?) AND u.email_verified=TRUE AND u.account_status='ACTIVE' ON CONFLICT DO NOTHING",invite[1],invite[2],email);
@@ -143,10 +144,12 @@ public class EnterpriseOrganizationController {
         return inviteMember(id,email,input);
     }
 
+    @org.springframework.transaction.annotation.Transactional("empresasTransactionManager")
     @DeleteMapping("/association/organizations/{id}/members/{memberId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeMember(@AuthenticationPrincipal String email,@PathVariable long id,@PathVariable long memberId) {
         requireAssociationManager(email,id);
+        jdbc.queryForObject("SELECT id FROM enterprise_organizations WHERE id=? FOR UPDATE",Long.class,id);
         String role=jdbc.query("SELECT role FROM enterprise_organization_members WHERE organization_id=? AND id=?",(rs,row)->rs.getString(1),id,memberId).stream().findFirst().orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Membro não encontrado."));
         if("ASSOCIATION_ADMIN".equals(role) && count(jdbc,"SELECT COUNT(*) FROM enterprise_organization_members WHERE organization_id=? AND role='ASSOCIATION_ADMIN'",id)<=1)
             throw new ResponseStatusException(HttpStatus.CONFLICT,"A associação precisa manter pelo menos uma pessoa administradora.");

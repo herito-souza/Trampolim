@@ -1,3 +1,5 @@
+import { useErrorFocus } from '../learning/accessibleFocus';
+import { useCapacitaSurface } from '../learning/accessibilityContext';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { acceptCompanyInvite, acceptOrganizationInvite, authenticate, authenticateTrail, registerOrganizationInvite, requestPasswordReset, resendEmailConfirmation, resetPassword } from './api';
@@ -17,12 +19,14 @@ interface AuthScreenProps {
 }
 
 export function AuthScreen({ initialMode, onSuccess, onBack, initialNotice = '', initialError = '', initialCompanySignup = false, trail = 'oportunidades' }: AuthScreenProps) {
+  useCapacitaSurface(undefined, trail === 'capacita');
   const [mode, setMode] = useState(initialMode);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState(initialError);
+  const errorFocus = useErrorFocus(error);
   const [busy, setBusy] = useState(false);
   const [recovery, setRecovery] = useState(false);
   const [resetToken, setResetToken] = useState(() => new URLSearchParams(`${window.location.search}&${window.location.hash.split('?')[1] || ''}`).get('resetToken') || new URLSearchParams(`${window.location.search}&${window.location.hash.split('?')[1] || ''}`).get('token') || '');
@@ -125,8 +129,8 @@ export function AuthScreen({ initialMode, onSuccess, onBack, initialNotice = '',
   return (
     <>
       <RibbonStrip />
-      <main className="min-h-screen px-[6vw] py-8">
-      <a href="#auth-form" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-white focus:px-4 focus:py-3 focus:font-bold">Pular para o formulário</a>
+      <main id={trail === "capacita" ? "conteudo-principal" : undefined} className="min-h-screen px-[6vw] py-8">
+      <a href="#auth-form" onClick={event => { event.preventDefault(); document.getElementById("auth-form")?.focus(); }} className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-white focus:px-4 focus:py-3 focus:font-bold">Pular para o formulário</a>
       <button onClick={onBack} className="border-0 bg-transparent font-bold text-ink cursor-pointer">← Voltar ao início</button>
       <div className="mx-auto mt-12 grid max-w-5xl overflow-hidden rounded-[28px] bg-brand-white shadow-xl md:grid-cols-2">
         <section className="bg-ink p-9 text-brand-white md:p-12">
@@ -143,7 +147,7 @@ export function AuthScreen({ initialMode, onSuccess, onBack, initialNotice = '',
           {organizationInvite && <div className="mb-4 rounded-xl border border-brand-blue/20 bg-brand-blue/5 p-3 text-sm font-bold"><p>Convite institucional Trampolim Empresas. Use o e-mail que recebeu este link.</p><button type="button" onClick={() => { setMode(mode === 'login' ? 'cadastro' : 'login'); setError(''); }} className="mt-2 border-0 bg-transparent p-0 font-extrabold text-brand-blue underline">{mode === 'login' ? 'Criar uma conta' : 'Já tenho uma conta Empresas'}</button></div>}
           <h2 className="text-3xl font-black">{organizationInvite ? mode === 'login' ? 'Entre para a organização.' : 'Crie seu acesso institucional.' : companyInvite ? 'Entre para a equipe.' : resetToken ? 'Crie uma nova senha.' : recovery ? 'Recupere seu acesso.' : mode === 'login' ? 'Que bom ter você de volta.' : 'Vamos começar?'}</h2>
           <p className="mt-2 text-sm text-ink/65">{organizationInvite ? 'Esta conta terá acesso somente às funções autorizadas da organização.' : companyInvite ? 'Crie sua conta para acessar o portal da empresa.' : resetToken ? 'Escolha uma senha com pelo menos 8 caracteres.' : recovery ? 'Enviaremos um link seguro para o e-mail cadastrado.' : mode === 'login' ? 'Entre para continuar seu perfil.' : 'Seus dados ficam salvos para você voltar quando quiser.'}</p>
-          <form id="auth-form" noValidate onSubmit={submit} className="mt-7 space-y-4">
+          <form id="auth-form" tabIndex={-1} noValidate onSubmit={submit} className="mt-7 space-y-4">
             {!resetToken && !recovery && mode === 'cadastro' && <label className="block text-sm font-bold">Nome completo<input autoComplete="name" value={name} onChange={e => setName(e.target.value)} className="mt-2 w-full rounded-xl border border-ink/20 bg-white px-4 py-3 font-normal" placeholder="Seu nome" /></label>}
             {!resetToken && !recovery && mode === 'cadastro' && trail === 'capacita' && <div className="space-y-4"><label className="block text-sm font-bold">Faixa etária<select required value={ageBand} onChange={event => setAgeBand(event.target.value)} className="mt-2 w-full rounded-xl border border-ink/20 bg-white px-4 py-3 font-normal"><option value="">Selecione sua faixa etária</option><option value="AGE_14_17">Tenho de 14 a 17 anos</option><option value="AGE_18_PLUS">Tenho 18 anos ou mais</option></select><span className="mt-2 block text-xs font-normal">O cadastro é destinado a pessoas a partir de 14 anos. Esta informação é autodeclarada.</span></label><label className="block text-sm font-bold">Etapa de ensino<select required value={educationStage} onChange={event => setEducationStage(event.target.value)} className="mt-2 w-full rounded-xl border border-ink/20 bg-white px-4 py-3 font-normal"><option value="HIGH_SCHOOL">Ensino médio</option><option value="UNIVERSITY">Ensino superior</option><option value="CAREER_START">Conclusão do ensino médio e início profissional</option></select></label><label className="block text-sm font-bold">Instituição de ensino (opcional)<input maxLength={180} value={institutionName} onChange={event => setInstitutionName(event.target.value)} className="mt-2 w-full rounded-xl border border-ink/20 bg-white px-4 py-3 font-normal" /></label></div>}
             {!resetToken && !recovery && !companyInvite && !organizationInvite && mode === 'cadastro' && companySignup && <div className="space-y-4 rounded-2xl border border-white/10 bg-[#0b1421] p-4"><p className="text-xs font-extrabold uppercase tracking-widest text-brand-red">Dados da empresa</p>
@@ -158,7 +162,7 @@ export function AuthScreen({ initialMode, onSuccess, onBack, initialNotice = '',
             {!resetToken && <label className="block text-sm font-bold">{trail === 'empresas' ? 'E-mail corporativo ou do responsável' : 'E-mail'}<input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-2 w-full rounded-xl border border-ink/20 bg-white px-4 py-3 font-normal" placeholder="voce@email.com" /></label>}
             {resetToken ? <><label className="block text-sm font-bold">Nova senha<input required type="password" minLength={8} autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-ink/20 bg-white px-4 py-3 font-normal" /></label><label className="block text-sm font-bold">Confirme a nova senha<input required type="password" minLength={8} autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-ink/20 bg-white px-4 py-3 font-normal" /></label></> : !recovery && <><label className="block text-sm font-bold">Senha<input required type="password" minLength={mode === 'cadastro' ? 8 : undefined} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-ink/20 bg-white px-4 py-3 font-normal" placeholder={mode === 'cadastro' ? 'Pelo menos 8 caracteres' : 'Sua senha'} /></label>{mode === 'cadastro' && <label className="block text-sm font-bold">Confirme sua senha<input required type="password" minLength={8} autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-ink/20 bg-white px-4 py-3 font-normal" /></label>}</>}
             {!resetToken && !recovery && mode === 'cadastro' && <><TrailUsageNotice trail={trail} /><label className="flex items-start gap-3 text-sm font-medium"><input required type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} className="mt-1" />Li o aviso de uso e privacidade e concordo com as condições apresentadas para esta área.</label></>}
-            {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-brand-red">{error}</p>}
+            {error && <p ref={errorFocus} tabIndex={-1} role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-brand-red">{error}</p>}
             {success && <p role="status" className="rounded-xl bg-green-50 p-3 text-sm font-semibold text-brand-green">{success}</p>}
             <button disabled={busy} className="w-full rounded-full border-0 bg-brand-yellow px-6 py-4 font-extrabold text-[#101725] cursor-pointer disabled:opacity-60">{busy ? 'Aguarde...' : organizationInvite ? mode === 'login' ? 'Entrar e aceitar convite' : 'Criar acesso e aceitar convite' : companyInvite ? 'Aceitar convite e criar conta' : resetToken ? 'Salvar nova senha' : recovery ? 'Enviar link de recuperação' : mode === 'login' ? 'Entrar na minha conta' : companySignup ? 'Criar conta empresarial' : 'Criar meu perfil'}</button>
           </form>

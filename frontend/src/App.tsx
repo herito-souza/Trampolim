@@ -1,36 +1,51 @@
+import { RecruiterPortfolio } from './features/career/PortfolioPanel';
+const CareerPanel = lazy(() => import('./features/career/CareerPanel').then(module => ({default:module.CareerPanel})));
+import { CredentialVerification, RecruiterPassport } from './features/learning/PassportVerification';
 import { ApiError } from './features/account/api';
-import { useEffect, useState } from 'react';
-import { Home } from './pages/Home';
-import { AuthScreen } from './features/account/AuthScreen';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { PageBoundary } from './components/ui/PageBoundary';
+const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
+const AuthScreen = lazy(() => import('./features/account/AuthScreen').then(module => ({ default: module.AuthScreen })));
 import { api, confirmEmail, confirmTrailEmail, API_URL, revokeTrailSession } from './features/account/api';
 import type { AuthResponse, AuthTrail, Profile, ProfileResponse } from './features/account/api';
-import { ProfilePage } from './features/account/ProfilePage';
-import { WelcomeScreen } from './features/account/WelcomeScreen';
-import { OpportunitiesPage } from './features/account/OpportunitiesPage';
-import { CatalogPage } from './features/account/CatalogPage';
-import { AdminCatalogPage } from './features/account/AdminCatalogPage';
-import { PublicProfilePage } from './features/account/PublicProfilePage';
+const ProfilePage = lazy(() => import('./features/account/ProfilePage').then(module => ({ default: module.ProfilePage })));
+const WelcomeScreen = lazy(() => import('./features/account/WelcomeScreen').then(module => ({ default: module.WelcomeScreen })));
+const OpportunitiesPage = lazy(() => import('./features/account/OpportunitiesPage').then(module => ({ default: module.OpportunitiesPage })));
+const CatalogPage = lazy(() => import('./features/account/CatalogPage').then(module => ({ default: module.CatalogPage })));
+const AdminCatalogPage = lazy(() => import('./features/account/AdminCatalogPage').then(module => ({ default: module.AdminCatalogPage })));
+const PublicProfilePage = lazy(() => import('./features/account/PublicProfilePage').then(module => ({ default: module.PublicProfilePage })));
 import { AccountNavigation } from './features/account/AccountNavigation';
 import type { AccountDestination } from './features/account/AccountNavigation';
 import { loadDiagnosticResult } from './features/diagnostic/recommendations';
 import type { DiagnosticResult } from './features/diagnostic/recommendations';
 import { RibbonStrip } from './components/ui/RibbonStrip';
-import { CompanyPublicPage } from './features/account/CompanyPublicPage';
-import { PremiumPage } from './features/account/PremiumPage';
+const CompanyPublicPage = lazy(() => import('./features/account/CompanyPublicPage').then(module => ({ default: module.CompanyPublicPage })));
+const PremiumPage = lazy(() => import('./features/account/PremiumPage').then(module => ({ default: module.PremiumPage })));
 import { EcosystemHome } from './pages/EcosystemHome';
-import { CapacitaPage } from './pages/CapacitaPage';
-import { CompanyEntryPage } from './pages/CompanyEntryPage';
-import { AdminCapacitaPage } from './features/account/AdminCapacitaPage';
-import { SaasAdminPage, type Organization } from './features/account/SaasAdminPage';
-import { AssociationDashboardPage } from './features/account/AssociationDashboardPage';
-import { CompanyPortal } from './features/account/CompanyPortal';
+const CapacitaPage = lazy(() => import('./pages/CapacitaPage').then(module => ({ default: module.CapacitaPage })));
+const SharedCompetency = lazy(() => import('./features/learning/SharedCompetency').then(module => ({ default: module.SharedCompetency })));
+const CompanyEntryPage = lazy(() => import('./pages/CompanyEntryPage').then(module => ({ default: module.CompanyEntryPage })));
+const AdminCapacitaPage = lazy(() => import('./features/account/AdminCapacitaPage').then(module => ({ default: module.AdminCapacitaPage })));
+import type { Organization } from './features/account/SaasAdminPage';
+const SaasAdminPage = lazy(() => import('./features/account/SaasAdminPage').then(module => ({ default: module.SaasAdminPage })));
+const AssociationDashboardPage = lazy(() => import('./features/account/AssociationDashboardPage').then(module => ({ default: module.AssociationDashboardPage })));
+const CompanyPortal = lazy(() => import('./features/account/CompanyPortal').then(module => ({ default: module.CompanyPortal })));
+
+const HubPublicPage = lazy(() => import('./features/hub/HubPublicPage').then(module => ({ default: module.HubPublicPage })));
+const HubCompanyInvitation = lazy(() => import('./features/hub/HubCompanyInvitation').then(module => ({ default: module.HubCompanyInvitation })));
+const FutureTalentPanel = lazy(() => import('./features/future/FutureTalentPanel').then(module => ({ default: module.FutureTalentPanel })));
+const RadarPanel = lazy(() => import('./features/radar/RadarPanel').then(module => ({ default: module.RadarPanel })));
 
 type PublicArea = 'home' | 'oportunidades' | 'empresas' | 'capacita';
 function readPublicArea(): PublicArea {
   const hash = window.location.hash.replace(/^#/, '').split('/')[0];
+  if (new URLSearchParams(window.location.search).has('portfolio')) return 'empresas';
+  if (new URLSearchParams(window.location.search).has('passport')) return 'empresas';
+  if (new URLSearchParams(window.location.search).has('hubCompanyInvite')) return 'empresas';
   if (new URLSearchParams(window.location.search).has('companyInvite')) return 'empresas';
   if (new URLSearchParams(window.location.search).has('organizationInvite')) return 'empresas';
   if (!hash && localStorage.getItem('trampolim_account_type') === 'COMPANY') return 'empresas';
+  if (hash === 'empresa-carreira' || hash === 'empresa-futuros') return 'empresas';
   if (hash === 'como-funciona' || hash === 'diagnostico' || hash === 'vagas') return 'oportunidades';
   return hash === 'oportunidades' || hash === 'empresas' || hash === 'capacita' ? hash : 'home';
 }
@@ -41,9 +56,9 @@ function App() {
   const [studentToken, setStudentToken] = useState(() => localStorage.getItem('trampolim_capacita_token'));
   const [profileReady, setProfileReady] = useState(false);
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
-  const [profileView, setProfileView] = useState<'welcome' | 'details' | 'opportunities' | 'diagnostic' | 'catalog-courses' | 'catalog-jobs' | 'premium' | 'admin' | 'admin-capacita' | 'admin-saas' | 'association' | 'capacita' | 'ecosystem' | 'company-entry'>(() => {
+  const [profileView, setProfileView] = useState<'career' | 'future' | 'radar' | 'welcome' | 'details' | 'opportunities' | 'diagnostic' | 'catalog-courses' | 'catalog-jobs' | 'premium' | 'admin' | 'admin-capacita' | 'admin-saas' | 'association' | 'capacita' | 'ecosystem' | 'company-entry'>(() => {
     const step = localStorage.getItem('trampolim_profile_step');
-    return step === 'details' || step === 'opportunities' || step === 'diagnostic' || step === 'catalog-courses' || step === 'catalog-jobs' || step === 'premium' || step === 'admin' ? step : 'welcome';
+    return step === 'career' || step === 'future' || step === 'radar' || step === 'details' || step === 'opportunities' || step === 'diagnostic' || step === 'catalog-courses' || step === 'catalog-jobs' || step === 'premium' || step === 'admin' ? step : 'welcome';
   });
   const [authMode, setAuthMode] = useState<'login' | 'cadastro' | null>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -74,6 +89,8 @@ function App() {
     if (!companyToken) { setManagedAssociations([]); return; }
     api<Organization[]>('/empresas/association/organizations', companyToken).then(setManagedAssociations).catch(() => setManagedAssociations([]));
   }, [companyToken]);
+
+  useEffect(() => { const id = Number(new URLSearchParams(window.location.search).get('hubProgram')); if (Number.isSafeInteger(id) && id > 0) sessionStorage.setItem('trampolim_hub_program_intent', String(id)); }, []);
 
   useEffect(() => {
     const syncArea = () => setPublicArea(readPublicArea());
@@ -204,6 +221,12 @@ function App() {
     navigatePublicArea('capacita');
   }
 
+  if (currentParams.has('credential')) return <CredentialVerification id={currentParams.get('credential')||''}/>;
+  if (currentParams.has('portfolio') && companyToken && !authMode) return <main><RecruiterPortfolio token={companyToken} initial={currentParams.get('portfolio')||''} onDone={()=>window.location.assign('/#empresas')}/></main>;
+  if (currentParams.has('passport') && companyToken && !authMode) return <main><RecruiterPassport token={companyToken} initial={currentParams.get('passport')||''} onDone={()=>window.location.assign('/#empresas')}/></main>;
+  if (currentParams.has('hub')) return <HubPublicPage slug={currentParams.get('hub') || ''}/>;
+  if (currentParams.has('hubCompanyInvite') && companyToken && !authMode) return <HubCompanyInvitation token={companyToken} invite={currentParams.get('hubCompanyInvite') || ''} onDone={() => window.location.assign('/#empresas')}/>;
+  if (currentParams.has('competencia')) return <SharedCompetency shareToken={currentParams.get('competencia') || ''} />;
   if (shareId) return <PublicProfilePage shareId={shareId} />;
   if (companySlug) return <CompanyPublicPage slug={companySlug} />;
   if (verifyToken && !emailConfirmation) return <><RibbonStrip /><main className="grid min-h-screen place-items-center bg-paper p-6"><section className="max-w-lg rounded-3xl border border-white/10 bg-brand-white p-8 text-center shadow-sm"><h1 className="text-3xl font-black">Confirmando seu e-mail…</h1><p className="mt-3 text-ink/65">Estamos validando o link de confirmação.</p></section></main></>;
@@ -256,6 +279,9 @@ function App() {
       if (destination === 'opportunities') { openOpportunities(); return; }
       if (destination === 'courses') { openCatalog('course'); return; }
       if (destination === 'jobs') { openCatalog('job'); return; }
+      if (destination === 'career') { localStorage.setItem('trampolim_profile_step','career'); setProfileView('career'); return; }
+      if (destination === 'future') { localStorage.setItem('trampolim_profile_step', 'future'); setProfileView('future'); return; }
+      if (destination === 'radar') { localStorage.setItem('trampolim_profile_step', 'radar'); setProfileView('radar'); return; }
       if (destination === 'profile') { openDetails(); return; }
       if (destination === 'premium') {
         localStorage.setItem('trampolim_profile_step', 'premium');
@@ -273,6 +299,9 @@ function App() {
       if (destination === 'admin-capacita' && canManageCatalog) setProfileView('admin-capacita');
       if (destination === 'admin-saas' && canManageCatalog) setProfileView('admin-saas');
     };
+    if (profileView === 'career') return <CareerPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog}/>;
+    if (profileView === 'future') return <FutureTalentPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog} />;
+    if (profileView === 'radar') return <RadarPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog} />;
     if (profileView === 'ecosystem') return <EcosystemHome onNavigate={area => area === 'home' ? setProfileView('ecosystem') : area === 'oportunidades' ? navigateAccount('opportunities') : area === 'capacita' ? setProfileView('capacita') : setProfileView('company-entry')} />;
     if (profileView === 'company-entry') return companyToken
       ? <CompanyPortal token={companyToken} onLogout={logoutCompany} />
@@ -293,4 +322,6 @@ function App() {
   return <EcosystemHome onNavigate={navigatePublicArea} />;
 }
 
-export default App;
+export default function Application() {
+  return <PageBoundary><Suspense fallback={<main className="grid min-h-screen place-items-center p-8"><p role="status">Carregando sua área…</p></main>}><App /></Suspense></PageBoundary>;
+}

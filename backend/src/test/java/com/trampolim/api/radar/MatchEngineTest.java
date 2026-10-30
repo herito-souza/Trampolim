@@ -1,0 +1,19 @@
+package com.trampolim.api.radar;
+import static org.junit.jupiter.api.Assertions.*;
+import static com.trampolim.api.radar.RadarModel.*;
+import java.util.*;
+import java.util.concurrent.*;
+import org.junit.jupiter.api.Test;
+class MatchEngineTest {
+ static final Policy POLICY=new Policy(1,Map.of("MANDATORY",50,"DESIRABLE",15,"EXPERIENCE",10,"EDUCATION",10,"LOCATION",5,"MODALITY",5,"PREFERENCES",5));
+ static Requirements req(List<Need> needs){return new Requirements(1,needs,null,null,false,false,"","","");}
+ static Candidate person(Map<String,Level> skills){return new Candidate(skills,null,null,"","","");}
+ @Test void declaredIsPartialAndCannotSatisfyVerifiedEliminatoryRequirement(){var engine=new MatchEngine();var result=engine.evaluate(person(Map.of("sql",new Level(4,0),"java",new Level(1,0))),req(List.of(new Need("sql",2,true,true,true),new Need("java",2,false,false,false))),POLICY);assertEquals(11.54,result.get("score"));assertEquals(1,((List<?>)result.get("eliminatoryNotDemonstrated")).size());assertEquals(7,((List<?>)result.get("factors")).size());assertTrue(result.get("formula").toString().contains("Não há rejeição"));}
+ @Test void proofLevelAndPartialCreditAreBounded(){var result=new MatchEngine().evaluate(person(Map.of("sql",new Level(0,3))),req(List.of(new Need("sql",2,true,true,true))),POLICY);assertEquals(100d,result.get("score"));assertTrue(((List<?>)result.get("eliminatoryNotDemonstrated")).isEmpty());}
+ @Test void noProfessionalCriteriaNeverFabricatesScore(){var r=new Requirements(1,List.of(),null,null,false,false,"Cidade","Presencial","Área");assertNull(new MatchEngine().evaluate(person(Map.of()),r,POLICY).get("score"));}
+ @Test void unknownExperienceAndEducationArePendingAndNotAutomaticRejections(){var r=new Requirements(1,List.of(),12,4,true,true,"","","");var result=new MatchEngine().evaluate(person(Map.of()),r,POLICY);assertEquals(0d,result.get("score"));assertTrue(((List<?>)result.get("eliminatoryNotDemonstrated")).isEmpty());assertEquals(4,((List<?>)result.get("pendingInformation")).size());}
+ @Test void remoteWorkIgnoresCityAndDoesNotUseIdentity(){var r=new Requirements(1,List.of(new Need("sql",1,true,false,false)),null,null,false,false,"São Paulo","Remoto","");var a=new Candidate(Map.of("sql",new Level(1,0)),null,null,"Outra cidade","Remoto","");assertEquals(100d,new MatchEngine().evaluate(a,r,POLICY).get("score"));assertEquals(Set.of("skills","experienceMonths","educationLevel","city","modality","area"),Arrays.stream(Candidate.class.getRecordComponents()).map(java.lang.reflect.RecordComponent::getName).collect(java.util.stream.Collectors.toSet()));}
+ @Test void synonymsNormalizeAccentsButDistinctProgrammingLanguagesRemainDistinct(){assertEquals(normalize("  Comunicação   escrita "),normalize("comunicacao escrita"));assertNotEquals(normalize("C++"),normalize("C#"));}
+ @Test void invalidAndDuplicateCriteriaAndWeightsAreRejected(){assertThrows(org.springframework.web.server.ResponseStatusException.class,()->validate(req(List.of(new Need("sql",1,true,false,false),new Need("sql",2,true,false,false)))));assertThrows(org.springframework.web.server.ResponseStatusException.class,()->validate(new Requirements(1,List.of(),null,null,true,false,"","","")));assertThrows(org.springframework.web.server.ResponseStatusException.class,()->validateWeights(Map.of("MANDATORY",100)));}
+ @Test void concurrentScoringIsDeterministic()throws Exception{var engine=new MatchEngine();var c=person(Map.of("sql",new Level(1,0)));var r=req(List.of(new Need("sql",2,true,false,false)));long started=System.nanoTime();try(var workers=Executors.newFixedThreadPool(16)){var tasks=new ArrayList<Callable<Double>>();for(int n=0;n<10000;n++)tasks.add(()->((Number)engine.evaluate(c,r,POLICY).get("score")).doubleValue());for(var result:workers.invokeAll(tasks))assertEquals(50d,result.get());}System.out.println("RADAR_ENGINE_CONCURRENCY: 10000 evaluations, 16 workers, ms="+(System.nanoTime()-started)/1000000);}
+}

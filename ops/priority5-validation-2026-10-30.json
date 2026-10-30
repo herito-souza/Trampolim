@@ -1,0 +1,121 @@
+{
+  "date": "2026-10-30",
+  "scope": "Priority 5 only; local implementation, no production deployment",
+  "sourceOfTruth": "C:\\Users\\Windows\\trampolim-main",
+  "databaseVersions": {
+    "oportunidades": 17,
+    "empresas": 14,
+    "capacita": 19
+  },
+  "backend": {
+    "broadRegression": {
+      "tests": 143,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "finalFocused": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "package": "BUILD SUCCESS"
+  },
+  "frontend": {
+    "broadBrowserRegression": {
+      "passed": 74,
+      "failed": 0
+    },
+    "finalCareerBrowserTests": {
+      "passed": 5,
+      "failed": 0,
+      "overlapWithBroad": 4
+    },
+    "distinctBrowserScenarios": 75,
+    "unitPassed": 7,
+    "unitFailed": 0,
+    "build": "PASS",
+    "lint": "PASS"
+  },
+  "accessibility": {
+    "automatedTags": [
+      "wcag2a",
+      "wcag2aa",
+      "wcag21aa",
+      "wcag22aa"
+    ],
+    "newScreenViewports": [
+      1440,
+      390
+    ],
+    "keyboard": true,
+    "companyMobileScreenshotVisuallyInspected": true,
+    "screenReaderCertification": false,
+    "physicalDeviceMicrophoneHomologation": false
+  },
+  "ai": {
+    "realPaidRequests": 0,
+    "contractTestProvider": "local synthetic HTTP server",
+    "tested": [
+      "selected-text consent",
+      "contact and secret redaction",
+      "store=false",
+      "persistent quotas",
+      "idempotency",
+      "provider failure does not automatically retry"
+    ]
+  },
+  "concurrency": {
+    "requests": 12,
+    "lastTotalMilliseconds": 53,
+    "fixture": "small synthetic public catalog",
+    "qualifiesThousandsOfUsers": false
+  },
+  "artifacts": {
+    "backendJarSha256": "9b0f00a2a66032b2015a96a08bd862b5151b2eb200f5ded08a7d2ab46282a03f",
+    "frontendIndexSha256": "32846c6ab591c77f0016d63a218ebefc0438da64c678d9ae9baadd8cc6ef700f"
+  },
+  "newModuleFiles": [
+    "backend/src/main/java/com/trampolim/api/career/CareerAccountController.java",
+    "backend/src/main/java/com/trampolim/api/career/CareerAiService.java",
+    "backend/src/main/java/com/trampolim/api/career/CareerCoachingController.java",
+    "backend/src/main/java/com/trampolim/api/career/CareerCostController.java",
+    "backend/src/main/java/com/trampolim/api/career/CareerDeliveryWorker.java",
+    "backend/src/main/java/com/trampolim/api/career/CareerEligibilityController.java",
+    "backend/src/main/java/com/trampolim/api/career/CareerErrors.java",
+    "backend/src/main/java/com/trampolim/api/career/CareerOperationsController.java",
+    "backend/src/main/java/com/trampolim/api/career/CareerPortfolioController.java",
+    "backend/src/main/java/com/trampolim/api/career/CareerProjectsController.java",
+    "backend/src/main/java/com/trampolim/api/career/CareerRegionalController.java",
+    "backend/src/main/java/com/trampolim/api/career/CareerRules.java",
+    "backend/src/main/java/com/trampolim/api/career/CompanyCareerController.java",
+    "backend/src/main/java/com/trampolim/api/career/CompanyCareerService.java",
+    "backend/src/main/java/com/trampolim/api/career/CompanySelectionService.java",
+    "backend/src/main/java/com/trampolim/api/career/RegionalObservatory.java",
+    "backend/src/test/java/com/trampolim/api/career/CareerHttpPostgresTest.java",
+    "backend/src/test/java/com/trampolim/api/career/CareerRulesTest.java",
+    "frontend/src/features/career/CareerExtras.tsx",
+    "frontend/src/features/career/CareerPanel.tsx",
+    "frontend/src/features/career/CareerResult.tsx",
+    "frontend/src/features/career/CompanyCareerPanel.tsx",
+    "frontend/src/features/career/InterviewAudioPractice.tsx",
+    "frontend/src/features/career/ObservatoryPanel.tsx",
+    "frontend/src/features/career/PortfolioPanel.tsx",
+    "frontend/src/features/career/ProjectsPanel.tsx",
+    "frontend/src/features/career/YoungOpportunities.tsx",
+    "frontend/src/features/career/careerApi.ts"
+  ],
+  "configurationPending": [
+    "External AI paid-provider homologation and operator enablement",
+    "SMTP and Mercado Pago credentials/homologation as already documented",
+    "Institutional legal/privacy/retention review",
+    "Production load, backups and monitoring validation"
+  ],
+  "limitations": [
+    "Local audio rehearsal, no automatic STT or biometric analysis",
+    "Challenges support text and HTTPS references, no new binary project uploads",
+    "Small personal cohorts suppressed, no fabricated history or retention metric"
+  ],
+  "report": "IA_OBSERVATORIO_FUNCIONALIDADES_PRIORIDADE5.md"
+}

@@ -1,0 +1,10 @@
+import { useCapacitaSurface } from './accessibilityContext';
+import { useEffect, useState } from 'react';
+import { API_URL } from '../account/api';
+import type { Award } from './assessmentTypes';
+export function SharedCompetency({ shareToken }: { shareToken: string }) {
+  useCapacitaSurface();
+  const [award, setAward] = useState<Award | null>(null); const [error, setError] = useState('');
+  useEffect(() => { const controller = new AbortController(); void fetch(`${API_URL}/capacita/learning/competencies/shared/${encodeURIComponent(shareToken)}`, { signal: controller.signal, referrerPolicy: 'no-referrer' }).then(async response => { if (!response.ok) throw new Error('Compartilhamento indisponível, expirado ou revogado.'); setAward(await response.json()); }).catch(failure => { if (!controller.signal.aborted) setError(failure.message); }); return () => controller.abort(); }, [shareToken]);
+  return <main id="conteudo-principal" className="min-h-screen bg-paper p-5 md:p-10"><article className="mx-auto max-w-2xl space-y-4 rounded-3xl border border-brand-blue/30 p-6"><p className="text-sm font-bold uppercase tracking-widest text-brand-blue">Trampolim Capacita · verificação autorizada</p><h1 className="text-3xl font-bold">Competência verificada</h1>{!award && !error && <p role="status">Consultando registro…</p>}{error && <p role="alert">{error}</p>}{award && <><h2 className="text-2xl font-bold">{award.name}</h2><p>{award.description}</p><p>{award.course_title} · {award.module_title}</p><p>Professor responsável: {award.teacher_name}</p><p>Conquistada em {new Date(award.awarded_at).toLocaleDateString('pt-BR')} · Nota: {award.score_percent}%</p><p>{award.criterion}</p><p className="break-all text-sm">Registro: {award.id}</p><p className="text-sm text-ink/65">Registro educacional obtido por avaliação aprovada. Não é um certificado formal. A identidade pessoal do aluno não faz parte deste compartilhamento.</p></>}<a href="/#capacita" className="inline-block text-brand-blue underline">Conhecer o Trampolim Capacita</a></article></main>;
+}

@@ -12,7 +12,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
@@ -53,8 +52,7 @@ public class AuthController {
     public record UserSummary(String name, String email) {}
     public record ResetRequest(String email) {}
     public record ResetPassword(String token, String password) {}
-    private final ConcurrentHashMap<String, RateWindow> resetRequestCounts = new ConcurrentHashMap<>();
-    private record RateWindow(Instant expiresAt, int count) {}
+    private final com.trampolim.api.security.BoundedRateLimiter resetRequestCounts = new com.trampolim.api.security.BoundedRateLimiter();
 
     @PostMapping("/cadastro")
     public AuthResponse register(@RequestBody Registration request, HttpServletRequest servletRequest) {
@@ -264,12 +262,8 @@ public class AuthController {
         limitRequests("reset:" + remoteAddress, 5, 60);
     }
 
-    private void limitRequests(String key, int maximum, int windowMinutes) {
-        Instant now = Instant.now();
-        RateWindow current = resetRequestCounts.compute(key, (bucket, previous) -> previous == null || previous.expiresAt().isBefore(now)
-                ? new RateWindow(now.plus(windowMinutes, ChronoUnit.MINUTES), 1) : new RateWindow(previous.expiresAt(), previous.count() + 1));
-        if (resetRequestCounts.size() > 10_000) resetRequestCounts.entrySet().removeIf(entry -> entry.getValue().expiresAt().isBefore(now));
-        if (current.count() > maximum) throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Muitas solicitações. Tente novamente mais tarde.");
+    private void limitRequests(String key,int maximum,int windowMinutes) {
+        if (!resetRequestCounts.allow(key,maximum,java.time.Duration.ofMinutes(windowMinutes))) throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,"Muitas solicitações. Tente novamente mais tarde.");
     }
 
     private void sendVerificationMail(AppUser user, String token, JavaMailSender sender) {

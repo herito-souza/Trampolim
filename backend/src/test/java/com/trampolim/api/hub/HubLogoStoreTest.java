@@ -1,0 +1,8 @@
+package com.trampolim.api.hub;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;import org.junit.jupiter.api.io.TempDir;import org.springframework.mock.web.MockMultipartFile;import java.nio.file.*;import java.awt.image.BufferedImage;import javax.imageio.ImageIO;import java.io.*;
+class HubLogoStoreTest {
+ @TempDir Path directory;
+ @Test void reencodesToPngAndKeepsFilesInOrganizationDirectory()throws Exception{var store=new HubLogoStore(directory.toString());var bytes=new ByteArrayOutputStream();ImageIO.write(new BufferedImage(20,10,BufferedImage.TYPE_INT_RGB),"png",bytes);bytes.write("trailing-untrusted-metadata".getBytes());String key=store.save(7,new MockMultipartFile("file","untrusted.png","image/png",bytes.toByteArray()));byte[] clean=store.read(7,key);assertFalse(new String(clean,java.nio.charset.StandardCharsets.ISO_8859_1).contains("trailing-untrusted-metadata"));assertEquals(20,ImageIO.read(new ByteArrayInputStream(clean)).getWidth());assertThrows(org.springframework.web.server.ResponseStatusException.class,()->store.read(8,key));assertThrows(org.springframework.web.server.ResponseStatusException.class,()->store.read(7,"../../secret"));}
+ @Test void rejectsSvgAndOversizedOrInvalidImages(){var store=new HubLogoStore(directory.toString());assertThrows(org.springframework.web.server.ResponseStatusException.class,()->store.save(1,new MockMultipartFile("file","logo.svg","image/svg+xml","<svg onload='x'/>".getBytes())));assertThrows(org.springframework.web.server.ResponseStatusException.class,()->store.save(1,new MockMultipartFile("file","x.png","image/png",new byte[1048577])));}
+}

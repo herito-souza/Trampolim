@@ -1,0 +1,90 @@
+{
+  "synthetic": true,
+  "accounts": [
+    {
+      "trail": "oportunidades",
+      "token": "REPLACE_WITH_ISOLATED_CANDIDATE_TOKEN",
+      "email": "candidate@example.test",
+      "password": "REPLACE_WITH_SYNTHETIC_TEST_PASSWORD",
+      "reads": [
+        "/api/profile",
+        "/api/opportunities/job"
+      ]
+    },
+    {
+      "trail": "empresas",
+      "token": "REPLACE_WITH_ISOLATED_CORPORATE_TOKEN",
+      "email": "employer@example.test",
+      "password": "REPLACE_WITH_SYNTHETIC_TEST_PASSWORD",
+      "reads": [
+        "/api/company/dashboard",
+        "/api/public/companies/internships?limit=25"
+      ],
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/api/company/listings",
+          "expected": 201,
+          "body": {
+            "kind": "job",
+            "title": "Synthetic load vacancy",
+            "area": "Test",
+            "description": "Synthetic fixture",
+            "requirements": "Test",
+            "location": "Test",
+            "modality": "Remoto",
+            "contactEmail": "synthetic@example.test",
+            "url": "https://example.test/synthetic",
+            "isInternship": false
+          },
+          "captureId": "listingId"
+        },
+        {
+          "method": "PUT",
+          "path": "/api/company/listings/${listingId}/status",
+          "expected": 204,
+          "body": {
+            "status": "PUBLISHED"
+          }
+        }
+      ]
+    },
+    {
+      "trail": "capacita",
+      "token": "REPLACE_WITH_ISOLATED_STUDENT_TOKEN",
+      "email": "student@example.test",
+      "password": "REPLACE_WITH_SYNTHETIC_TEST_PASSWORD",
+      "reads": [
+        "/api/capacita/learning/courses?limit=25&offset=0",
+        "/api/capacita/learning/notifications",
+        "/api/capacita/learning/discussion/questions",
+        "/api/capacita/learning/performance"
+      ],
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/api/capacita/learning/discussion/questions",
+          "body": {
+            "clientKey": "${requestId}",
+            "courseId": 1,
+            "title": "Synthetic load question",
+            "body": "Synthetic text, no personal data"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/capacita/learning/assessments/1/attempts",
+          "captureId": "attemptId"
+        },
+        {
+          "method": "POST",
+          "path": "/api/capacita/learning/assessment-attempts/${attemptId}/submit",
+          "body": {
+            "clientKey": "${requestId}",
+            "answers": {}
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+import { defineConfig } from '@playwright/test';
+export default defineConfig({ testDir: './e2e-integrated', outputDir: './test-results-integrated', workers: 1, timeout: 300000, reporter: 'list', use: { actionTimeout: 15000, baseURL: 'http://127.0.0.1:4174', trace: 'retain-on-failure' }, webServer: { command: 'node ./node_modules/vite/bin/vite.js --host 127.0.0.1 --port 4174', env: { TRAMPOLIM_TEST_CACHE_DIR: 'node_modules/.vite-integrated', VITE_API_URL: 'http://127.0.0.1:5097/api' }, url: 'http://127.0.0.1:4174', reuseExistingServer: false, timeout: 30000 } });

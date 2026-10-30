@@ -44,7 +44,20 @@ public class CapacitaController {
         if (accounts.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conta não encontrada.");
         var account = accounts.get(0);
         var progress = jdbc.queryForList("SELECT content_id,completed_at FROM student_education_progress WHERE student_user_id=? ORDER BY completed_at,content_id", account.get("id"));
-        return java.util.Map.of("exportedAt", Instant.now().toString(), "trail", "capacita", "account", account, "progress", progress);
+        var videoProgress=jdbc.queryForList("SELECT lesson_id,position_seconds,watched_seconds,completed_at,updated_at FROM learning_lesson_progress WHERE student_id=? ORDER BY updated_at DESC",account.get("id"));
+        var questions=jdbc.queryForList("SELECT id,course_id,module_id,lesson_id,title,status,created_at,updated_at FROM learning_questions WHERE student_id=? ORDER BY id",account.get("id"));
+        var messages=jdbc.queryForList("SELECT m.id,m.question_id,m.author_role,m.body,m.media_id,m.transcript,m.captions_vtt,m.created_at FROM learning_question_messages m JOIN learning_questions q ON q.id=m.question_id WHERE q.student_id=? OR m.author_id=? ORDER BY m.id",account.get("id"),account.get("id"));
+        var attempts=jdbc.queryForList("SELECT id,assessment_id,version_id,attempt_number,status,draft_answers,answers,earned_points,total_points,score_percent,passed,criteria,started_at,submitted_at FROM learning_assessment_attempts WHERE student_id=? ORDER BY started_at",account.get("id"));
+        var competencies=jdbc.queryForList("SELECT id,name,description,course_title,module_title,teacher_name,score_percent,criterion,awarded_at,issuer_name,valid_until,revoked_at,revocation_reason,highlighted,sort_order,share_expires_at FROM learning_competency_awards WHERE student_id=? ORDER BY awarded_at",account.get("id"));
+        var export=new java.util.LinkedHashMap<String,Object>();export.put("exportedAt",Instant.now().toString());export.put("trail","capacita");export.put("account",account);export.put("progress",progress);export.put("videoProgress",videoProgress);export.put("questions",questions);export.put("questionMessages",messages);export.put("assessmentAttempts",attempts);export.put("competencies",competencies);
+        export.put("hubProgramParticipations",jdbc.queryForList("SELECT program_id,organization_id,institution_name,program_title,consent_at FROM hub_program_participations WHERE student_id=?",account.get("id")));
+        export.put("hubAuthorizedCourses",jdbc.queryForList("SELECT program_id,course_id FROM hub_participation_courses WHERE student_id=?",account.get("id")));
+        export.put("adaptiveGoals",jdbc.queryForList("SELECT id,title,source,source_id,requirements::text AS requirements,source_title,created_at FROM learning_adaptive_goals WHERE student_id=?",account.get("id")));
+        export.put("passportShares",jdbc.queryForList("SELECT id,recipient_email,holder_label,consent_at,expires_at,revoked_at FROM learning_passport_shares WHERE student_id=?",account.get("id")));
+        export.put("radarExports",jdbc.queryForList("SELECT id,award_id,status,consent_at,updated_at FROM learning_radar_exports WHERE student_id=? ORDER BY consent_at",account.get("id")));
+        export.put("accessibilityPreferences",jdbc.queryForList("SELECT font_percent,high_contrast,reduced_motion,text_spacing,playback_speed,captions,muted,updated_at FROM student_accessibility_preferences WHERE user_id=?",account.get("id")));
+        export.put("supportRequests",jdbc.queryForList("SELECT id,message,reply,status,consent_at,created_at,updated_at FROM learning_support_requests WHERE student_id=? ORDER BY id",account.get("id")));
+        export.put("assessmentAccommodations",jdbc.queryForList("SELECT assessment_id,extended_due_at,updated_at FROM learning_assessment_accommodations WHERE student_id=?",account.get("id")));return export;
     }
     @GetMapping("/capacita/tracks")
     public List<Track> tracks() {
@@ -58,10 +71,18 @@ public class CapacitaController {
         }).toList();
     }
 
+    public List<Content> contents(String stage) { return contents(stage,null,0,null); }
     @GetMapping("/capacita/contents")
-    public List<Content> contents(@RequestParam(required = false) String stage) {
-        String sql = contentSql() + " WHERE ec.status='PUBLISHED'" + (stage == null || stage.isBlank() ? "" : " AND t.code=?") + " ORDER BY t.sort_order,c.sort_order,ec.created_at DESC";
-        return stage == null || stage.isBlank() ? jdbc.query(sql, contentMapper()) : jdbc.query(sql, contentMapper(), stage);
+    public List<Content> contents(@RequestParam(required=false) String stage,@RequestParam(required=false) Integer limit,
+            @RequestParam(defaultValue="0") int offset,@RequestParam(required=false) String q) {
+        if(limit!=null&&(limit<1||limit>200)||offset<0||offset>10000||q!=null&&q.length()>120) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Consulta inválida.");
+        var parameters=new java.util.ArrayList<Object>();
+        String sql=contentSql()+" WHERE ec.status='PUBLISHED'";
+        if(stage!=null&&!stage.isBlank()){sql+=" AND t.code=?";parameters.add(stage);}
+        if(q!=null&&!q.isBlank()){sql+=" AND (ec.title ILIKE ? OR ec.summary ILIKE ? OR c.name ILIKE ?)";for(int i=0;i<3;i++)parameters.add("%"+q.trim()+"%");}
+        sql+=" ORDER BY t.sort_order,c.sort_order,ec.created_at DESC,ec.id DESC";
+        if(limit!=null){sql+=" LIMIT ? OFFSET ?";parameters.add(limit);parameters.add(offset);}
+        return jdbc.query(sql,contentMapper(),parameters.toArray());
     }
 
     @GetMapping("/capacita/contents/{id}")

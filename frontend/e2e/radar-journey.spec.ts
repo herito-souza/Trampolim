@@ -1,0 +1,54 @@
+import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+const skill={code:'sql',name:'SQL',category:'Tecnologia',kind:'TECHNICAL',active:true};
+const emptyProfile={declarations:[],evidence:[],preferences:{city:'',modality:'',area:'',experienceConfirmed:false},suggestionsToReview:[],professionalFacts:{experienceMonths:null,educationLevel:null,invalidExperienceDates:0,unrecognizedEducationEntries:0,notice:'Dados profissionais declarados.'}};
+for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
+ test(`radar permite revisar competências e compreender lacunas em ${viewport.width}px`,async({page})=>{
+  await page.setViewportSize(viewport);await page.addInitScript(()=>{localStorage.setItem('trampolim_token','synthetic-radar');localStorage.setItem('trampolim_profile_step','radar');});let declared=false;let insufficient=false;
+  await page.route('http://localhost:8080/api/**',async route=>{const r=route.request(),url=new URL(r.url()),p=url.pathname;
+   if(p==='/api/profile')return route.fulfill({json:{profile:{name:'Synthetic',email:'synthetic@example.test'},experiences:[],educations:[]}});
+   if(p==='/api/profile/diagnostic')return route.fulfill({json:null});
+   if(p==='/api/admin/saas/overview')return route.fulfill({status:403,json:{detail:'Fixture'}});
+   if(p.startsWith('/api/public/skills')){expect(r.headers().authorization).toBeUndefined();return route.fulfill({json:{items:[skill]}});}
+   if(p==='/api/radar/profile')return route.fulfill({json:{...emptyProfile,declarations:declared?[{skill_code:'sql',name:'SQL',level:2}]:[]}});
+   if(p==='/api/radar/skills'){expect(r.postDataJSON()).toEqual({skillCode:'sql',level:2});declared=true;return route.fulfill({status:204});}
+   if(p==='/api/radar/jobs')return route.fulfill({json:{items:[{id:1,title:'Vaga sintética SQL',company:'Empresa fictícia',area:'Tecnologia',location:'Teste',modality:'Remoto'}],nextCursor:null}});
+   if(p.startsWith('/api/radar/matches/'))return route.fulfill({json:{job:{id:1,title:'Vaga sintética SQL',requirementsText:'SQL comprovado'},catalog:[skill],evidenceStatus:'OK',analysis:{score:insufficient?null:50,status:insufficient?'INSUFFICIENT_STRUCTURED_DATA':'ANALYZED',policyRevision:1,requirementsRevision:1,knownFactors:1,configuredFactors:1,notice:'Análise orientativa sem garantia de contratação.',formula:'Fórmula transparente do servidor.',skills:[{skillCode:'sql',requiredLevel:4,declaredLevel:2,verifiedLevel:0,usedLevel:2,mandatory:true,requiresEvidence:false,status:'PARTIAL'}],factors:[{key:'MANDATORY',weight:50,credit:.5,applicable:true,explanation:'Crédito por nível informado.'}],eliminatoryNotDemonstrated:[],pendingInformation:[]},training:{status:'AVAILABLE',items:[]}}});
+   if(p==='/api/radar/link-challenges')return route.fulfill({json:{challenge:'a'.repeat(64)}});
+   return route.fulfill({json:[]});
+  });
+  await page.goto('/#oportunidades');await expect(page.getByRole('heading',{name:'Radar de competências',exact:true})).toBeVisible();await page.getByRole('combobox',{name:'Competência do meu perfil',exact:true}).selectOption('sql');await page.getByRole('combobox',{name:'Meu nível declarado',exact:true}).selectOption('2');await page.getByRole('button',{name:'Salvar competência declarada'}).focus();await page.keyboard.press('Enter');await expect(page.getByText('SQL — nível 2 · Declarada')).toBeVisible();
+  await page.getByRole('button',{name:'Compatibilidade com vagas',exact:true}).click();await page.getByRole('button',{name:'Analisar compatibilidade — Vaga sintética SQL'}).click();await expect(page.getByText('50% de compatibilidade',{exact:true})).toBeVisible();await expect(page.getByText('Nenhum curso publicado foi vinculado a estas lacunas ainda.')).toBeVisible();await page.getByText('Como a pontuação foi calculada',{exact:true}).click();await expect(page.getByText('Fórmula transparente do servidor.')).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);const result=await new AxeBuilder({page}).include('main').withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();expect(result.violations).toEqual([]);
+  insufficient=true;await page.getByRole('button',{name:'Analisar compatibilidade — Vaga sintética SQL'}).click();await expect(page.getByText('Critérios estruturados insuficientes',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Vincular Capacita',exact:true}).click();await page.getByRole('button',{name:'Gerar código de vinculação'}).click();await expect(page.getByLabel('Código de vinculação (copie antes de sair)')).toHaveValue('a'.repeat(64));
+ });
+}
+test('aluno confirma e revoga uma conquista sem compartilhar sessões',async({page})=>{
+ await page.addInitScript(()=>localStorage.setItem('trampolim_capacita_token','synthetic-student'));let sent=false,revoked=false;
+ await page.route('http://localhost:8080/api/**',async route=>{const r=route.request(),p=new URL(r.url()).pathname;
+  if(p.endsWith('/learning/me'))return route.fulfill({json:{id:1,teacher:false}});
+  if(p.endsWith('/learning/performance'))return route.fulfill({json:{courses:[]}});
+  if(p.endsWith('/learning/competencies'))return route.fulfill({json:[{id:'award-1',name:'SQL',skill_code:'sql',skill_level:2,course_title:'Curso sintético',module_title:'Módulo',teacher_name:'Professor',score_percent:100,awarded_at:'2026-10-29',criterion:'Prova aprovada',highlighted:false,sort_order:0}]});
+  if(p.endsWith('/radar/exports')){expect(r.headers().authorization).toBe('Bearer synthetic-student');if(r.method()==='POST'){expect(r.postDataJSON()).toEqual({awardId:'award-1',challenge:'a'.repeat(64),consent:true});sent=true;return route.fulfill({json:{status:'ACTIVE'}});}return route.fulfill({json:sent?[{id:'receipt',name:'SQL',status:revoked?'REVOKED':'ACTIVE'}]:[]});}
+  if(p.endsWith('/radar/exports/receipt')){revoked=true;return route.fulfill({status:204});}
+  return route.fulfill({json:[]});
+ });
+ await page.goto('/#capacita');await page.getByRole('button',{name:'Meu desempenho e competências',exact:true}).click();await page.getByText('Usar uma conquista no Radar de Oportunidades',{exact:true}).click();await page.getByRole('combobox',{name:'Competência comprovada',exact:true}).selectOption('award-1');await page.getByLabel('Código gerado em Oportunidades').fill('a'.repeat(64));await expect(page.getByRole('button',{name:'Confirmar envio da conquista'})).toBeDisabled();await page.getByLabel('Confirmo que o código é da minha conta de Oportunidades e autorizo o envio e a consulta desta comprovação.').check();await page.getByRole('button',{name:'Confirmar envio da conquista'}).click();await expect(page.getByText('SQL · Ativa',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Revogar autorização',exact:true}).click();await expect(page.getByText('SQL · Revogada',{exact:true})).toBeVisible();expect(revoked).toBe(true);
+});
+
+test('recrutador revisa critérios profissionais na vaga da sua empresa',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.addInitScript(()=>localStorage.setItem('trampolim_empresas_token','synthetic-owner'));let saved=false;let definition={revision:0,skills:[],experienceMonths:null,educationLevel:null,experienceEliminatory:false,educationEliminatory:false,city:'',modality:'',area:''};
+ await page.route('http://localhost:8080/api/**',async route=>{const r=route.request(),p=new URL(r.url()).pathname;
+  if(p==='/api/company/dashboard')return route.fulfill({json:{role:'OWNER',tradeName:'Empresa sintética',legalName:'Fixture',cnpj:'11222333000181',city:'Teste',industry:'Tecnologia',phone:'000',state:'SP',publicSlug:'synthetic'}});
+  if(p==='/api/company/listings')return route.fulfill({json:[{id:1,kind:'job',title:'Vaga de teste',area:'Tecnologia',description:'Fixture',requirements:'SQL',location:'Teste',modality:'Remoto',priceCents:5000,paymentStatus:'PAID',publicationStatus:'PUBLISHED',isInternship:true,views:0,applicationClicks:0,applications:0,createdAt:'2026-10-29',updatedAt:'2026-10-29'}]});
+  if(p==='/api/company/listings/1/radar'){expect(r.headers().authorization).toBe('Bearer synthetic-owner');if(r.method()==='PUT'){const body=r.postDataJSON();expect(body.skills).toEqual([{skillCode:'sql',level:2,mandatory:true,verified:true,eliminatory:true}]);definition={...body,revision:1};saved=true;return route.fulfill({status:204});}return route.fulfill({json:definition});}
+  if(p==='/api/public/skills/resolve')return route.fulfill({json:[skill]});if(p==='/api/public/skills')return route.fulfill({json:{items:[skill]}});return route.fulfill({json:[]});
+ });
+ await page.goto('/#empresas');await page.getByRole('button',{name:'Vagas e cursos',exact:true}).click();await page.getByText('Competências e critérios das vagas',{exact:true}).click();await page.getByRole('combobox',{name:'Vaga para revisar',exact:true}).selectOption('1');const form=page.getByRole('form',{name:'Critérios profissionais da vaga'});await form.getByRole('combobox',{name:'Adicionar competência à vaga',exact:true}).selectOption('sql');await form.getByRole('combobox',{name:'Nível exigido — SQL',exact:true}).selectOption('2');await form.getByLabel('Exige comprovação por avaliação',{exact:true}).check();await form.getByLabel('Eliminatória — justificar na descrição da vaga',{exact:true}).check();await form.getByRole('button',{name:'Salvar critérios do Radar'}).click();await expect.poll(()=>saved).toBe(true);await expect(form.getByRole('status')).toHaveText('Critérios salvos. Novas análises usarão esta revisão.');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+test('direcionamento de capacitação abre apenas o módulo público da conta educacional',async({page})=>{
+ await page.addInitScript(()=>{localStorage.setItem('trampolim_capacita_token','independent-student');sessionStorage.setItem('trampolim_capacita_course_intent',JSON.stringify({courseId:99,moduleId:77}));});
+ await page.route('http://localhost:8080/api/**',async route=>{const r=route.request(),p=new URL(r.url()).pathname;if(p.endsWith('/learning/me'))return route.fulfill({json:{id:1,teacher:false}});if(p.endsWith('/learning/courses/99')){expect(r.headers().authorization).toBe('Bearer independent-student');return route.fulfill({json:{id:99,title:'Curso recomendado sintético',description:'Fixture',subjects:[{id:88,title:'Disciplina',modules:[{id:77,title:'SQL módulo recomendado',description:'Fixture',lessons:[]}]}]}});}return route.fulfill({json:[]});});
+ await page.goto('/#capacita');await expect(page.getByRole('heading',{name:'SQL módulo recomendado',exact:true})).toBeVisible();expect(await page.evaluate(()=>sessionStorage.getItem('trampolim_capacita_course_intent'))).toBeNull();expect(await page.evaluate(()=>localStorage.getItem('trampolim_token'))).toBeNull();
+});

@@ -62,6 +62,20 @@
 }
 
 @layer utilities {
+  .cap-a11y [class*="text-ink/"] { color: rgb(242 244 242 / 78%); }
+  .cap-a11y [class*="text-white/"] { color: rgb(255 255 255 / 78%); }
+  .cap-a11y :is(input:not([type=checkbox]):not([type=radio]),select,textarea) { color: #F2F4F2; background-color: #0B1421; }
+  .cap-a11y :is(button,summary,input:not([type=checkbox]):not([type=radio]),select) { min-height: 2.75rem; }
+  .cap-a11y :is(input[type=checkbox],input[type=radio]) { min-width: 1.5rem; min-height: 1.5rem; flex-shrink: 0; }
+  .cap-a11y :focus-visible { outline: 3px solid #91B8DC; outline-offset: 4px; scroll-margin: 1.5rem; }
+  .cap-a11y[data-spacing=true] :is(p,li,label,button,summary,input,select,textarea,h1,h2,h3,h4,h5) { line-height: 1.7; letter-spacing: .12em; word-spacing: .16em; }
+  .cap-a11y[data-motion=true] *, .cap-a11y[data-motion=true] *::before, .cap-a11y[data-motion=true] *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  .cap-a11y[data-contrast=true], .cap-a11y[data-contrast=true] :is(section,article,aside,header,main,nav,details,fieldset,[role=dialog]) { background-color: #000 !important; color: #fff !important; border-color: #fff !important; background-image: none !important; }
+  .cap-a11y[data-contrast=true] :is(button,input,textarea,select,summary) { color: #fff !important; background-color: #000 !important; border-color: #fff !important; }
+  .cap-a11y[data-contrast=true] [class*="text-ink/"], .cap-a11y[data-contrast=true] [class*="text-brand-"] { color: #fff !important; }
+  .cap-a11y[data-contrast=true] a { color: #ffeb3b !important; text-decoration: underline; }
+  .cap-a11y[data-contrast=true] :focus-visible { outline-color: #ffeb3b; }
+  .cap-a11y[data-contrast=true] button[aria-pressed=true] { text-decoration: underline; outline: 2px solid #ffeb3b; outline-offset: 2px; }
   .bg-paper { background-color: var(--color-paper); }
   .bg-ink { background-color: var(--color-surface); }
   .bg-brand-white, .bg-white { background-color: var(--color-surface); }

@@ -1,0 +1,10 @@
+{
+  "javaSourceFiles": 83,
+  "frontendSourceFiles": 69,
+  "endpointDeclarations": 239,
+  "migrationCounts": {
+    "migration": 13,
+    "migration-capacita": 15,
+    "migration-empresas": 10
+  }
+}

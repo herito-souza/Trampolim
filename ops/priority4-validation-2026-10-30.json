@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-30",
+  "priority": 4,
+  "scope": "Local implementation and validation; no production deployment; Priority 5 not started",
+  "backend": {
+    "fullSuitePassed": 138,
+    "fullSuiteSkipped": 0,
+    "affectedFlowsRecheckPassed": 18,
+    "finalAdaptiveRecheckPassed": 8,
+    "finalPackage": "BUILD SUCCESS"
+  },
+  "frontend": {
+    "fullBrowserSuitePassed": 70,
+    "finalAdaptiveBrowserRecheckPassed": 6,
+    "existingUnitPassed": 7,
+    "lint": "passed",
+    "build": "passed"
+  },
+  "migration": {
+    "trail": "CAPACITA",
+    "version": 18,
+    "file": "backend/src/main/resources/db/migration-capacita/V18__adaptive_paths_and_digital_passport.sql",
+    "localVersionVerified": 18,
+    "otherTrailNewMigrations": 0
+  },
+  "concurrencyProbe": {
+    "requests": 20,
+    "scope": "Same authorized adaptive goal, HTTP and local PostgreSQL",
+    "allAuthorizedResponsesCorrect": true,
+    "batchElapsedMs": 567,
+    "productionCapacityCertification": false
+  },
+  "securityEvidence": [
+    "Credentials issued by genuine server-graded assessment",
+    "No award after failed attempt",
+    "Cross-trail JWT rejected",
+    "Foreign goal and credentials inaccessible",
+    "Recipient derived from corporate session",
+    "Analyst and different recruiter rejected",
+    "Public verification contains status metadata only",
+    "Revocation and expiry fail closed in evidence checks",
+    "Durable invalidation retry and idempotent delivery",
+    "Expired/revoked prior proof requires responsible review"
+  ],
+  "accessibility": {
+    "automatedRules": [
+      "wcag2a",
+      "wcag2aa",
+      "wcag21aa",
+      "wcag22aa"
+    ],
+    "testedWidths": [
+      390,
+      1440
+    ],
+    "keyboardInteractionTested": true,
+    "mobileScreensInspected": true,
+    "formalCertification": false
+  },
+  "limitations": [
+    "Online internal learning credentials, not officially recognized certificates",
+    "No W3C/Open Badges offline signature",
+    "Explicit consent required for cross-trail evidence",
+    "Aggregated indicators update eventually via existing worker",
+    "Production load, TLS, secrets, backup recovery and assistive technology homologation still required"
+  ]
+}

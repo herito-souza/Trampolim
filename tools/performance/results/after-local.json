@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "jarBytes": 69762095,
+  "jarSHA256": "71d69fa68dc72ed3718b4cb680e65e412f96a46a81c1dcdcd71f4feec97c647c",
+  "monitoring": {
+    "available": true,
+    "unauthenticatedStatus": 403,
+    "authorizedStatus": 200,
+    "livenessStatus": 200,
+    "sseGaugePresent": true,
+    "poolGaugePresent": true
+  },
+  "environment": {
+    "os": "Windows-10-10.0.19045-SP0",
+    "logicalCPUs": 6,
+    "heapMaximumMiB": 768,
+    "backendInstances": 1,
+    "database": "three local development PostgreSQL containers, disposable schemas",
+    "accounts": 3,
+    "course": {
+      "subjects": 20,
+      "modules": 200,
+      "lessons": 1000
+    },
+    "mediaDistributionIncluded": false,
+    "clientsShareSyntheticAccounts": true
+  },
+  "loginSamples": [
+    {
+      "route": "/auth/login",
+      "status": 200,
+      "milliseconds": 122.29
+    },
+    {
+      "route": "/empresas/auth/login",
+      "status": 200,
+      "milliseconds": 89.14
+    },
+    {
+      "route": "/capacita/auth/login",
+      "status": 200,
+      "milliseconds": 94.71
+    }
+  ],
+  "crossTrailIsolation": [
+    {
+      "route": "/company/dashboard",
+      "status": 403,
+      "rejected": true
+    },
+    {
+      "route": "/capacita/learning/me",
+      "status": 403,
+      "rejected": true
+    },
+    {
+      "route": "/profile",
+      "status": 403,
+      "rejected": true
+    }
+  ],
+  "stages": [
+    {
+      "stage": "warmup",
+      "clients": 10,
+      "seconds": 4.08,
+      "requests": 506,
+      "rps": 124.01,
+      "p50_ms": 22.7,
+      "p95_ms": 57.19,
+      "p99_ms": 76.05,
+      "server_or_transport_errors": 0,
+      "unexpected_statuses": 0,
+      "error_rate": 0.0,
+      "responses_bytes": 12239665
+    },
+    {
+      "stage": "nominal",
+      "clients": 25,
+      "seconds": 8.08,
+      "requests": 1712,
+      "rps": 211.85,
+      "p50_ms": 52.17,
+      "p95_ms": 133.8,
+      "p99_ms": 176.57,
+      "server_or_transport_errors": 0,
+      "unexpected_statuses": 0,
+      "error_rate": 0.0,
+      "responses_bytes": 41506430
+    },
+    {
+      "stage": "stress",
+      "clients": 50,
+      "seconds": 5.23,
+      "requests": 1213,
+      "rps": 231.9,
+      "p50_ms": 102.52,
+      "p95_ms": 411.15,
+      "p99_ms": 658.79,
+      "server_or_transport_errors": 0,
+      "unexpected_statuses": 0,
+      "error_rate": 0.0,
+      "responses_bytes": 30377965
+    },
+    {
+      "stage": "short-burst",
+      "clients": 100,
+      "seconds": 2.25,
+      "requests": 606,
+      "rps": 268.95,
+      "p50_ms": 111.91,
+      "p95_ms": 712.05,
+      "p99_ms": 1076.19,
+      "server_or_transport_errors": 0,
+      "unexpected_statuses": 0,
+      "error_rate": 0.0,
+      "responses_bytes": 15432519
+    },
+    {
+      "stage": "short-resistance",
+      "clients": 10,
+      "seconds": 12.07,
+      "requests": 1775,
+      "rps": 147.04,
+      "p50_ms": 11.78,
+      "p95_ms": 38.85,
+      "p99_ms": 52.88,
+      "server_or_transport_errors": 0,
+      "unexpected_statuses": 0,
+      "error_rate": 0.0,
+      "responses_bytes": 42479006
+    }
+  ]
+}

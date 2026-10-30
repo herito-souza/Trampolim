@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
+  cacheDir: process.env.TRAMPOLIM_TEST_CACHE_DIR || 'node_modules/.vite',
+  optimizeDeps: { include: ['pdfjs-dist'] },
   plugins: [
     react(),
     tailwindcss(),

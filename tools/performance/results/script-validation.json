@@ -1,0 +1,6 @@
+{
+  "k6Inspect": "passed (no network, synthetic token, no load executed)",
+  "nginxConfiguration": "nginx -t passed in temporary network-disabled container",
+  "composeConfigurations": "backend/docker-compose.yml and ops/compose.local.yml passed syntax validation",
+  "dockerApplicationImagesBuilt": false
+}

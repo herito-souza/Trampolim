@@ -19,8 +19,11 @@ public class JobReminderService {
     @Value("${app.mail.enabled:false}") private boolean mailEnabled;
     @Value("${app.frontend-url:http://localhost:5173}") private String frontendUrl;
 
+    @org.springframework.beans.factory.annotation.Value("${operations.catalog-jobs-enabled:true}") private boolean jobsEnabled=true;
+
     @Scheduled(cron = "0 0 9 * * *", zone = "America/Sao_Paulo")
     public void sendFollowUpReminders() {
+        if (!jobsEnabled) return;
         if (!mailEnabled) return;
         JavaMailSender sender = mailSenders.getIfAvailable();
         if (sender == null) return;

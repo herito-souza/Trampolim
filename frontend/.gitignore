@@ -15,6 +15,7 @@ test-results
 dist
 dist-ssr
 *.local
+/test-results-integrated/
 
 # Editor directories and files
 .vscode/*
@@ -26,3 +27,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+/test-results-modules/
+
+/test-results-audit/

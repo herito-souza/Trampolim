@@ -1,0 +1,23 @@
+import { careerPublic } from './careerApi';
+import { useEffect, useState } from 'react';
+import { api } from '../account/api';
+import { radarButton as button, radarField as field } from '../radar/radarUi';
+import { Result } from './CareerResult';
+import type { Json } from './CareerResult';
+export function ObservatoryPanel({ token, trail = 'oportunidades' }: {
+    token?: string;
+    trail?: 'oportunidades' | 'capacita';
+}) { const [region, setRegion] = useState(''), [from, setFrom] = useState(new Date().toISOString().slice(0, 4) + '-01-01'), [to, setTo] = useState(new Date().toISOString().slice(0, 10)), [data, setData] = useState<Json>(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [consent, setConsent] = useState(false), [rating, setRating] = useState(5), [ratingNotice, setRatingNotice] = useState(''), [registered, setRegistered] = useState(''); const consentPath = trail === 'capacita' ? '/capacita/learning/observatory/consent' : '/career/observatory/consent'; useEffect(() => { if (!token)
+    return; let live = true; api<{
+    region_code: string;
+}[]>(consentPath, token).then(rows => { if (live)
+    setRegistered(rows[0]?.region_code || ''); }).catch(e => { if (live)
+    setError(e.message); }); return () => { live = false; }; }, [token, consentPath]); async function run(action: () => Promise<void>) { setBusy(true); setError(''); try {
+    await action();
+}
+catch (e) {
+    setError(e instanceof Error ? e.message : 'Consulta indisponível.');
+}
+finally {
+    setBusy(false);
+} } return <section className="space-y-5"><h2 className="text-2xl font-black">Observatório regional</h2><p>Indicadores da amostra da Trampolim. Não representam todo o mercado de trabalho. Dados pessoais só integram grupos autorizados com no mínimo dez participantes.</p><div className="grid gap-4 sm:grid-cols-3"><label>UF (vazio: todas)<input className={field} maxLength={2} value={region} onChange={e => setRegion(e.target.value.toUpperCase())}/></label><label>De<input type="date" className={field} value={from} onChange={e => setFrom(e.target.value)}/></label><label>Até<input type="date" className={field} value={to} onChange={e => setTo(e.target.value)}/></label></div><button className={button} disabled={busy} onClick={() => run(async () => setData(await careerPublic('/public/career/observatory?region=' + encodeURIComponent(region) + '&from=' + from + '&to=' + to)))}>Consultar amostra</button>{token && <section className="space-y-3 rounded-2xl border border-white/15 p-5"><h3 className="text-xl font-bold">Minha participação (opcional)</h3><p>{registered ? 'Você autorizou indicadores agregados para ' + registered + '.' : 'Você ainda não autorizou esta finalidade.'} A retirada passa a valer para novas consultas; o cache público pode levar até um minuto para atualizar.</p><label className="flex gap-3"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}/>Autorizo usar meus registros desta trilha em indicadores regionais agregados para a UF selecionada.</label><button className={button} disabled={busy || !consent || region.length !== 2} onClick={() => run(async () => { await api(consentPath, token, { method: 'PUT', body: JSON.stringify({ regionCode: region, consent }) }); setRegistered(region); setConsent(false); })}>Salvar autorização</button> <button className={button} disabled={busy || !registered} onClick={() => run(async () => { await api(consentPath, token, { method: 'DELETE' }); setRegistered(''); setConsent(false); })}>Retirar autorização</button></section>}{token && trail === 'oportunidades' && <section className="space-y-3 rounded-2xl border border-white/15 p-5"><h3 className="text-xl font-bold">Avaliação voluntária da plataforma</h3><p>Sua avaliação só compõe o indicador público se você também autorizar a participação regional e houver amostra suficiente.</p><label>Minha avaliação (1 a 5)<select className={field} value={rating} onChange={e => setRating(Number(e.target.value))}>{[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}</select></label><button className={button} disabled={busy} onClick={() => run(async () => { await api('/career/satisfaction', token, { method: 'PUT', body: JSON.stringify({ rating }) }); setRatingNotice('Avaliação registrada.'); })}>Registrar minha avaliação</button> <button className={button} disabled={busy} onClick={() => run(async () => { await api('/career/satisfaction', token, { method: 'DELETE' }); setRatingNotice('Avaliação removida.'); })}>Remover minha avaliação</button>{ratingNotice && <p role="status">{ratingNotice}</p>}</section>}{busy && <p role="status">Consultando…</p>}{error && <p role="alert">{error}</p>}{data && <Result value={data}/>}</section>; }

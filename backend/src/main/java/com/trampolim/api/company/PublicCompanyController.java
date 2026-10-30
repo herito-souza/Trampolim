@@ -50,17 +50,21 @@ public class PublicCompanyController {
                 rs.getString(5),rs.getString(6),rs.getString(7),rs.getString(8),rs.getString(9),rs.getString(10),
                 rs.getString(11),rs.getDate(12)==null?null:rs.getDate(12).toLocalDate().toString(),rs.getBoolean(13)));
     }
+    public List<PublicInternship> internships(String area,String location,String modality,String requirements) {return internships(area,location,modality,requirements,null,null);}
     @GetMapping("/internships")
     public List<PublicInternship> internships(@RequestParam(required = false) String area,
             @RequestParam(required = false) String location, @RequestParam(required = false) String modality,
-            @RequestParam(required = false) String requirements) {
+            @RequestParam(required = false) String requirements,@RequestParam(required=false) Integer limit,@RequestParam(required=false) Long before) {
+        if(limit!=null&&(limit<1||limit>200)||before!=null&&before<1||java.util.stream.Stream.of(area,location,modality,requirements).anyMatch(value->value!=null&&value.length()>120)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Consulta inválida.");
         StringBuilder sql = new StringBuilder("SELECT l.id,c.public_slug,c.trade_name,l.title,l.area,l.description,l.requirements,l.accepted_courses,l.location,l.modality,l.work_schedule,l.workload,l.salary,l.benefits,l.headcount,l.application_deadline FROM company_listings l JOIN companies c ON c.id=l.company_id WHERE c.verification_status='APPROVED' AND l.kind='job' AND l.is_internship=TRUE AND l.payment_status='PAID' AND l.publication_status='PUBLISHED' AND (l.expires_at IS NULL OR l.expires_at>=CURRENT_DATE) AND (l.application_deadline IS NULL OR l.application_deadline>=CURRENT_DATE)");
         java.util.List<Object> parameters = new java.util.ArrayList<>();
         if (area != null && !area.isBlank()) { sql.append(" AND LOWER(l.area) LIKE LOWER(?)"); parameters.add("%" + area.trim() + "%"); }
         if (location != null && !location.isBlank()) { sql.append(" AND LOWER(l.location) LIKE LOWER(?)"); parameters.add("%" + location.trim() + "%"); }
         if (modality != null && !modality.isBlank()) { sql.append(" AND l.modality=?"); parameters.add(modality.trim()); }
         if (requirements != null && !requirements.isBlank()) { sql.append(" AND (LOWER(l.requirements) LIKE LOWER(?) OR LOWER(COALESCE(l.accepted_courses,'')) LIKE LOWER(?))"); parameters.add("%" + requirements.trim() + "%"); parameters.add("%" + requirements.trim() + "%"); }
-        sql.append(" ORDER BY l.created_at DESC");
+        if(before!=null){sql.append(" AND l.id<?");parameters.add(before);}
+        sql.append(limit==null?" ORDER BY l.created_at DESC,l.id DESC":" ORDER BY l.id DESC");
+        if(limit!=null){sql.append(" LIMIT ?");parameters.add(limit);}
         return jdbc.query(sql.toString(), (rs, row) -> new PublicInternship(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6), rs.getString(7), rs.getString(8), rs.getString(9), rs.getString(10), rs.getString(11), rs.getString(12), rs.getString(13), rs.getString(14), (Integer) rs.getObject(15), rs.getDate(16) == null ? null : rs.getDate(16).toLocalDate().toString()), parameters.toArray());
     }
 

@@ -1,0 +1,9 @@
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { api } from '../account/api';
+import { inputClass, buttonClass } from './types';
+export function AssessmentAccommodation({ token, assessmentId }: { token: string; assessmentId: number }) {
+  const [email, setEmail] = useState(''); const [due, setDue] = useState(''); const [busy, setBusy] = useState(false); const [notice, setNotice] = useState(''); const [error, setError] = useState('');
+  async function submit(event: FormEvent) { event.preventDefault(); if (busy) return; setBusy(true); setError(''); setNotice(''); try { await api(`/capacita/learning/assessments/${assessmentId}/accommodations`, token, { method: 'PUT', body: JSON.stringify({ studentEmail: email, extendedDueAt: new Date(due).toISOString() }) }); setNotice('Prazo adicional autorizado para esta conta, sem alterar nota mínima ou tentativas.'); } catch (failure) { setError(failure instanceof Error ? failure.message : 'Falha ao autorizar prazo.'); } finally { setBusy(false); } }
+  return <details className="rounded-xl border border-white/20 p-3"><summary className="cursor-pointer font-bold">Autorizar tempo adicional</summary><form onSubmit={submit} className="mt-3 space-y-3"><p className="text-sm">Amplia o prazo final de uma avaliação com prazo definido. Não altera o gabarito, a nota mínima nem o limite de tentativas. Não informe diagnósticos.</p><label className="block">E-mail do aluno para prazo adicional<input required type="email" className={inputClass} value={email} onChange={event => setEmail(event.target.value)} /></label><label className="block">Novo prazo final autorizado<input required type="datetime-local" className={inputClass} value={due} onChange={event => setDue(event.target.value)} /></label><button className={buttonClass} disabled={busy}>Autorizar prazo adicional</button>{notice && <p role="status">{notice}</p>}{error && <p role="alert">{error}</p>}</form></details>;
+}

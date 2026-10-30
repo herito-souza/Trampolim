@@ -40,8 +40,11 @@ public class OpportunityAlertService {
         }
     }
 
+    @org.springframework.beans.factory.annotation.Value("${operations.catalog-jobs-enabled:true}") private boolean jobsEnabled=true;
+
     @Scheduled(cron = "0 0 9 * * *", zone = "America/Sao_Paulo")
     public void sendDigests() {
+        if (!jobsEnabled) return;
         boolean weeklyDay = java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")).getDayOfWeek() == java.time.DayOfWeek.MONDAY;
         for (AppUser user : users.findAllByAlertPreferencesIsNotNull()) {
             try {

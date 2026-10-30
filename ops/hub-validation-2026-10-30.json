@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-30",
+  "priority": 3,
+  "scope": "Local validation; not production deployment or capacity certification",
+  "backend": {
+    "fullSuiteDetected": 128,
+    "fullSuitePassed": 124,
+    "initialConditionalMedia": 4,
+    "mediaRerunPassed": 4,
+    "finalHubPassed": 8,
+    "complementaryDistinctPassed": 130,
+    "finalPackage": "BUILD SUCCESS"
+  },
+  "frontend": {
+    "fullBrowserSuitePassed": 62,
+    "finalHubBrowserSuitePassed": 8,
+    "complementaryDistinctBrowserPassed": 64,
+    "invitationReturnRecheckPassed": 1,
+    "unitPassed": 7,
+    "lint": "passed",
+    "build": "passed"
+  },
+  "postgresVersions": {
+    "oportunidades": 16,
+    "empresas": 13,
+    "capacita": 17
+  },
+  "isolationProbe": {
+    "syntheticAdditionalAssociations": 1000,
+    "concurrentRequests": 32,
+    "pageSize": 20,
+    "allResultsScoped": true,
+    "batchElapsedMs": 307,
+    "scope": "Single local machine, HTTP plus PostgreSQL; not production latency"
+  },
+  "pendingExternal": [
+    "Institutional commercial pricing decision",
+    "Recurring payment provider integration and homologation",
+    "SMTP homologation",
+    "Persistent logo storage for multiple replicas",
+    "Production load and assistive technology validation"
+  ]
+}

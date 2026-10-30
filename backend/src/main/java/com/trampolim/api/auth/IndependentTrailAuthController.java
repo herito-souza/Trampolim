@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -39,8 +38,7 @@ public class IndependentTrailAuthController {
     private final ObjectProvider<JavaMailSender> mailSenders;
     @Value("${app.frontend-url:http://localhost:5173}") private String frontendUrl;
     @Value("${app.mail.enabled:false}") private boolean mailEnabled;
-    private final ConcurrentHashMap<String, RateWindow> rateLimits = new ConcurrentHashMap<>();
-    private record RateWindow(Instant expiresAt, int count) {}
+    private final com.trampolim.api.security.BoundedRateLimiter rateLimits = new com.trampolim.api.security.BoundedRateLimiter();
 
     public IndependentTrailAuthController(
             @Qualifier("empresasJdbcTemplate") ObjectProvider<JdbcTemplate> empresasJdbc,
@@ -398,12 +396,8 @@ public class IndependentTrailAuthController {
     private String limit(String value, int size) { return value.length() <= size ? value : value.substring(0, size); }
     private void unauthorized() { throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "E-mail ou senha incorretos."); }
     private void bad(String message) { throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message); }
-    private void limit(String key, int maximum, int minutes) {
-        Instant now = Instant.now();
-        RateWindow bucket = rateLimits.compute(key, (ignored, old) -> old == null || old.expiresAt().isBefore(now)
-                ? new RateWindow(now.plus(minutes, ChronoUnit.MINUTES), 1) : new RateWindow(old.expiresAt(), old.count() + 1));
-        if (rateLimits.size() > 10_000) rateLimits.entrySet().removeIf(entry -> entry.getValue().expiresAt().isBefore(now));
-        if (bucket.count() > maximum) throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Muitas tentativas. Tente novamente mais tarde.");
+    private void limit(String key,int maximum,int minutes) {
+        if (!rateLimits.allow(key,maximum,java.time.Duration.ofMinutes(minutes))) throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,"Muitas tentativas. Tente novamente mais tarde.");
     }
     private String hash(String value) {
         try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8))); }

@@ -1,4 +1,4 @@
-export type AccountDestination = 'home' | 'companies' | 'opportunities' | 'courses' | 'jobs' | 'profile' | 'diagnostic' | 'premium' | 'admin' | 'admin-capacita' | 'admin-saas' | 'association' | 'capacita';
+export type AccountDestination = 'career' | 'future' | 'radar' | 'home' | 'companies' | 'opportunities' | 'courses' | 'jobs' | 'profile' | 'diagnostic' | 'premium' | 'admin' | 'admin-capacita' | 'admin-saas' | 'association' | 'capacita';
 
 interface AccountNavigationProps {
   active: AccountDestination;
@@ -11,6 +11,9 @@ const links: { destination: AccountDestination; label: string }[] = [
   { destination: 'home', label: 'Início' },
   { destination: 'companies', label: 'Empresas' },
   { destination: 'diagnostic', label: 'Diagnóstico' },
+  { destination: 'radar', label: 'Radar de competências' },
+  { destination: 'career', label: 'Carreira e projetos' },
+  { destination: 'future', label: 'Talentos futuros' },
   { destination: 'opportunities', label: 'Oportunidades' },
   { destination: 'courses', label: 'Cursos' },
   { destination: 'jobs', label: 'Vagas' },

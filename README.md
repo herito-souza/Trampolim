@@ -154,3 +154,50 @@ O backend possui um filtro rigoroso (`JwtAuthenticationFilter`).
 ## 🤝 Como contribuir
 1. Lembre-se que as dependências não se misturam. Qualquer pacote Node é restrito ao `/frontend`, enquanto pacotes Maven ficam restritos ao `pom.xml` do `/backend`.
 2. O CSS deve seguir os padrões já definidos no Tailwind v4. Não adicione arquivos de estilo avulsos a não ser que estritamente necessário.
+
+### Cursos e videoaulas do Capacita — Parte 1
+
+A estrutura Curso → Disciplina → Módulo → Videoaula e os papéis de professor/administrador educacional utilizam somente o banco e a autenticação do Capacita. Consulte [o guia da Parte 1](CAPACITA_VIDEOAULAS_PARTE1.md) para configurar FFmpeg, armazenamento privado e administrador inicial, executar os testes e conhecer os limites da entrega.
+
+### Mural privado e notificações do Capacita — Parte 2
+
+Perguntas por texto, áudio ou vídeo, atendimento individual ou em lote e notificações persistidas com atualização SSE utilizam exclusivamente o Capacita. Consulte [o guia da Parte 2](CAPACITA_MURAL_PARTE2.md) para conhecer permissões, limites, retenção, migração V11 e configurações de produção.
+
+### Biblioteca virtual do Capacita — Parte 3
+
+Materiais PDF com versões, permissões, editor de texto para geração e leitor integrado às aulas. Consulte [o guia da Parte 3](CAPACITA_BIBLIOTECA_PARTE3.md) para os fluxos de professor/aluno, configuração do armazenamento, limites, migração V12 e validação.
+
+### Avaliações e competências do Capacita — Parte 4
+
+Mini provas objetivas corrigidas no backend, histórico de tentativas, desempenho e conquistas verificadas com compartilhamento opcional. Consulte [o guia da Parte 4](CAPACITA_AVALIACOES_PARTE4.md) para critérios de conclusão, permissões, migração V13, testes e preparação da integração consentida com Oportunidades.
+
+### Acessibilidade, inclusão e validação final — Parte 5
+
+Preferências persistentes, foco/contraste/mídia, apoio privado, verificação administrativa de experiência inclusiva e prazo adicional autorizado. O [relatório final das cinco etapas](CAPACITA_ACESSIBILIDADE_PARTE5.md) consolida arquitetura, operação, migração V14, testes, evidências WCAG e limitações de homologação/produção. Inclui instruções para o teste integrado real com schema temporário, além da suíte de navegação.
+
+## Auditoria, desempenho e operação
+
+Consulte [a auditoria técnica e suas limitações](AUDITORIA_ESCALABILIDADE.md), [o diagnóstico inicial](AUDITORIA_DIAGNOSTICO_INICIAL.md), [os testes de desempenho](tools/performance/README.md) e [o guia de operação e escala](ops/OPERACAO_E_ESCALA.md). As metas de milhares de usuários não foram certificadas.
+
+
+### Radar de competências — Prioridade 1
+
+Catálogo padronizado, match explicável, lacunas e conquistas consentidas entre contas independentes. Consulte [arquitetura, regras, configuração e validações](RADAR_COMPETENCIAS_PRIORIDADE1.md). As integrações usam `RADAR_INTERNAL_API_URL` e `RADAR_BRIDGE_SECRET` exclusivamente no backend.
+
+
+### Banco de Talentos Futuros — Prioridade 2
+
+Previsões empresariais, preparação consentida com o Radar, indicadores agregados e avisos internos de vagas reais. Consulte [arquitetura, migrações, testes e operação](BANCO_TALENTOS_FUTUROS_PRIORIDADE2.md). O processamento usa `FUTURE_TALENT_POLL_ENABLED` e `FUTURE_TALENT_POLL_DELAY_MS`, reutilizando a integração segura do Radar.
+
+## Trampolim Hub — associações empresariais
+
+A Prioridade 3 adiciona ambientes institucionais, identidade pública, programas com cursos do Capacita, convites empresariais, indicadores agregados com autorização por instituição e contratos administrativos sem preços ou cobranças simuladas. Acesso pela Gestão SaaS e pelas contas institucionais de Empresas. Consulte [arquitetura, configuração, migrações, testes e limitações do Hub](TRAMPOLIM_HUB_PRIORIDADE3.md).
+
+## Capacitação adaptativa e Passaporte Digital — Prioridade 4
+
+No Capacita, os módulos Minhas Trilhas e Passaporte Digital conectam objetivos profissionais a competências verificadas, conteúdos existentes e compartilhamento dirigido a recrutadores. As conquistas existentes receberam validade e revogação, e a integração consentida com o Radar ganhou invalidação durável. Consulte [funcionalidades, regras, migração V18, testes e limitações](CAPACITACAO_ADAPTATIVA_PASSAPORTE_PRIORIDADE4.md).
+
+
+## Prioridade 5 — Carreira, desafios e observatório
+
+Consulte [arquitetura, configuração, privacidade, testes e limitações](IA_OBSERVATORIO_FUNCIONALIDADES_PRIORIDADE5.md). A IA externa exige habilitação explícita; a orientação sem IA funciona sem provedor. Novas migrações: Oportunidades V17, Empresas V14 e Capacita V19, em históricos separados. Nenhuma implantação produtiva foi realizada nesta etapa.

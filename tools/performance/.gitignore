@@ -1,0 +1,3 @@
+# Real credentials/tokens used only in synthetic isolated load environments.
+*.local.json
+__pycache__/

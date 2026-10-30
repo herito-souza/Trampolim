@@ -39,22 +39,26 @@ public class SaasOrganizationAdminController {
     public record LinkedCompany(long companyId,String name,String status) {}
     public record InviteView(String email,String role,String expiresAt,String inviteUrl) {}
 
+    public List<OrganizationView> list(String email) { return list(email, 0, 50); }
+
     @GetMapping
-    public List<OrganizationView> list(@AuthenticationPrincipal String email) {
+    public List<OrganizationView> list(@AuthenticationPrincipal String email,
+            @RequestParam(defaultValue="0") int offset, @RequestParam(defaultValue="50") int limit) {
         requireSuperAdmin(email);
-        List<OrganizationView> institutions=jdbc.query("""
-                SELECT o.id,o.name,o.organization_type,o.status,NULL::BIGINT,
-                    (SELECT COUNT(*) FROM enterprise_organization_members m WHERE m.organization_id=o.id),
-                    (SELECT COUNT(*) FROM enterprise_organization_companies r WHERE r.organization_id=o.id AND r.status='ACTIVE'),o.created_at
-                FROM enterprise_organizations o
-                """,(rs,row)->new OrganizationView(rs.getLong(1),rs.getString(2),rs.getString(3),rs.getString(4),null,rs.getLong(6),rs.getLong(7),rs.getTimestamp(8).toInstant().toString()));
-        List<OrganizationView> companies=jdbc.query("""
-                SELECT -c.id,c.trade_name,'COMPANY',c.verification_status,c.id,
-                    (SELECT COUNT(*) FROM company_members m WHERE m.company_id=c.id),
-                    (SELECT COUNT(*) FROM enterprise_organization_companies r WHERE r.company_id=c.id AND r.status='ACTIVE'),c.created_at
-                FROM companies c
-                """,(rs,row)->new OrganizationView(rs.getLong(1),rs.getString(2),rs.getString(3),rs.getString(4),rs.getLong(5),rs.getLong(6),rs.getLong(7),rs.getTimestamp(8).toInstant().toString()));
-        return java.util.stream.Stream.concat(institutions.stream(),companies.stream()).sorted((a,b)->b.createdAt().compareTo(a.createdAt())).toList();
+        if(offset<0||offset>100000||limit<1||limit>100) bad("Use páginas de até cem organizações.");
+        return jdbc.query("""
+            WITH sources AS (
+              SELECT id,name,organization_type AS type,status,NULL::BIGINT AS legacy_id,created_at FROM enterprise_organizations
+              UNION ALL
+              SELECT -id,trade_name,'COMPANY',verification_status,id,created_at FROM companies
+            ), page AS (SELECT * FROM sources ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?)
+            SELECT p.id,p.name,p.type,p.status,p.legacy_id,
+              CASE WHEN p.id>0 THEN (SELECT count(*) FROM enterprise_organization_members m WHERE m.organization_id=p.id)
+                   ELSE (SELECT count(*) FROM company_members m WHERE m.company_id=p.legacy_id) END AS members,
+              CASE WHEN p.id>0 THEN (SELECT count(*) FROM enterprise_organization_companies r WHERE r.organization_id=p.id AND r.status='ACTIVE')
+                   ELSE (SELECT count(*) FROM enterprise_organization_companies r WHERE r.company_id=p.legacy_id AND r.status='ACTIVE') END AS links,
+              p.created_at FROM page p ORDER BY p.created_at DESC,p.id DESC
+            """,(rs,row)->new OrganizationView(rs.getLong(1),rs.getString(2),rs.getString(3),rs.getString(4),rs.getObject(5,Long.class),rs.getLong(6),rs.getLong(7),rs.getTimestamp(8).toInstant().toString()),limit,offset);
     }
 
     @PostMapping

@@ -41,6 +41,9 @@ public class ProfileController {
     private final ObjectMapper objectMapper;
     private final JobApplicationRepository applications;
     private final PasswordEncoder passwordEncoder;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.trampolim.api.radar.RadarService radar;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.trampolim.api.future.FutureTalentService future;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.trampolim.api.hub.HubCandidateController hub;
 
     public record ProfileData(String name, String email, String phone, String location, String summary, String resumeFileName, String photoFileName) {}
     public record ProfileUpdate(String name, String phone, String location, String summary) {}
@@ -175,6 +178,9 @@ public class ProfileController {
         export.put("applications", applications.findAllByUserIdOrderByUpdatedAtDesc(user.getId()).stream().map(application -> Map.of(
                 "title", application.getItem().getTitle(), "provider", application.getItem().getProvider(), "status", application.getStatus(),
                 "notes", application.getNotes() == null ? "" : application.getNotes(), "followUpDate", application.getFollowUpDate() == null ? "" : application.getFollowUpDate().toString())).toList());
+        if(radar!=null) export.put("radar",radar.export(email));
+        if(future!=null) export.put("futureTalent",future.export(email));
+        if(hub!=null) export.put("hubConsents",hub.export(email));
         return export;
     }
 

@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ConditionalOnProperty(name = "trampolim.datasource.empresas.enabled", havingValue = "true")
 public class CompanyPaymentController {
     private final JdbcTemplate jdbc;
-    private final RestClient mercadopago = RestClient.builder().baseUrl("https://api.mercadopago.com").build();
+    private final RestClient mercadopago = com.trampolim.api.config.BoundedRestClients.create("https://api.mercadopago.com",java.time.Duration.ofSeconds(15));
     @Value("${payments.mercadopago.access-token:}") private String accessToken;
     @Value("${payments.mercadopago.webhook-secret:}") private String webhookSecret;
 

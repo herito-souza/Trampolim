@@ -1,0 +1,11 @@
+# Operational snippets for a private Prometheus deployment. Do not expose metrics on the public gateway.
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: trampolim
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [api1:9001, api2:9001]
+    http_headers:
+      X-Monitoring-Key:
+        files: [/run/secrets/trampolim_monitoring_key]

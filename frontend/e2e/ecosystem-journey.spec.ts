@@ -71,6 +71,7 @@ test('página institucional conecta oportunidades, empresas e Capacita', async (
   await page.getByRole('button', { name: 'Conhecer o Capacita' }).click();
   await expect(page.getByRole('heading', { name: 'Trampolim Capacita' })).toBeVisible();
   await page.getByRole('button', { name: 'Conclusão do ensino médio e início profissional' }).click();
+  await page.getByRole('navigation', { name: 'Módulos do Capacita', exact: true }).getByRole('button', { name: 'Preparação profissional', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Vagas de estágio' })).toBeVisible();
   await expect(page.getByText('Nenhuma vaga de estágio disponível agora')).toBeVisible();
   await page.getByRole('button', { name: 'Fazer diagnóstico para o primeiro trabalho' }).click();
@@ -189,6 +190,7 @@ test('exportação do Capacita usa apenas a sessão estudantil e baixa JSON', as
     return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
   });
   await page.goto('/#capacita');
+  await page.getByRole('button', { name: 'Minha conta', exact: true }).click();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Baixar meus dados' }).click();
   const download = await downloadPromise;
@@ -220,6 +222,7 @@ test('exclusão do Capacita exige confirmação e preserva sessão empresarial',
     return route.fulfill({ status: request.method() === 'POST' ? 204 : 200, contentType: 'application/json', body: request.method() === 'POST' ? '' : '[]' });
   });
   await page.goto('/#capacita');
+  await page.getByRole('button', { name: 'Minha conta', exact: true }).click();
   await page.getByRole('button', { name: 'Excluir conta do Capacita' }).click();
   const confirm = page.getByRole('button', { name: 'Confirmar exclusão' });
   await expect(confirm).toBeDisabled();
@@ -309,6 +312,7 @@ test('conta antiga declara faixa etária somente no Capacita', async ({ page }) 
     return route.fulfill({status:200,contentType:'application/json',body:'[]'});
   });
   await page.goto('/#capacita');
+  await page.getByRole('button', { name: 'Minha conta', exact: true }).click();
   await expect(page.getByRole('button',{name:'Salvar faixa etária'})).toBeDisabled();
   await page.getByLabel('Faixa etária declarada').selectOption('AGE_14_17');
   await page.getByRole('button',{name:'Salvar faixa etária'}).click();
