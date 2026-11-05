@@ -1,0 +1,11 @@
+Synthetic fixture: 10000 interested candidates. Aggregate elapsed ms=640
+Limit  (cost=0.28..58.51 rows=500 width=8) (actual time=0.227..0.560 rows=500 loops=1)
+  Buffers: shared hit=26
+  ->  Index Only Scan using idx_future_interest_notify on future_talent_interests  (cost=0.28..388.44 rows=3333 width=8) (actual time=0.225..0.486 rows=500 loops=1)
+        Index Cond: ((demand_id = 123) AND (user_id > 0))
+        Heap Fetches: 500
+        Buffers: shared hit=26
+Planning:
+  Buffers: shared hit=162
+Planning Time: 2.660 ms
+Execution Time: 0.665 ms

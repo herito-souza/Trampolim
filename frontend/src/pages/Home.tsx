@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { RibbonStrip } from '../components/ui/RibbonStrip';
 import { Header } from '../components/sections/Header';
 import { Hero } from '../components/sections/Hero';
@@ -10,6 +11,11 @@ import type { DiagnosticResult } from '../features/diagnostic/recommendations';
 import type { ReactNode } from 'react';
 
 export function Home({ onAuth, onDiagnosticComplete, isAuthenticated = false, hasPreviousDiagnostic = false, startNewTest = false, accountNavigation, onProfile, onLogout }: { onAuth: (mode: 'login' | 'cadastro') => void; onDiagnosticComplete?: (result: DiagnosticResult) => void; isAuthenticated?: boolean; hasPreviousDiagnostic?: boolean; startNewTest?: boolean; accountNavigation?: ReactNode; onProfile?: () => void; onLogout?: () => void }) {
+  useEffect(() => {
+    if (window.location.hash === '#diagnostico') {
+      document.getElementById('diagnostico')?.scrollIntoView({ behavior: 'instant' });
+    }
+  }, []);
   return (
     <>
       <RibbonStrip />

@@ -29,7 +29,7 @@ export interface Profile {
 
 export interface CatalogItem {
   id: number; kind: 'course' | 'job'; title: string; provider: string; description: string; url: string; area: string;
-  location: string | null; latitude: number | null; longitude: number | null; modality: string | null; experienceLevel: string | null; contractType: string | null; workSchedule: string | null; salary: string | null; accessibility: string | null; active: boolean;
+  municipalityLabel?:string|null; municipalityCode?:string|null; location: string | null; latitude: number | null; longitude: number | null; modality: string | null; experienceLevel: string | null; contractType: string | null; workSchedule: string | null; salary: string | null; accessibility: string | null; active: boolean;
   moderationStatus: 'PENDING' | 'APPROVED' | 'REJECTED'; expiresAt: string | null; createdAt: string; updatedAt: string; createdBy: string | null; updatedBy: string | null; reviewedBy: string | null;
   publishedAt: string | null; lastLinkCheckAt?: string | null; lastLinkReminderAt?: string | null; linkStatus?: 'UNKNOWN' | 'ACTIVE' | 'BROKEN' | null;
 }

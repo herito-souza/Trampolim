@@ -1,0 +1,6 @@
+.trampolim-map button { min-height:44px; border:1px solid rgb(242 244 242 / .3); border-radius:999px; padding:.5rem 1rem; font-weight:700; color:var(--color-ink); }
+.trampolim-map button:disabled { opacity:.55; }
+.trampolim-map .maplibregl-ctrl-attrib { background:#fff; color:#101725; font-size:12px; }
+.trampolim-map .maplibregl-ctrl-attrib a { color:#101725; }
+.trampolim-map .maplibregl-canvas:focus-visible { outline:3px solid #91b8dc; outline-offset:-3px; }
+.trampolim-map .maplibregl-cooperative-gesture-screen { background:rgb(11 20 33 / .85); color:#fff; }

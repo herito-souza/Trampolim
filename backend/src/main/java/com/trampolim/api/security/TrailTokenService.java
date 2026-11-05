@@ -31,12 +31,12 @@ public class TrailTokenService {
         for (Trail trail : Trail.values()) {
             String key=secret(trail);
             if(environment!=null && environment.acceptsProfiles(org.springframework.core.env.Profiles.of("prod","production"))
-                    && java.util.Set.of("TRAMPOLIM_LOCAL_DEV_SECRET_CHANGE_ME_2026",
+                    && (key.strip().toUpperCase(java.util.Locale.ROOT).startsWith("REPLACE_") || java.util.Set.of("TRAMPOLIM_LOCAL_DEV_SECRET_CHANGE_ME_2026",
                         "TRAMPOLIM_EMPRESAS_LOCAL_SECRET_CHANGE_ME_2026",
                         "TRAMPOLIM_CAPACITA_LOCAL_SECRET_CHANGE_ME_2026",
                         "gere-um-segredo-aleatorio-com-pelo-menos-32-bytes",
                         "gere-um-segredo-aleatorio-exclusivo-com-pelo-menos-32-bytes",
-                        "gere-outro-segredo-aleatorio-exclusivo-com-pelo-menos-32-bytes").contains(key))
+                        "gere-outro-segredo-aleatorio-exclusivo-com-pelo-menos-32-bytes").contains(key)))
                 throw new IllegalStateException("Configure uma chave JWT exclusiva de produção para a trilha "+trail.key+"; valores públicos de exemplo não são permitidos.");
             if (!keys.add(key))
                 throw new IllegalStateException("Cada trilha precisa de uma chave JWT exclusiva.");

@@ -1,0 +1,473 @@
+{
+  "date": "2026-11-05",
+  "backend": {
+    "tests": 151,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "name": "com.trampolim.api.auth.AuthControllerTrailIsolationTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "3.386"
+      },
+      {
+        "name": "com.trampolim.api.auth.IndependentPasswordResetTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.17"
+      },
+      {
+        "name": "com.trampolim.api.auth.PasswordPolicyTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.025"
+      },
+      {
+        "name": "com.trampolim.api.career.CareerHttpPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "56.783"
+      },
+      {
+        "name": "com.trampolim.api.career.CareerRulesTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.022"
+      },
+      {
+        "name": "com.trampolim.api.catalog.CatalogMetricControllerTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.564"
+      },
+      {
+        "name": "com.trampolim.api.company.CompanyAccountPostgresTest",
+        "tests": "6",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "11.498"
+      },
+      {
+        "name": "com.trampolim.api.company.CompanyPaymentWebhookPostgresTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "11.181"
+      },
+      {
+        "name": "com.trampolim.api.company.LegacyOrganizationMigrationServiceTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.176"
+      },
+      {
+        "name": "com.trampolim.api.company.LegacyOrganizationPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "3.335"
+      },
+      {
+        "name": "com.trampolim.api.company.PublicCompanyControllerVisibilityTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.017"
+      },
+      {
+        "name": "com.trampolim.api.config.BoundedRestClientsTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.119"
+      },
+      {
+        "name": "com.trampolim.api.config.FreshInstallationPostgresTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "47.275"
+      },
+      {
+        "name": "com.trampolim.api.config.HealthControllerTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.479"
+      },
+      {
+        "name": "com.trampolim.api.config.IndependentFlywayPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "19.318"
+      },
+      {
+        "name": "com.trampolim.api.config.OperationalRequestFilterTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.007"
+      },
+      {
+        "name": "com.trampolim.api.config.TrailDatabaseExceptionHandlerTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.001"
+      },
+      {
+        "name": "com.trampolim.api.config.TrailDatabaseIsolationGuardTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.006"
+      },
+      {
+        "name": "com.trampolim.api.criticalflows.CriticalFlowsTest",
+        "tests": "9",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.974"
+      },
+      {
+        "name": "com.trampolim.api.education.AdaptivePassportHttpPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "34.893"
+      },
+      {
+        "name": "com.trampolim.api.education.AdaptiveRulesTest",
+        "tests": "7",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.011"
+      },
+      {
+        "name": "com.trampolim.api.education.AssessmentHttpPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "11.09"
+      },
+      {
+        "name": "com.trampolim.api.education.AssessmentPostgresTest",
+        "tests": "8",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "24.421"
+      },
+      {
+        "name": "com.trampolim.api.education.CapacitaExportPostgresTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "2.61"
+      },
+      {
+        "name": "com.trampolim.api.education.CapacitaExportTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.012"
+      },
+      {
+        "name": "com.trampolim.api.education.CourseQueryBudgetPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "103.367"
+      },
+      {
+        "name": "com.trampolim.api.education.DiscussionHttpPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "7.923"
+      },
+      {
+        "name": "com.trampolim.api.education.DiscussionPostgresTest",
+        "tests": "5",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "34.591"
+      },
+      {
+        "name": "com.trampolim.api.education.FeedIndexMigrationPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "5.304"
+      },
+      {
+        "name": "com.trampolim.api.education.InclusionPostgresTest",
+        "tests": "5",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "8.295"
+      },
+      {
+        "name": "com.trampolim.api.education.LearningHttpPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "6.571"
+      },
+      {
+        "name": "com.trampolim.api.education.LearningPostgresTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "15.887"
+      },
+      {
+        "name": "com.trampolim.api.education.LearningUploadFilterTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.164"
+      },
+      {
+        "name": "com.trampolim.api.education.LibraryHttpPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "10.197"
+      },
+      {
+        "name": "com.trampolim.api.education.LibraryPostgresTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "26.032"
+      },
+      {
+        "name": "com.trampolim.api.education.LibraryUploadFilterTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.2"
+      },
+      {
+        "name": "com.trampolim.api.education.PublicLearningConnectionRecoveryTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.081"
+      },
+      {
+        "name": "com.trampolim.api.education.PublicLearningSummaryTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.008"
+      },
+      {
+        "name": "com.trampolim.api.education.StudentAccountControllerTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.016"
+      },
+      {
+        "name": "com.trampolim.api.future.FutureModelTest",
+        "tests": "4",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.0"
+      },
+      {
+        "name": "com.trampolim.api.future.FutureQueryBudgetPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "9.761"
+      },
+      {
+        "name": "com.trampolim.api.future.FutureTalentHttpPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "16.532"
+      },
+      {
+        "name": "com.trampolim.api.future.FutureTalentWorkerTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.185"
+      },
+      {
+        "name": "com.trampolim.api.geography.TerritorialCatalogTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.183"
+      },
+      {
+        "name": "com.trampolim.api.geography.TerritorialHttpPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "12.81"
+      },
+      {
+        "name": "com.trampolim.api.hub.HubHttpPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "16.056"
+      },
+      {
+        "name": "com.trampolim.api.hub.HubLogoStoreTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.064"
+      },
+      {
+        "name": "com.trampolim.api.hub.HubLogoUploadFilterTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.163"
+      },
+      {
+        "name": "com.trampolim.api.hub.HubRulesTest",
+        "tests": "3",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.0"
+      },
+      {
+        "name": "com.trampolim.api.organization.TrailAccountAdminAuthorizationTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.015"
+      },
+      {
+        "name": "com.trampolim.api.radar.MatchEngineTest",
+        "tests": "8",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.351"
+      },
+      {
+        "name": "com.trampolim.api.radar.RadarHttpPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "12.741"
+      },
+      {
+        "name": "com.trampolim.api.radar.RadarMigrationPostgresTest",
+        "tests": "1",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "17.735"
+      },
+      {
+        "name": "com.trampolim.api.security.BoundedRateLimiterTest",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.012"
+      },
+      {
+        "name": "com.trampolim.api.security.JwtAuthenticationFilterTrailIsolationTest",
+        "tests": "13",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.066"
+      },
+      {
+        "name": "com.trampolim.api.security.TrailTokenServiceTest",
+        "tests": "5",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.007"
+      },
+      {
+        "name": "com.trampolim.backend.BackendApplicationTests",
+        "tests": "2",
+        "failures": "0",
+        "errors": "0",
+        "skipped": "0",
+        "time": "0.163"
+      }
+    ]
+  },
+  "java": "21.0.11",
+  "node": "24.18.0",
+  "postgres": "15.19",
+  "productionDeployment": false,
+  "providerSandboxTest": false,
+  "smtpTest": false
+}

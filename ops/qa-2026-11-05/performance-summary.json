@@ -1,0 +1,117 @@
+{
+  "date": "2026-11-05",
+  "samples": 33,
+  "method": {
+    "tool": "web-vitals in Chromium/Playwright",
+    "build": "production dist served locally with gzip",
+    "runsPerScenario": 3,
+    "latencyMs": 150,
+    "downloadMbps": 1.6,
+    "uploadMbps": 0.75,
+    "cpuSlowdown": 4,
+    "cache": "disabled per context",
+    "api": "synthetic responses delayed 120ms; not backend measurements",
+    "note": "Laboratory interaction sample, not CrUX/production p75. Initial 6.5s observation followed by scripted interactions."
+  },
+  "summary": [
+    {
+      "area": "homepage",
+      "width": 320,
+      "medianLCP": 1992,
+      "medianINP": 88,
+      "medianCLS": 0,
+      "requests": 7,
+      "encodedBytes": 179748
+    },
+    {
+      "area": "homepage",
+      "width": 375,
+      "medianLCP": 1980,
+      "medianINP": 88,
+      "medianCLS": 0,
+      "requests": 7,
+      "encodedBytes": 179748
+    },
+    {
+      "area": "homepage",
+      "width": 768,
+      "medianLCP": 2076,
+      "medianINP": 96,
+      "medianCLS": 0.00014124529803240742,
+      "requests": 7,
+      "encodedBytes": 179748
+    },
+    {
+      "area": "homepage",
+      "width": 1024,
+      "medianLCP": 2064,
+      "medianINP": 104,
+      "medianCLS": 0,
+      "requests": 7,
+      "encodedBytes": 179748
+    },
+    {
+      "area": "homepage",
+      "width": 1440,
+      "medianLCP": 2096,
+      "medianINP": 104,
+      "medianCLS": 0,
+      "requests": 7,
+      "encodedBytes": 179748
+    },
+    {
+      "area": "candidate",
+      "width": 375,
+      "medianLCP": 2752,
+      "medianINP": 64,
+      "medianCLS": 0.007593947685185185,
+      "requests": 23,
+      "encodedBytes": 208036
+    },
+    {
+      "area": "candidate",
+      "width": 1440,
+      "medianLCP": 2816,
+      "medianINP": 80,
+      "medianCLS": 2.445023148148148e-05,
+      "requests": 23,
+      "encodedBytes": 208036
+    },
+    {
+      "area": "company",
+      "width": 375,
+      "medianLCP": 2792,
+      "medianINP": 176,
+      "medianCLS": 0,
+      "requests": 25,
+      "encodedBytes": 218941
+    },
+    {
+      "area": "company",
+      "width": 1440,
+      "medianLCP": 2916,
+      "medianINP": 200,
+      "medianCLS": 0,
+      "requests": 25,
+      "encodedBytes": 218941
+    },
+    {
+      "area": "capacita",
+      "width": 375,
+      "medianLCP": 2084,
+      "medianINP": 56,
+      "medianCLS": 0.07666666666666666,
+      "requests": 30,
+      "encodedBytes": 228403
+    },
+    {
+      "area": "capacita",
+      "width": 1440,
+      "medianLCP": 2156,
+      "medianINP": 72,
+      "medianCLS": 0.04393544238683128,
+      "requests": 29,
+      "encodedBytes": 228214
+    }
+  ]
+}

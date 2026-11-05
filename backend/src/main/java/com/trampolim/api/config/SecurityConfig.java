@@ -44,7 +44,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Only the completion redispatch of an already-authorized SSE request is anonymous.
                         .requestMatchers(request -> request.getDispatcherType()==jakarta.servlet.DispatcherType.ASYNC && request.getRequestURI().equals("/api/capacita/learning/notifications/stream")).permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/public/career/**","/api/public/skills/**","/api/public/skills","/api/public/capacita/radar/training","/api/public/hub/**","/api/public/capacita/hub/**","/api/public/capacita/passport/verify/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/public/geography/**","/api/public/career/**","/api/public/skills/**","/api/public/skills","/api/public/capacita/radar/training","/api/public/hub/**","/api/public/capacita/hub/**","/api/public/capacita/passport/verify/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/integrations/career/**","/api/integrations/radar/award","/api/integrations/capacita/radar/evidence","/api/integrations/future/summary","/api/integrations/hub/candidates","/api/integrations/hub/learning","/api/integrations/capacita/passport/verify","/api/integrations/radar/invalidate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()

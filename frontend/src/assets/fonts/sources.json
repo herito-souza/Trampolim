@@ -1,0 +1,41 @@
+{
+  "retrievedAt": "2026-11-04",
+  "cssSource": "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400..800&display=swap",
+  "fonts": [
+    {
+      "family": "Barlow Condensed",
+      "weight": "500",
+      "filename": "barlow-condensed-500-latin.woff2",
+      "bytes": 21424,
+      "source": "https://fonts.gstatic.com/s/barlowcondensed/v13/HTxwL3I-JCGChYJ8VI-L6OO_au7B4-Lwz3bWuQ.woff2"
+    },
+    {
+      "family": "Barlow Condensed",
+      "weight": "600",
+      "filename": "barlow-condensed-600-latin.woff2",
+      "bytes": 22308,
+      "source": "https://fonts.gstatic.com/s/barlowcondensed/v13/HTxwL3I-JCGChYJ8VI-L6OO_au7B4873z3bWuQ.woff2"
+    },
+    {
+      "family": "Barlow Condensed",
+      "weight": "700",
+      "filename": "barlow-condensed-700-latin.woff2",
+      "bytes": 22444,
+      "source": "https://fonts.gstatic.com/s/barlowcondensed/v13/HTxwL3I-JCGChYJ8VI-L6OO_au7B46r2z3bWuQ.woff2"
+    },
+    {
+      "family": "Barlow Condensed",
+      "weight": "800",
+      "filename": "barlow-condensed-800-latin.woff2",
+      "bytes": 22464,
+      "source": "https://fonts.gstatic.com/s/barlowcondensed/v13/HTxwL3I-JCGChYJ8VI-L6OO_au7B47b1z3bWuQ.woff2"
+    },
+    {
+      "family": "DM Sans",
+      "weight": "400 800",
+      "filename": "dm-sans-latin.woff2",
+      "bytes": 36932,
+      "source": "https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2"
+    }
+  ]
+}

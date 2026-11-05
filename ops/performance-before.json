@@ -1,0 +1,691 @@
+{
+  "label": "before",
+  "date": "2026-11-04",
+  "method": {
+    "tool": "web-vitals in Chromium/Playwright",
+    "build": "production dist served locally with gzip",
+    "runsPerScenario": 3,
+    "latencyMs": 150,
+    "downloadMbps": 1.6,
+    "uploadMbps": 0.75,
+    "cpuSlowdown": 4,
+    "cache": "disabled per context",
+    "api": "synthetic responses delayed 120ms; not backend measurements",
+    "note": "Laboratory interaction sample, not CrUX/production p75. Initial 6.5s observation followed by scripted interactions."
+  },
+  "results": [
+    {
+      "area": "homepage",
+      "width": 320,
+      "run": 1,
+      "LCP": 4384,
+      "INP": 168,
+      "CLS": 0.0895761434220679,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 13637
+    },
+    {
+      "area": "homepage",
+      "width": 320,
+      "run": 2,
+      "LCP": 1840,
+      "INP": 96,
+      "CLS": 0.0895761434220679,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10666
+    },
+    {
+      "area": "homepage",
+      "width": 320,
+      "run": 3,
+      "LCP": 1916,
+      "INP": 96,
+      "CLS": 0.0895761434220679,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10827
+    },
+    {
+      "area": "homepage",
+      "width": 375,
+      "run": 1,
+      "LCP": 1848,
+      "INP": 88,
+      "CLS": 0.06824602726337449,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10715
+    },
+    {
+      "area": "homepage",
+      "width": 375,
+      "run": 2,
+      "LCP": 1884,
+      "INP": 88,
+      "CLS": 0.06824602726337449,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10687
+    },
+    {
+      "area": "homepage",
+      "width": 375,
+      "run": 3,
+      "LCP": 1860,
+      "INP": 88,
+      "CLS": 0.06824602726337449,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10640
+    },
+    {
+      "area": "homepage",
+      "width": 768,
+      "run": 1,
+      "LCP": 1896,
+      "INP": 88,
+      "CLS": 0.006832287446952161,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10633
+    },
+    {
+      "area": "homepage",
+      "width": 768,
+      "run": 2,
+      "LCP": 1888,
+      "INP": 88,
+      "CLS": 0.006832287446952161,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10682
+    },
+    {
+      "area": "homepage",
+      "width": 768,
+      "run": 3,
+      "LCP": 1896,
+      "INP": 88,
+      "CLS": 0.006832287446952161,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10574
+    },
+    {
+      "area": "homepage",
+      "width": 1024,
+      "run": 1,
+      "LCP": 1892,
+      "INP": 96,
+      "CLS": 0.006840376522805955,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10637
+    },
+    {
+      "area": "homepage",
+      "width": 1024,
+      "run": 2,
+      "LCP": 1908,
+      "INP": 96,
+      "CLS": 0.006840376522805955,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10637
+    },
+    {
+      "area": "homepage",
+      "width": 1024,
+      "run": 3,
+      "LCP": 1904,
+      "INP": 96,
+      "CLS": 0.006840376522805955,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10691
+    },
+    {
+      "area": "homepage",
+      "width": 1440,
+      "run": 1,
+      "LCP": 1944,
+      "INP": 104,
+      "CLS": 0.033904851114406505,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10734
+    },
+    {
+      "area": "homepage",
+      "width": 1440,
+      "run": 2,
+      "LCP": 1932,
+      "INP": 96,
+      "CLS": 0.033904851114406505,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10712
+    },
+    {
+      "area": "homepage",
+      "width": 1440,
+      "run": 3,
+      "LCP": 1880,
+      "INP": 104,
+      "CLS": 0.033904851114406505,
+      "requests": 12,
+      "encodedBytes": 188602,
+      "heavyRequests": 0,
+      "elapsedMs": 10593
+    },
+    {
+      "area": "candidate",
+      "width": 375,
+      "run": 1,
+      "LCP": 2492,
+      "INP": 64,
+      "CLS": 0.042214800514403295,
+      "requests": 28,
+      "encodedBytes": 217058,
+      "heavyRequests": 0,
+      "elapsedMs": 10179
+    },
+    {
+      "area": "candidate",
+      "width": 375,
+      "run": 2,
+      "LCP": 2524,
+      "INP": 64,
+      "CLS": 0.042214800514403295,
+      "requests": 28,
+      "encodedBytes": 217058,
+      "heavyRequests": 0,
+      "elapsedMs": 10137
+    },
+    {
+      "area": "candidate",
+      "width": 375,
+      "run": 3,
+      "LCP": 2604,
+      "INP": 48,
+      "CLS": 0.042214800514403295,
+      "requests": 28,
+      "encodedBytes": 217058,
+      "heavyRequests": 0,
+      "elapsedMs": 10563
+    },
+    {
+      "area": "candidate",
+      "width": 1440,
+      "run": 1,
+      "LCP": 2560,
+      "INP": 80,
+      "CLS": 0.11707649374544539,
+      "requests": 28,
+      "encodedBytes": 217058,
+      "heavyRequests": 0,
+      "elapsedMs": 10098
+    },
+    {
+      "area": "candidate",
+      "width": 1440,
+      "run": 2,
+      "LCP": 2472,
+      "INP": 72,
+      "CLS": 0.11707649374544539,
+      "requests": 28,
+      "encodedBytes": 217058,
+      "heavyRequests": 0,
+      "elapsedMs": 10099
+    },
+    {
+      "area": "candidate",
+      "width": 1440,
+      "run": 3,
+      "LCP": 2512,
+      "INP": 80,
+      "CLS": 0.11707649374544539,
+      "requests": 28,
+      "encodedBytes": 217058,
+      "heavyRequests": 0,
+      "elapsedMs": 10068
+    },
+    {
+      "area": "company",
+      "width": 375,
+      "run": 1,
+      "LCP": 2528,
+      "INP": 200,
+      "CLS": 0.7037383765432099,
+      "requests": 30,
+      "encodedBytes": 234411,
+      "heavyRequests": 0,
+      "elapsedMs": 9743
+    },
+    {
+      "area": "company",
+      "width": 375,
+      "run": 2,
+      "LCP": 2448,
+      "INP": 168,
+      "CLS": 0.7037383765432099,
+      "requests": 30,
+      "encodedBytes": 234413,
+      "heavyRequests": 0,
+      "elapsedMs": 9681
+    },
+    {
+      "area": "company",
+      "width": 375,
+      "run": 3,
+      "LCP": 2420,
+      "INP": 168,
+      "CLS": 0.7037383765432099,
+      "requests": 30,
+      "encodedBytes": 234413,
+      "heavyRequests": 0,
+      "elapsedMs": 9694
+    },
+    {
+      "area": "company",
+      "width": 1440,
+      "run": 1,
+      "LCP": 2516,
+      "INP": 208,
+      "CLS": 0.33067737737375685,
+      "requests": 30,
+      "encodedBytes": 234413,
+      "heavyRequests": 0,
+      "elapsedMs": 9711
+    },
+    {
+      "area": "company",
+      "width": 1440,
+      "run": 2,
+      "LCP": 2596,
+      "INP": 200,
+      "CLS": 0.33067737737375685,
+      "requests": 30,
+      "encodedBytes": 234413,
+      "heavyRequests": 0,
+      "elapsedMs": 9714
+    },
+    {
+      "area": "company",
+      "width": 1440,
+      "run": 3,
+      "LCP": 2552,
+      "INP": 208,
+      "CLS": 0.33067737737375685,
+      "requests": 30,
+      "encodedBytes": 234413,
+      "heavyRequests": 0,
+      "elapsedMs": 9673
+    },
+    {
+      "area": "capacita",
+      "width": 375,
+      "run": 1,
+      "LCP": 1988,
+      "INP": 56,
+      "CLS": 0.10247448230452674,
+      "requests": 37,
+      "encodedBytes": 246388,
+      "heavyRequests": 0,
+      "elapsedMs": 10496
+    },
+    {
+      "area": "capacita",
+      "width": 375,
+      "run": 2,
+      "LCP": 2008,
+      "INP": 56,
+      "CLS": 0.10247448230452674,
+      "requests": 38,
+      "encodedBytes": 246388,
+      "heavyRequests": 0,
+      "elapsedMs": 10555
+    },
+    {
+      "area": "capacita",
+      "width": 375,
+      "run": 3,
+      "LCP": 2004,
+      "INP": 56,
+      "CLS": 0.10247448230452674,
+      "requests": 38,
+      "encodedBytes": 246388,
+      "heavyRequests": 0,
+      "elapsedMs": 10559
+    },
+    {
+      "area": "capacita",
+      "width": 1440,
+      "run": 1,
+      "LCP": 2112,
+      "INP": 72,
+      "CLS": 0.04971794494712631,
+      "requests": 38,
+      "encodedBytes": 246577,
+      "heavyRequests": 0,
+      "elapsedMs": 10156
+    },
+    {
+      "area": "capacita",
+      "width": 1440,
+      "run": 2,
+      "LCP": 1972,
+      "INP": 72,
+      "CLS": 0.04971794494712631,
+      "requests": 37,
+      "encodedBytes": 246388,
+      "heavyRequests": 0,
+      "elapsedMs": 9986
+    },
+    {
+      "area": "capacita",
+      "width": 1440,
+      "run": 3,
+      "LCP": 2000,
+      "INP": 48,
+      "CLS": 0.04971794494712631,
+      "requests": 37,
+      "encodedBytes": 246388,
+      "heavyRequests": 0,
+      "elapsedMs": 9961
+    }
+  ],
+  "assets": [
+    {
+      "file": "accessibleFocus-DF69G87a.js",
+      "bytes": 1714,
+      "gzipBytes": 753
+    },
+    {
+      "file": "AccountDataDownload-Dym2WtTf.js",
+      "bytes": 1052,
+      "gzipBytes": 690
+    },
+    {
+      "file": "AccountHeaderActions-C9QHQdHs.js",
+      "bytes": 479,
+      "gzipBytes": 316
+    },
+    {
+      "file": "AdminCapacitaPage-CRJUq8nz.js",
+      "bytes": 7389,
+      "gzipBytes": 2436
+    },
+    {
+      "file": "AdminCatalogPage-C1sJ5nty.js",
+      "bytes": 21469,
+      "gzipBytes": 5998
+    },
+    {
+      "file": "api-C4oIdtFg.js",
+      "bytes": 5541,
+      "gzipBytes": 1807
+    },
+    {
+      "file": "AssessmentPanel-BHV0VvlV.js",
+      "bytes": 19919,
+      "gzipBytes": 5376
+    },
+    {
+      "file": "AssociationDashboardPage-CwONt2c3.js",
+      "bytes": 27685,
+      "gzipBytes": 7188
+    },
+    {
+      "file": "AuthScreen-BHYN2QhQ.js",
+      "bytes": 20431,
+      "gzipBytes": 5902
+    },
+    {
+      "file": "CapacitaPage-CCj9y_IW.js",
+      "bytes": 86636,
+      "gzipBytes": 21788
+    },
+    {
+      "file": "CareerExtras-DZLmSNii.js",
+      "bytes": 7843,
+      "gzipBytes": 2631
+    },
+    {
+      "file": "CareerPanel-CrfzNOQ8.js",
+      "bytes": 17603,
+      "gzipBytes": 5009
+    },
+    {
+      "file": "CatalogPage-DJ_jzaGU.js",
+      "bytes": 43709,
+      "gzipBytes": 13326
+    },
+    {
+      "file": "CompanyEntryPage-CCt5dB2J.js",
+      "bytes": 2923,
+      "gzipBytes": 1183
+    },
+    {
+      "file": "CompanyOpportunities-1U2j5K1J.js",
+      "bytes": 5212,
+      "gzipBytes": 2171
+    },
+    {
+      "file": "CompanyPortal-BiP4ZRG7.js",
+      "bytes": 100614,
+      "gzipBytes": 22369
+    },
+    {
+      "file": "CompanyPublicPage-Cm3wR5jV.js",
+      "bytes": 8833,
+      "gzipBytes": 3084
+    },
+    {
+      "file": "DashboardActions-CL-gaVLG.js",
+      "bytes": 1160,
+      "gzipBytes": 582
+    },
+    {
+      "file": "FutureTalentPanel-3HgGp-Dp.js",
+      "bytes": 20493,
+      "gzipBytes": 5498
+    },
+    {
+      "file": "Home-7vGX1Hnj.js",
+      "bytes": 18960,
+      "gzipBytes": 5446
+    },
+    {
+      "file": "HubCompanyInvitation-D567yc--.js",
+      "bytes": 2023,
+      "gzipBytes": 1059
+    },
+    {
+      "file": "HubParticipationPanel-Gn3vM3qk.js",
+      "bytes": 6471,
+      "gzipBytes": 2240
+    },
+    {
+      "file": "HubPublicPage-aZkqsH95.js",
+      "bytes": 3134,
+      "gzipBytes": 1267
+    },
+    {
+      "file": "hubTypes-BM8Z1Icy.js",
+      "bytes": 2920,
+      "gzipBytes": 1271
+    },
+    {
+      "file": "InclusionSupport-COXf339l.js",
+      "bytes": 9147,
+      "gzipBytes": 2973
+    },
+    {
+      "file": "index-NIiLDDBm.js",
+      "bytes": 285644,
+      "gzipBytes": 85269
+    },
+    {
+      "file": "index-vO99IaYl.css",
+      "bytes": 66925,
+      "gzipBytes": 11729
+    },
+    {
+      "file": "jsx-runtime-BX5dh3L7.js",
+      "bytes": 971,
+      "gzipBytes": 557
+    },
+    {
+      "file": "LessonEditor-gPQsWFPN.js",
+      "bytes": 5430,
+      "gzipBytes": 2404
+    },
+    {
+      "file": "LibraryPanel-NR92SsjZ.js",
+      "bytes": 16942,
+      "gzipBytes": 5310
+    },
+    {
+      "file": "maplibre-gl-worker-Br3j0JGE.js",
+      "bytes": 518989,
+      "gzipBytes": 148199
+    },
+    {
+      "file": "MunicipalityAssignment-CBbOAaL6.js",
+      "bytes": 2084,
+      "gzipBytes": 1029
+    },
+    {
+      "file": "ObservatoryPanel-BwvTUdRs.js",
+      "bytes": 5289,
+      "gzipBytes": 1888
+    },
+    {
+      "file": "OpportunitiesPage-C_eDLGRh.js",
+      "bytes": 23663,
+      "gzipBytes": 7206
+    },
+    {
+      "file": "PdfReader-BdWBaaVx.js",
+      "bytes": 436626,
+      "gzipBytes": 130464
+    },
+    {
+      "file": "PdfReader-B_lzOk4a.css",
+      "bytes": 230012,
+      "gzipBytes": 41268
+    },
+    {
+      "file": "PerformancePanel-zNNPtUSm.js",
+      "bytes": 13537,
+      "gzipBytes": 4454
+    },
+    {
+      "file": "PremiumPage-BGPyZizL.js",
+      "bytes": 23736,
+      "gzipBytes": 7461
+    },
+    {
+      "file": "ProfilePage-CwqdIUfa.js",
+      "bytes": 35368,
+      "gzipBytes": 9107
+    },
+    {
+      "file": "PublicProfilePage-C73sMzoN.js",
+      "bytes": 3170,
+      "gzipBytes": 1206
+    },
+    {
+      "file": "QuestionBoard-CH6OgbS-.js",
+      "bytes": 24463,
+      "gzipBytes": 7508
+    },
+    {
+      "file": "RadarPanel-DEPq0792.js",
+      "bytes": 24699,
+      "gzipBytes": 6629
+    },
+    {
+      "file": "react-CroeVfTE.js",
+      "bytes": 7527,
+      "gzipBytes": 2883
+    },
+    {
+      "file": "RegionalMap-BygeejS_.js",
+      "bytes": 1062646,
+      "gzipBytes": 286831
+    },
+    {
+      "file": "RegionalMap-jb8J7iKO.css",
+      "bytes": 71844,
+      "gzipBytes": 10266
+    },
+    {
+      "file": "RequirementsEditor-yMquEHky.js",
+      "bytes": 6775,
+      "gzipBytes": 2447
+    },
+    {
+      "file": "SaasAdminPage-D4F6LAaR.js",
+      "bytes": 45267,
+      "gzipBytes": 9830
+    },
+    {
+      "file": "SharedCompetency-CQiYQrBo.js",
+      "bytes": 2098,
+      "gzipBytes": 1080
+    },
+    {
+      "file": "SkillPicker-CKjCbZKb.js",
+      "bytes": 1693,
+      "gzipBytes": 923
+    },
+    {
+      "file": "territory-CvgVTXBv.js",
+      "bytes": 960,
+      "gzipBytes": 501
+    },
+    {
+      "file": "TerritorySelector-CP0qrZky.js",
+      "bytes": 2073,
+      "gzipBytes": 1016
+    },
+    {
+      "file": "types-CVmkk60s.js",
+      "bytes": 224,
+      "gzipBytes": 171
+    },
+    {
+      "file": "types-HMNAPMEw.js",
+      "bytes": 201,
+      "gzipBytes": 194
+    },
+    {
+      "file": "WelcomeScreen-Bp5HKRQH.js",
+      "bytes": 4490,
+      "gzipBytes": 2005
+    },
+    {
+      "file": "YoungOpportunities-BJflImRb.js",
+      "bytes": 3160,
+      "gzipBytes": 1409
+    }
+  ]
+}

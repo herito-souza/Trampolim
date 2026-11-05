@@ -1,3 +1,4 @@
+import { CandidateNextStep } from '../dashboard/CandidateNextStep';
 import { useCallback, useEffect, useState } from 'react';
 import { getRecommendationReason, getRecommendations, loadDiagnosticResult } from '../diagnostic/recommendations';
 import { api } from './api';
@@ -26,6 +27,8 @@ export function OpportunitiesPage({ token, profile, onEditProfile, onLogout, onR
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [favoriteError, setFavoriteError] = useState('');
   const [journeyProfile, setJourneyProfile] = useState<ProfileResponse | null>(null);
+  const [journeyApplications,setJourneyApplications]=useState<Application[]|null>(null);
+  const [favoriteLoading,setFavoriteLoading]=useState(true);
   const [applicationCount, setApplicationCount] = useState<number | null>(null);
   const [journeyLoading, setJourneyLoading] = useState(true);
   const [journeyError, setJourneyError] = useState('');
@@ -34,16 +37,20 @@ export function OpportunitiesPage({ token, profile, onEditProfile, onLogout, onR
   const jobs = getRecommendations(diagnostic, 'job');
 
   const loadFavorites = useCallback(() => {
-    setFavoriteError('');
-    return api<string[]>('/profile/favorites', token).then(setFavoriteIds).catch(() => setFavoriteError('Não foi possível carregar seus favoritos.'));
+    setFavoriteError('');setFavoriteLoading(true);
+    return api<string[]>('/profile/favorites', token).then(setFavoriteIds).catch(() => setFavoriteError('Não foi possível carregar seus favoritos.')).finally(()=>setFavoriteLoading(false));
   }, [token]);
 
   const loadJourney = useCallback(() => {
     setJourneyLoading(true);
     setJourneyError('');
-    Promise.all([api<ProfileResponse>('/profile', token), api<Application[]>('/profile/applications', token)])
-      .then(([savedProfile, applications]) => { setJourneyProfile(savedProfile); setApplicationCount(applications.length); })
-      .catch(() => { setJourneyProfile(null); setApplicationCount(null); setJourneyError('Não foi possível carregar o resumo da sua jornada. Verifique sua conexão e tente novamente.'); })
+    Promise.allSettled([api<ProfileResponse>('/profile', token), api<Application[]>('/profile/applications', token)])
+      .then(([saved, applications]) => {
+        setJourneyProfile(saved.status==='fulfilled'?saved.value:null);
+        setJourneyApplications(applications.status==='fulfilled'?applications.value:null);
+        setApplicationCount(applications.status==='fulfilled'?applications.value.length:null);
+        if(saved.status==='rejected'||applications.status==='rejected')setJourneyError('Parte do resumo não pôde ser carregada. Os dados disponíveis continuam acessíveis. Tente novamente para atualizar.');
+      })
       .finally(() => setJourneyLoading(false));
   }, [token]);
 
@@ -85,6 +92,7 @@ export function OpportunitiesPage({ token, profile, onEditProfile, onLogout, onR
           </div>
         </section>
 
+        <CandidateNextStep profile={journeyProfile?.profile||profile} hasDiagnostic={Boolean(diagnostic)} onProfile={onEditProfile} onDiagnostic={()=>diagnostic?onNavigate('diagnostic'):onRetakeDiagnostic()} onCatalog={onOpenCatalog} onNavigate={onNavigate}/>
         {!diagnostic && <div role="status" className="mt-7 rounded-2xl border border-brand-yellow/50 bg-brand-yellow/15 p-5 font-semibold">Você está vendo o catálogo completo. Faça o diagnóstico para filtrar cursos e vagas de acordo com seus interesses.</div>}
         {diagnostic && <GuidancePanel result={diagnostic} />}
         {favoriteError && <p role="alert" className="mt-5 rounded-xl bg-red-50 p-3 text-sm font-semibold text-brand-red">{favoriteError}</p>}
@@ -95,16 +103,18 @@ export function OpportunitiesPage({ token, profile, onEditProfile, onLogout, onR
           {journeyError && <div role="alert" className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 p-4 text-sm font-semibold text-brand-red"><span>{journeyError}</span><button type="button" onClick={loadJourney} className="rounded-full border border-brand-red/30 px-4 py-2 font-bold">Tentar novamente</button></div>}
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <button type="button" onClick={onEditProfile} className="rounded-2xl bg-paper p-4 text-left transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"><span className="text-xs font-bold uppercase tracking-wider text-ink/55">Perfil</span><strong className="mt-2 block text-2xl">{journeyLoading ? '…' : profileCompletion === null ? '—' : `${profileCompletion}%`}</strong><span className="mt-1 block text-sm text-ink/65">{journeyProfile ? `${journeyProfile.experiences.length} experiências · ${journeyProfile.educations.length} formações` : 'Ver seus dados profissionais'}</span></button>
-            <button type="button" onClick={onEditProfile} className="rounded-2xl bg-paper p-4 text-left transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"><span className="text-xs font-bold uppercase tracking-wider text-ink/55">Itens salvos</span><strong className="mt-2 block text-2xl">{favoriteIds.length}</strong><span className="mt-1 block text-sm text-ink/65">Cursos e áreas para consultar depois</span></button>
-            <button type="button" onClick={onEditProfile} className="rounded-2xl bg-paper p-4 text-left transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"><span className="text-xs font-bold uppercase tracking-wider text-ink/55">Candidaturas</span><strong className="mt-2 block text-2xl">{applicationCount === null ? '…' : applicationCount}</strong><span className="mt-1 block text-sm text-ink/65">Vagas que você está acompanhando</span></button>
+            <button type="button" onClick={onEditProfile} className="rounded-2xl bg-paper p-4 text-left transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"><span className="text-xs font-bold uppercase tracking-wider text-ink/55">Itens salvos</span><strong className="mt-2 block text-2xl">{favoriteLoading?'…':favoriteError?'—':favoriteIds.length}</strong><span className="mt-1 block text-sm text-ink/65">Cursos e áreas para consultar depois</span></button>
+            <button type="button" onClick={onEditProfile} className="rounded-2xl bg-paper p-4 text-left transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"><span className="text-xs font-bold uppercase tracking-wider text-ink/55">Candidaturas</span><strong className="mt-2 block text-2xl">{journeyLoading?'…':applicationCount===null?'—':applicationCount}</strong><span className="mt-1 block text-sm text-ink/65">Vagas que você está acompanhando</span></button>
             <button type="button" onClick={onRetakeDiagnostic} className="rounded-2xl bg-paper p-4 text-left transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"><span className="text-xs font-bold uppercase tracking-wider text-ink/55">Diagnóstico</span><strong className="mt-2 block text-2xl">{diagnostic ? 'Concluído' : 'Pendente'}</strong><span className="mt-1 block text-sm text-ink/65">{diagnostic ? `Trilha ${diagnostic.trackName}` : 'Faça o teste para personalizar recomendações'}</span></button>
           </div>
         </section>
 
+        <section aria-labelledby="recent-applications-title" className="mt-8 rounded-3xl border border-white/15 bg-surface p-5 md:p-7"><h2 id="recent-applications-title" className="text-2xl font-black">Candidaturas recentes</h2><p className="mt-2 text-sm text-ink/80">Acompanhamento registrado na sua conta de Oportunidades. Seleções feitas em portais externos podem ter histórico separado.</p>{journeyLoading?<p role="status" className="mt-4">Carregando seu acompanhamento…</p>:journeyApplications===null?<p role="status" className="mt-4">Histórico indisponível. Atualize o resumo da jornada para tentar novamente.</p>:journeyApplications.length?<ul className="mt-4 space-y-3">{[...journeyApplications].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,5).map(item=><li key={item.id} className="rounded-xl border border-white/15 p-4"><h3 className="font-bold">{item.title}</h3><p className="mt-1 text-sm text-ink/80">{item.provider}{item.location?' · '+item.location:''}</p><p className="mt-1 text-sm">Etapa: {({SAVED:'Salva para acompanhar',APPLIED:'Candidatura registrada',INTERVIEW:'Entrevista',OFFER:'Proposta recebida',REJECTED:'Não selecionada'} as Record<string,string>)[item.status]||item.status}</p></li>)}</ul>:<p className="mt-4">Você ainda não registrou candidaturas nesta conta.</p>}<button type="button" className="mt-4 min-h-11 rounded-full border border-white/25 px-4 py-2 font-bold" onClick={onEditProfile}>Gerenciar meu acompanhamento</button></section>
+
         <section id="cursos" className="scroll-mt-8 py-14 md:py-16">
           <p className="mb-2 text-[13px] font-extrabold uppercase tracking-[1.5px] text-brand-red">Aprenda e avance</p>
           <h2 className="text-3xl font-black md:text-4xl">{diagnostic ? 'Cursos que combinam com suas respostas' : 'Todos os cursos disponíveis'}</h2>
-          <p className="mt-3 max-w-2xl text-ink/65">Acesse as plataformas parceiras para consultar cursos, requisitos, modalidades e inscrições disponíveis.</p>
+          <p className="mt-3 max-w-2xl text-ink/65">Acesse as plataformas indicadas para consultar cursos, requisitos, modalidades e inscrições disponíveis.</p>
           {courses.length ? <div className="mt-8 grid gap-5 md:grid-cols-3">{courses.slice(0, 3).map(course => { const reason = diagnostic ? getRecommendationReason(diagnostic, course.tags) : null; return <article key={course.id} className="flex h-full flex-col rounded-3xl border border-[#e7e0d0] bg-brand-white p-6 shadow-sm"><p className="text-xs font-extrabold tracking-wider text-brand-red">{course.provider}</p><p className="mt-2 text-xs font-bold text-ink/55">Tema de curso · consulte oferta e matrícula na plataforma</p><h3 className="mt-4 text-2xl font-black">{course.title}</h3><p className="mt-2 text-sm leading-6 text-ink/65">{course.description}</p>{reason && <p className="mb-4 mt-3 rounded-xl bg-brand-green/10 p-3 text-sm font-semibold text-ink/75">Recomendado pelas suas respostas: {reason.skills.map(skill => skillLabels[skill]).join(' e ')}.</p>}<button type="button" aria-pressed={favoriteIds.includes(course.id)} onClick={() => toggleFavorite(course.id)} className="mb-4 mt-auto w-fit rounded-full border border-brand-red/30 bg-transparent px-4 py-2 text-sm font-bold text-brand-red cursor-pointer">{favoriteIds.includes(course.id) ? '♥ Salvo no perfil' : '♡ Salvar no perfil'}</button><a href={course.url} target="_blank" rel="noreferrer" onClick={() => recordCatalogMetric('open', 'course', course.id, token)} className={buttonClass}>Acessar plataforma ↗</a></article>; })}</div> : <p className="mt-6 rounded-2xl bg-brand-white p-5 text-ink/60">Nenhum curso compatível no catálogo.</p>}
           {courses.length > 3 && <button onClick={() => onOpenCatalog('course')} className="mt-6 rounded-full border-2 border-ink px-6 py-3 font-extrabold text-ink cursor-pointer">Ver mais cursos</button>}
         </section>
@@ -115,7 +125,7 @@ export function OpportunitiesPage({ token, profile, onEditProfile, onLogout, onR
           <p className="mt-3 max-w-2xl text-ink/65">{diagnostic ? 'Estas áreas foram selecionadas conforme suas respostas. Consulte vagas reais e candidaturas no serviço oficial de emprego.' : 'Explore todas as áreas do catálogo e consulte vagas reais e candidaturas no serviço oficial de emprego.'}</p>
           {jobs.length ? <div className="mt-8 grid gap-5 md:grid-cols-3">{jobs.slice(0, 3).map(job => { const reason = diagnostic ? getRecommendationReason(diagnostic, job.tags) : null; return <article key={job.id} className="flex h-full flex-col rounded-3xl border border-[#e7e0d0] bg-brand-white p-6 shadow-sm"><p className="text-xs font-extrabold uppercase tracking-wider text-brand-blue">{job.provider}</p><p className="mt-2 text-xs font-bold text-ink/55">Área profissional · consulte anúncios abertos no portal</p><h3 className="mt-4 text-xl font-black">{job.title}</h3><p className="mt-2 text-sm leading-6 text-ink/65">{job.description}{profile.location ? ` Região informada: ${profile.location}.` : ''}</p>{reason && <p className="mb-4 mt-3 rounded-xl bg-brand-green/10 p-3 text-sm font-semibold text-ink/75">Recomendada pelas suas respostas: {reason.skills.map(skill => skillLabels[skill]).join(' e ')}.</p>}<button type="button" aria-pressed={favoriteIds.includes(job.id)} onClick={() => toggleFavorite(job.id)} className="mb-4 mt-auto w-fit rounded-full border border-brand-red/30 bg-transparent px-4 py-2 text-sm font-bold text-brand-red cursor-pointer">{favoriteIds.includes(job.id) ? '♥ Salvo no perfil' : '♡ Salvar no perfil'}</button><a href={job.url} target="_blank" rel="noreferrer" onClick={() => recordCatalogMetric('open', 'job', job.id, token)} className={buttonClass}>Pesquisar vagas ↗</a></article>; })}</div> : <p className="mt-6 rounded-2xl bg-brand-white p-5 text-ink/60">Nenhuma vaga compatível no catálogo.</p>}
           {jobs.length > 3 && <button onClick={() => onOpenCatalog('job')} className="mt-6 rounded-full border-2 border-ink px-6 py-3 font-extrabold text-ink cursor-pointer">Ver mais vagas</button>}
-          <p className="mt-5 text-xs text-ink/50">As recomendações indicam áreas de interesse. A disponibilidade de vagas e cursos depende das plataformas parceiras.</p>
+          <p className="mt-5 text-xs text-ink/50">As recomendações indicam áreas de interesse. A disponibilidade de vagas e cursos depende das plataformas indicadas.</p>
         </section>
 
         <footer className="rounded-3xl border border-brand-green/25 bg-brand-green/10 px-7 py-8 md:px-10"><p className="text-xs font-extrabold uppercase tracking-widest text-brand-green">Continue construindo</p><h2 className="mt-2 text-2xl font-black">Seu perfil profissional cresce junto com você.</h2><p className="mt-2 max-w-2xl text-sm text-ink/65">Quando quiser, atualize suas experiências e formações pelo atalho “Meu perfil” no cabeçalho.</p></footer>

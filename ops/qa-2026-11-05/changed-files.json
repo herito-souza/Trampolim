@@ -1,0 +1,69 @@
+{
+  "scope": "Files modified or created in this audit; earlier uncommitted files preserved",
+  "files": [
+    {
+      "path": "frontend/.gitignore",
+      "sha256": "08a00ca208adb9306c3966bd1e9831880d1e61417ce0e6a1b16aef5d725f59ed"
+    },
+    {
+      "path": "frontend/src/features/geography/publicSearch.ts",
+      "sha256": "92f8a92e45d5061dafe489715fc30549540607ed9936d90a6db76163c0f368ba"
+    },
+    {
+      "path": "frontend/tests/publicSearch.test.mjs",
+      "sha256": "0fe88ede71c3cdaee7d98266c9479fc12a99382f07c1a3d7e0fa45ee955328b5"
+    },
+    {
+      "path": "frontend/e2e/regional-resilience.spec.ts",
+      "sha256": "f9b8881023b937cb0ad87d6df6cb73df07ea446ccf51bdc4bad2350164c7fe9e"
+    },
+    {
+      "path": "frontend/e2e/homepage-regional.spec.ts",
+      "sha256": "38dba9b916c7e044205cdaaf670c258663e2572925b84ae6cad03aa4214283e7"
+    },
+    {
+      "path": "frontend/e2e/learning-journey.spec.ts",
+      "sha256": "f89743c8476a0b1c2d970a88e594d33b445d9927faa6b92ef0a9d4d91a7a9355"
+    },
+    {
+      "path": "frontend/src/pages/EcosystemHome.tsx",
+      "sha256": "d86c5ae24f0bf2c55f81edb079f3035e1b0b3935d192a8e0753bb85c03d1e796"
+    },
+    {
+      "path": "frontend/scripts/measure-performance.mjs",
+      "sha256": "8d2413304f93629d5d321c73afe493f7713640fde9c1b5f72112ac8a8ed7d382"
+    },
+    {
+      "path": "backend/src/main/java/com/trampolim/api/company/CompanyPaymentController.java",
+      "sha256": "a9df68f3ac0ba60142652a019e059b146cb926cf7a4d83a37193dc9dbb1962c9"
+    },
+    {
+      "path": "backend/src/main/java/com/trampolim/api/security/TrailTokenService.java",
+      "sha256": "631274523d3c9d8f69558cead005bbc6f228dca0c797aa7fc0b203cbe905c445"
+    },
+    {
+      "path": "backend/src/test/java/com/trampolim/api/company/CompanyPaymentWebhookPostgresTest.java",
+      "sha256": "eb08fdd7b82199d61f961b6fcf60cbe11059ca1319405e891df22b6b55b0bbed"
+    },
+    {
+      "path": "backend/src/test/java/com/trampolim/api/geography/TerritorialCatalogTest.java",
+      "sha256": "561d51c31777a1367f9262b32a5eaf53e55af6e776cef64df22dfb710c317ba8"
+    },
+    {
+      "path": "backend/src/test/java/com/trampolim/api/security/TrailTokenServiceTest.java",
+      "sha256": "9ba226db2df0d1e7598bc33cbb44d5276883eaeea62a2dae3122206edbc5cf45"
+    },
+    {
+      "path": "README.md",
+      "sha256": "d54313158549ebe680eba512566dd60077a66b1b485edb09ed3683f50a21e50a"
+    },
+    {
+      "path": "QA_IMPLANTACAO_IRECE.md",
+      "sha256": "364d7a0c6ec5ca9f57b814c0303c61f4db8e2701c9fe0e87d9ed26d49543fb73"
+    },
+    {
+      "path": "ops/GUIA_HOMOLOGACAO_IRECE.md",
+      "sha256": "2e04c66131e6d0795e8c6622c8d0de4eb5c557a5f6e05603b242c8d5d6174281"
+    }
+  ]
+}

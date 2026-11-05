@@ -1,0 +1,34 @@
+{
+  "defaultRegion": "irece-ba",
+  "referenceMunicipality": "2914604",
+  "source": "https://www.ba.gov.br/cultura/314/divisao-territorial-da-bahia",
+  "regions": [
+    {
+      "id": "irece-ba",
+      "name": "Irecê e região",
+      "description": "Território de Identidade Irecê — recorte inicial configurável",
+      "municipalityCodes": [
+        "2901155",
+        "2903003",
+        "2903235",
+        "2905305",
+        "2906204",
+        "2907608",
+        "2911303",
+        "2912400",
+        "2913101",
+        "2914109",
+        "2914604",
+        "2915353",
+        "2918357",
+        "2918506",
+        "2919157",
+        "2922052",
+        "2925600",
+        "2932408",
+        "2929255",
+        "2933604"
+      ]
+    }
+  ]
+}

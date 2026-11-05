@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-05",
+  "scope": "Read-only check of random fixture schema names observed in the final Maven log; no schema was deleted by this check",
+  "fixtureSchemaNamesObserved": 27,
+  "checks": [
+    {
+      "container": "trampolim-db",
+      "schemasRemainingFromThisRun": 0
+    },
+    {
+      "container": "trampolim-empresas-db",
+      "schemasRemainingFromThisRun": 0
+    },
+    {
+      "container": "trampolim-capacita-db",
+      "schemasRemainingFromThisRun": 0
+    }
+  ]
+}

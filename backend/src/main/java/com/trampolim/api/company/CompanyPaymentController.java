@@ -37,7 +37,7 @@ public class CompanyPaymentController {
 
     public record PaymentCheckout(long listingId, int amountCents, String currency, String status, String checkoutUrl) {}
     public record PaymentHistory(long id, int amountCents, String provider, String status, String providerStatus, String checkoutUrl, String createdAt, String paidAt) {}
-    public record WebhookEvent(String type, JsonNode data) {}
+    public record WebhookEvent(String type, Map<String,Object> data) {}
 
     @PostMapping("/api/company/listings/{listingId}/payment")
     public PaymentCheckout createCheckout(@AuthenticationPrincipal String email, @PathVariable long listingId) {
@@ -65,13 +65,13 @@ public class CompanyPaymentController {
         if (payment[4] != null) return new PaymentCheckout(listingId, 5000, "BRL", (String) payment[5], (String) payment[4]);
 
         try {
-            JsonNode order = mercadopago.post().uri("/v1/orders")
+            JsonNode order = readOrder(mercadopago.post().uri("/v1/orders")
                     .header("Authorization", "Bearer " + accessToken)
                     .header("X-Idempotency-Key", payment[2].toString())
                     .body(Map.of("type", "online", "processing_mode", "manual", "capture_mode", "automatic_async", "total_amount", "50.00",
                             "external_reference", payment[1], "description", "Divulgação de vaga de estágio no Trampolim",
                             "items", List.of(Map.of("title", "Divulgação de vaga de estágio", "quantity", 1, "unit_price", "50.00"))))
-                    .retrieve().body(JsonNode.class);
+                    .retrieve().body(String.class));
             String orderId = order == null ? "" : order.path("id").asText("");
             String checkoutUrl = order == null ? "" : order.path("checkout_url").asText("");
             if (orderId.isBlank() || checkoutUrl.isBlank() || !checkoutUrl.startsWith("https://")) throw new IllegalStateException("Resposta de checkout incompleta.");
@@ -100,7 +100,7 @@ public class CompanyPaymentController {
         if (webhookSecret == null || webhookSecret.isBlank()) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Webhook de pagamento ainda não configurado.");
         if (orderId == null || orderId.isBlank() || event == null || !"order".equals(event.type()) || !validSignature(signature, requestId, orderId)) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Notificação de pagamento inválida.");
         try {
-            JsonNode order = mercadopago.get().uri("/v1/orders/{id}", orderId).header("Authorization", "Bearer " + accessToken).retrieve().body(JsonNode.class);
+            JsonNode order = readOrder(mercadopago.get().uri("/v1/orders/{id}", orderId).header("Authorization", "Bearer " + accessToken).retrieve().body(String.class));
             if (order == null || !orderId.equals(order.path("id").asText())) return;
             List<Object[]> payments = jdbc.query("SELECT id,listing_id,external_reference,amount_cents,status FROM company_listing_payments WHERE provider_order_id=?", (rs, row) -> new Object[]{rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getInt(4), rs.getString(5)}, orderId);
             if (payments.isEmpty()) return;
@@ -111,14 +111,23 @@ public class CompanyPaymentController {
             String providerStatus = order.path("status").asText("unknown");
             if ("processed".equals(providerStatus) && paid.compareTo(new BigDecimal("50.00")) >= 0) {
                 jdbc.update("UPDATE company_listing_payments SET status='PAID',provider_status=?,paid_at=COALESCE(paid_at,CURRENT_TIMESTAMP),updated_at=CURRENT_TIMESTAMP WHERE id=?", providerStatus, payment[0]);
-                jdbc.update("UPDATE company_listings SET payment_status='PAID',publication_status='PUBLISHED',updated_at=CURRENT_TIMESTAMP WHERE id=? AND is_internship=TRUE", payment[1]);
+                jdbc.update("UPDATE company_listings SET payment_status='PAID',publication_status=CASE WHEN publication_status='AWAITING_PAYMENT' AND (expires_at IS NULL OR expires_at>=CURRENT_DATE) AND (application_deadline IS NULL OR application_deadline>=CURRENT_DATE) AND EXISTS (SELECT 1 FROM companies c WHERE c.id=company_listings.company_id AND c.verification_status='APPROVED') THEN 'PUBLISHED' ELSE publication_status END,updated_at=CURRENT_TIMESTAMP WHERE id=? AND is_internship=TRUE", payment[1]);
             } else if ("expired".equalsIgnoreCase(order.path("status_detail").asText()) || "cancelled".equals(providerStatus) || "failed".equals(providerStatus)) {
                 String mapped = "expired".equalsIgnoreCase(order.path("status_detail").asText()) ? "EXPIRED" : "CANCELLED";
                 jdbc.update("UPDATE company_listing_payments SET status=?,provider_status=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status<>'PAID'", mapped, providerStatus, payment[0]);
-                jdbc.update("UPDATE company_listings SET payment_status=?,publication_status='AWAITING_PAYMENT',updated_at=CURRENT_TIMESTAMP WHERE id=? AND is_internship=TRUE AND payment_status<>'PAID'", mapped, payment[1]);
+                jdbc.update("UPDATE company_listings SET payment_status=?,publication_status=CASE WHEN publication_status IN ('DRAFT','AWAITING_PAYMENT') THEN 'AWAITING_PAYMENT' ELSE publication_status END,updated_at=CURRENT_TIMESTAMP WHERE id=? AND is_internship=TRUE AND payment_status<>'PAID'", mapped, payment[1]);
             } else jdbc.update("UPDATE company_listing_payments SET provider_status=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status<>'PAID'", providerStatus, payment[0]);
         } catch (RestClientException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível confirmar o status da order no provedor.");
+        }
+    }
+
+    // Decode with the existing Jackson 2 model explicitly; Spring 7's default client uses Jackson 3.
+    private JsonNode readOrder(String body) {
+        if (body == null) return null;
+        try { return new com.fasterxml.jackson.databind.ObjectMapper().readTree(body); }
+        catch (com.fasterxml.jackson.core.JsonProcessingException failure) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "O provedor retornou uma resposta de pagamento inválida.");
         }
     }
 

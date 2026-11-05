@@ -1,0 +1,6 @@
+import { useId } from 'react';
+export type DashboardAction = { label: string; description: string; onSelect: () => void; disabled?: boolean };
+export function DashboardActions({title,description,actions}:{title:string;description:string;actions:DashboardAction[]}) {
+ const id=useId();
+ return <section aria-labelledby={id} className="my-6 rounded-3xl border border-white/15 bg-surface p-5 md:p-7"><h2 id={id} className="text-2xl font-black md:text-3xl">{title}</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-ink/80">{description}</p><div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{actions.map((action,index)=><div key={action.label} className="min-h-24 rounded-2xl border border-white/20 bg-paper p-4 transition hover:border-brand-blue focus-within:border-brand-blue"><button type="button" aria-describedby={id+'-'+index} disabled={action.disabled} onClick={action.onSelect} className="min-h-11 w-full rounded-lg text-left font-extrabold text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-blue disabled:opacity-60">{action.label}</button><p id={id+'-'+index} className="mt-2 text-sm leading-6 text-ink/80">{action.description}</p></div>)}</div></section>;
+}

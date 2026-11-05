@@ -1,0 +1,61 @@
+{
+  "date": "2026-11-05",
+  "readiness": "controlled_homologation_only",
+  "publicReleaseApproved": false,
+  "frontend": {
+    "lint": "passed",
+    "types": "passed via tsc -b and production build",
+    "unit": {
+      "passed": 13,
+      "failed": 0
+    },
+    "e2e": {
+      "passed": 121,
+      "failed": 0,
+      "workers": 2,
+      "duration": "5.2m",
+      "isolatedFromBackendLoad": true
+    },
+    "productionBuild": "passed",
+    "widths": [
+      320,
+      375,
+      768,
+      1024,
+      1440
+    ]
+  },
+  "backend": {
+    "fullVerify": {
+      "passed": 151,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "securityRegressionAfterFinalPlaceholderGuard": {
+      "passed": 25,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "jarSha256": "65b073cec0dede7cc9645f94fbfb6cd3999238f8aee02941d8d4d0269af66f75"
+  },
+  "infrastructure": {
+    "developmentComposeSyntax": "passed",
+    "localDeploymentComposeSyntax": "not validated: ops/.env.local is absent",
+    "nginxSyntaxInIsolatedContainer": "passed",
+    "fullProductionDeployment": "not executed"
+  },
+  "limitations": [
+    "No SMTP homologation",
+    "No real payment or provider sandbox transaction",
+    "No production TLS or end-to-end hosting validation",
+    "No backup restoration rehearsal",
+    "No Java/container vulnerability certification",
+    "No physical device or screen-reader user testing",
+    "No thousands-of-users capacity test",
+    "Intermediate combined-load frontend run had two map timeouts; all 121 passed isolated",
+    "Complete local multi-node stack environment not configured: ops/.env.local absent"
+  ],
+  "performanceEvidence": "../performance-qa-2026-11-05.json"
+}

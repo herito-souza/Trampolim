@@ -201,3 +201,19 @@ No Capacita, os módulos Minhas Trilhas e Passaporte Digital conectam objetivos 
 ## Prioridade 5 — Carreira, desafios e observatório
 
 Consulte [arquitetura, configuração, privacidade, testes e limitações](IA_OBSERVATORIO_FUNCIONALIDADES_PRIORIDADE5.md). A IA externa exige habilitação explícita; a orientação sem IA funciona sem provedor. Novas migrações: Oportunidades V17, Empresas V14 e Capacita V19, em históricos separados. Nenhuma implantação produtiva foi realizada nesta etapa.
+
+
+## Base territorial — Irecê e região
+
+O catálogo e os estágios podem ser consultados por região configurada ou município oficial, com opção de todas as localidades e oportunidades remotas. Veja [configuração, migrações, validação e limites da primeira entrega](REGIONALIZACAO_IRECE_ETAPA1.md). Novas migrações: Oportunidades V18 e Empresas V15; Capacita mantém o histórico independente sem migração nova.
+
+Busca regional e profissional: consulte [BUSCA_REGIONAL.md](BUSCA_REGIONAL.md) para filtros, cobertura de dados, fontes oficiais e validação.
+
+Painéis regionais e ações por perfil: consulte [DASHBOARDS_REGIONAIS.md](DASHBOARDS_REGIONAIS.md).
+
+Mapa regional sob demanda: consulte [MAPA_REGIONAL.md](MAPA_REGIONAL.md) para integração, fontes geográficas, configuração e validação.
+
+- [Performance, responsividade e acessibilidade](PERFORMANCE_ACESSIBILIDADE.md): metodologia de medição, otimizações e limites de produção.
+
+- [Auditoria de prontidão para Irecê e região — 05/11/2026](QA_IMPLANTACAO_IRECE.md).
+- [Guia de homologação e liberação regional](ops/GUIA_HOMOLOGACAO_IRECE.md).

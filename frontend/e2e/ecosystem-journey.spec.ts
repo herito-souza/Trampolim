@@ -51,7 +51,7 @@ test('página institucional conecta oportunidades, empresas e Capacita', async (
   await page.setViewportSize({ width: 390, height: 844 });
   await mockLearningApi(page);
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /Um lugar para aprender e avançar/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Descubra seu potencial/ })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Entrar' })).toHaveCount(0);
   await expect(page.getByText(/Você não precisa ter tudo planejado/)).toHaveCount(0);
 

@@ -82,7 +82,7 @@ public class OpportunityAlertService {
         return km <= prefs.path("radiusKm").asInt();
     }
     private boolean containsOrEmpty(String filter, String value) {
-        return filter == null || filter.isBlank() || (value != null && value.toLowerCase(java.util.Locale.ROOT).contains(filter.trim().toLowerCase(java.util.Locale.ROOT)));
+        return filter == null || filter.isBlank() || (value != null && com.trampolim.api.radar.RadarModel.normalize(value).contains(com.trampolim.api.radar.RadarModel.normalize(filter)));
     }
     private boolean equalsOrEmpty(String filter, String value) {
         return filter == null || filter.isBlank() || (value != null && filter.equalsIgnoreCase(value));

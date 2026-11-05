@@ -107,6 +107,7 @@ test('diagnóstico percorre as dez perguntas, permite confirmar e exibe recomend
   const quiz = page.locator('#diagnostico');
   await expect(quiz.getByRole('heading', { name: 'O que você mais gosta de fazer no dia a dia?' })).toBeVisible();
   for (let question = 0; question < 10; question += 1) {
+    await expect(quiz.getByRole('progressbar')).toHaveAttribute('aria-valuenow', String(question));
     await quiz.getByRole('group').getByRole('button').first().click();
   }
   await expect(quiz.getByRole('heading', { name: 'Revise suas respostas' })).toBeVisible();

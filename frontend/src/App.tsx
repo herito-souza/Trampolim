@@ -1,6 +1,7 @@
-import { RecruiterPortfolio } from './features/career/PortfolioPanel';
+const RecruiterPortfolio=lazy(()=>import('./features/career/PortfolioPanel').then(module=>({default:module.RecruiterPortfolio})));
 const CareerPanel = lazy(() => import('./features/career/CareerPanel').then(module => ({default:module.CareerPanel})));
-import { CredentialVerification, RecruiterPassport } from './features/learning/PassportVerification';
+const CredentialVerification=lazy(()=>import('./features/learning/PassportVerification').then(module=>({default:module.CredentialVerification})));
+const RecruiterPassport=lazy(()=>import('./features/learning/PassportVerification').then(module=>({default:module.RecruiterPassport})));
 import { ApiError } from './features/account/api';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { PageBoundary } from './components/ui/PageBoundary';
@@ -235,7 +236,7 @@ function App() {
     ? <CompanyPortal token={companyToken} onLogout={logoutCompany} />
     : <CompanyEntryPage onLogin={() => openAuth('empresas', 'login')} onRegister={() => openAuth('empresas', 'cadastro')} onNavigate={area => navigatePublicArea(area)} />;
   if (publicArea === 'capacita') return <CapacitaPage token={studentToken || undefined} onNavigate={area => navigatePublicArea(area)} onAuth={mode => openAuth('capacita', mode)} onLogout={studentToken ? logoutStudent : undefined} />;
-  if (publicArea === 'home' && !token) return <EcosystemHome onNavigate={navigatePublicArea} />;
+  if (publicArea === 'home' && !token) return <EcosystemHome onDiagnostic={() => { window.location.hash = 'diagnostico'; setPublicArea('oportunidades'); }} onNavigate={navigatePublicArea} />;
   if (token) {
     if (profileReady && !profile) return <main className="grid min-h-screen place-items-center bg-paper p-6"><section role="alert" className="max-w-lg rounded-3xl border border-ink/20 p-8 text-center"><h1 className="text-2xl font-bold">Não foi possível carregar seu perfil</h1><p className="mt-4">Sua sessão foi preservada. Tente novamente em alguns instantes.</p><button onClick={() => window.location.reload()} className="mt-6 rounded-full bg-brand-yellow px-6 py-3 font-bold text-[#101725]">Tentar novamente</button></section></main>;
     if (!profileReady || !profile) return <main className="min-h-screen p-10 text-center">Carregando sua sessão...</main>;
@@ -302,7 +303,7 @@ function App() {
     if (profileView === 'career') return <CareerPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog}/>;
     if (profileView === 'future') return <FutureTalentPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog} />;
     if (profileView === 'radar') return <RadarPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog} />;
-    if (profileView === 'ecosystem') return <EcosystemHome onNavigate={area => area === 'home' ? setProfileView('ecosystem') : area === 'oportunidades' ? navigateAccount('opportunities') : area === 'capacita' ? setProfileView('capacita') : setProfileView('company-entry')} />;
+    if (profileView === 'ecosystem') return <EcosystemHome onDiagnostic={() => { localStorage.setItem('trampolim_profile_step', 'diagnostic'); setProfileView('diagnostic'); window.location.hash = 'diagnostico'; }} onNavigate={area => area === 'home' ? setProfileView('ecosystem') : area === 'oportunidades' ? navigateAccount('opportunities') : area === 'capacita' ? setProfileView('capacita') : setProfileView('company-entry')} />;
     if (profileView === 'company-entry') return companyToken
       ? <CompanyPortal token={companyToken} onLogout={logoutCompany} />
       : <CompanyEntryPage onLogin={() => openAuth('empresas', 'login')} onRegister={() => openAuth('empresas', 'cadastro')} onNavigate={area => area === 'home' ? setProfileView('ecosystem') : area === 'oportunidades' ? navigateAccount('opportunities') : setProfileView('capacita')} />;
@@ -315,11 +316,11 @@ function App() {
     if (profileView === 'welcome') return <WelcomeScreen token={token} profile={profile.profile} onProfileChange={next => setProfile(current => current ? { ...current, profile: next } : current)} onContinue={openDetails} onLogout={logout} onNavigate={navigateAccount} canManage={canManageCatalog} />;
     if (profileView === 'opportunities') return <OpportunitiesPage token={token} profile={profile.profile} onEditProfile={openDetails} onLogout={logout} onRetakeDiagnostic={retakeDiagnostic} onOpenCatalog={openCatalog} canManage={canManageCatalog} onNavigate={navigateAccount} />;
     if (profileView === 'premium') return <PremiumPage token={token} profile={profile} onLogout={logout} onNavigate={navigateAccount} />;
-    if (profileView === 'catalog-courses' || profileView === 'catalog-jobs') return <CatalogPage kind={profileView === 'catalog-courses' ? 'course' : 'job'} token={token} profile={profile.profile} onLogout={logout} onRetakeDiagnostic={retakeDiagnostic} onNavigate={navigateAccount} canManage={canManageCatalog} />;
+    if (profileView === 'catalog-courses' || profileView === 'catalog-jobs') return <CatalogPage key={profileView} kind={profileView === 'catalog-courses' ? 'course' : 'job'} token={token} profile={profile.profile} onLogout={logout} onRetakeDiagnostic={retakeDiagnostic} onNavigate={navigateAccount} canManage={canManageCatalog} />;
     return <ProfilePage token={token} onLogout={logout} onBack={openWelcome} onComplete={openOpportunities} onNavigate={navigateAccount} canManage={canManageCatalog} />;
   }
   if (publicArea === 'oportunidades') return <Home onAuth={mode => openAuth('oportunidades', mode)} />;
-  return <EcosystemHome onNavigate={navigatePublicArea} />;
+  return <EcosystemHome onDiagnostic={() => { window.location.hash = 'diagnostico'; setPublicArea('oportunidades'); }} onNavigate={navigatePublicArea} />;
 }
 
 export default function Application() {

@@ -69,7 +69,7 @@ class TrailTokenServiceTest {
         tokens.validateConfiguration();
         for(String field:java.util.List.of("oportunidadesSecret","empresasSecret","capacitaSecret")) {
             Object original=ReflectionTestUtils.getField(tokens,field);
-            for(String example:java.util.List.of("TRAMPOLIM_LOCAL_DEV_SECRET_CHANGE_ME_2026","gere-um-segredo-aleatorio-com-pelo-menos-32-bytes")) {
+            for(String example:java.util.List.of("TRAMPOLIM_LOCAL_DEV_SECRET_CHANGE_ME_2026","gere-um-segredo-aleatorio-com-pelo-menos-32-bytes","REPLACE_WITH_OPORTUNIDADES_SECRET_AT_LEAST_32_CHARACTERS","REPLACE_WITH_EMPRESAS_SECRET_AT_LEAST_32_CHARACTERS","REPLACE_WITH_CAPACITA_SECRET_AT_LEAST_32_CHARACTERS")) {
                 ReflectionTestUtils.setField(tokens,field,example);
                 var error=org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,tokens::validateConfiguration);
                 org.junit.jupiter.api.Assertions.assertFalse(error.getMessage().contains(example));
