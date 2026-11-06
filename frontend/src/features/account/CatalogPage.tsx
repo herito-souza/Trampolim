@@ -1,3 +1,4 @@
+import {LegacyPageHeader} from '../../components/workspace/WorkspaceSlots';
 import { LocationRadiusFields } from '../geography/LocationRadiusFields';
 import { OpportunityMapView } from '../maps/OpportunityMapView';
 import { SearchRefinementFields } from '../geography/SearchRefinementFields';
@@ -208,10 +209,10 @@ export function CatalogPage({ kind, token, profile, onLogout, onRetakeDiagnostic
     <div className="min-h-screen bg-paper">
       <RibbonStrip />
       <a href="#conteudo-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-white focus:px-4 focus:py-3 focus:font-bold">Pular para o conteúdo</a>
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-ink/10 px-[6vw] py-5">
+      <LegacyPageHeader className="flex flex-wrap items-center justify-between gap-3 border-b border-ink/10 px-[6vw] py-5">
         <a href="#conteudo-principal" className="font-serif text-2xl font-black text-ink no-underline">Trampol<span className="text-brand-red">i</span>m</a>
         <AccountHeaderActions onProfile={() => onNavigate('profile')} onLogout={onLogout} />
-      </header>
+      </LegacyPageHeader>
       <AccountNavigation active={isCourse ? 'courses' : 'jobs'} onNavigate={onNavigate} canManage={canManage} />
 
       <main id="conteudo-principal" className="mx-auto max-w-7xl px-[6vw] pb-20">

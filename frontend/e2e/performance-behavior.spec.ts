@@ -1,3 +1,4 @@
+import {activate} from './navigation-helpers';
 import { test, expect } from '@playwright/test';
 
 test('dados públicos do Capacita só são buscados ao abrir o módulo correspondente', async ({ page }) => {
@@ -10,10 +11,10 @@ test('dados públicos do Capacita só são buscados ao abrir o módulo correspon
   });
   await page.goto('/#capacita');await expect(page.getByRole('heading',{name:'Trampolim Capacita',exact:true})).toBeVisible();
   expect(calls.filter(path=>path.endsWith('/capacita/contents')||path.endsWith('/internships'))).toEqual([]);
-  await page.getByRole('button',{name:'Conteúdos por etapa',exact:true}).click();
+  await activate(page,'Conteúdos por etapa');
   await expect.poll(()=>calls.filter(path=>path.endsWith('/capacita/contents')).length).toBe(1);
   expect(calls.some(path=>path.endsWith('/internships'))).toBe(false);
-  await page.getByRole('button',{name:'Preparação profissional',exact:true}).click();
+  await activate(page,'Preparação profissional');
   await expect.poll(()=>calls.filter(path=>path.endsWith('/internships')).length).toBe(1);
 });
 
@@ -58,15 +59,14 @@ test('estágios usam cursor e não duplicam registros ao reabrir a seção', asy
     return route.fulfill({json:[]});
   });
   await page.goto('/#capacita');
-  const modules=page.getByRole('navigation',{name:'Módulos do Capacita',exact:true});
-  await modules.getByRole('button',{name:'Preparação profissional',exact:true}).click();
+  await activate(page,'Preparação profissional','Módulos do Capacita');
   try { await expect(page.getByText('Carregando estágios…',{exact:true})).toBeVisible(); await expect(page.getByRole('heading',{name:'Nenhuma vaga de estágio disponível agora'})).toHaveCount(0); } finally { releaseFirst(); }
   await expect(page.getByRole('heading',{name:'Estágio 999',exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Carregar mais estágios',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Estágio 975',exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Ver vaga e candidatar-se',exact:true})).toHaveCount(48);
-  await modules.getByRole('button',{name:'Visão geral',exact:true}).click();
-  await modules.getByRole('button',{name:'Preparação profissional',exact:true}).click();
+  await activate(page,'Visão geral','Módulos do Capacita');
+  await activate(page,'Preparação profissional','Módulos do Capacita');
   await expect(page.getByRole('button',{name:'Ver vaga e candidatar-se',exact:true})).toHaveCount(24);
   await expect(page.getByRole('heading',{name:'Estágio 999',exact:true})).toBeVisible();
   expect(queries.at(-1)).toBe('first');
@@ -85,9 +85,9 @@ test('logout limpa progresso privado visível sem afetar a sessão empresarial',
     if(path.endsWith('/stream'))return route.fulfill({contentType:'text/event-stream',body:'event: ready\ndata: {}\n\n'});
     return route.fulfill({json:[]});
   });
-  await page.goto('/#capacita');await page.getByRole('button',{name:'Conteúdos por etapa',exact:true}).click();
+  await page.goto('/#capacita');await activate(page,'Conteúdos por etapa');
   await expect(page.getByRole('button',{name:'Concluído ✓',exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'Sair do Capacita',exact:true}).click();
+  await activate(page,'Sair do Capacita');
   await expect(page.getByRole('button',{name:'Entrar para acompanhar',exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Concluído ✓',exact:true})).toHaveCount(0);
   expect(await page.evaluate(()=>localStorage.getItem('trampolim_empresas_token'))).toBe('synthetic-other-trail');

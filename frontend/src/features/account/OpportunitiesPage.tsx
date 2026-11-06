@@ -1,3 +1,4 @@
+import {LegacyPageHeader} from '../../components/workspace/WorkspaceSlots';
 import { CandidateNextStep } from '../dashboard/CandidateNextStep';
 import { useCallback, useEffect, useState } from 'react';
 import { getRecommendationReason, getRecommendations, loadDiagnosticResult } from '../diagnostic/recommendations';
@@ -75,10 +76,10 @@ export function OpportunitiesPage({ token, profile, onEditProfile, onLogout, onR
     <div className="min-h-screen bg-paper">
       <RibbonStrip />
       <a href="#inicio" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-white focus:px-4 focus:py-3 focus:font-bold">Pular para o conteúdo</a>
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-ink/10 px-[6vw] py-5">
+      <LegacyPageHeader className="flex flex-wrap items-center justify-between gap-3 border-b border-ink/10 px-[6vw] py-5">
         <a href="#inicio" className="font-serif text-2xl font-black text-ink no-underline">Trampol<span className="text-brand-red">i</span>m</a>
         <AccountHeaderActions onProfile={onEditProfile} onLogout={onLogout} />
-      </header>
+      </LegacyPageHeader>
       <AccountNavigation active="opportunities" onNavigate={onNavigate} canManage={canManage} />
 
       <main id="inicio" className="mx-auto max-w-7xl px-[6vw] pb-20">

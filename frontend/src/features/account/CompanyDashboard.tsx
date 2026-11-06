@@ -1,3 +1,4 @@
+import {WorkspaceNavigation} from '../../components/workspace/WorkspaceNavigation';
 import { AsyncPanel, LoadingStatus } from '../../components/ui/Feedback';
 import { DashboardActions } from '../dashboard/DashboardActions';
 import { fold } from '../geography/territory';
@@ -23,10 +24,10 @@ type ListingForm = { kind: 'job' | 'course'; title: string; area: string; descri
 type CompanyPage = 'career' | 'passport' | 'future' | 'overview' | 'listings' | 'applications' | 'metrics' | 'growth' | 'profile' | 'team';
 const companyPageFromHash = (): CompanyPage => ({ '#empresa-carreira':'career', '#empresa-passaportes':'passport', '#empresa-futuros': 'future', '#painel': 'overview', '#divulgacoes': 'listings', '#selecao': 'applications', '#crescimento': 'growth', '#perfil-publico': 'profile', '#equipe': 'team', '#empresa-visao-geral': 'overview', '#empresa-divulgacoes': 'listings', '#empresa-candidaturas': 'applications', '#empresa-metricas': 'metrics', '#empresa-planos': 'growth', '#empresa-perfil': 'profile', '#empresa-equipe': 'team' }[window.location.hash] as CompanyPage | undefined) || 'overview';
 const companyPageHashes: Record<CompanyPage, string> = { career:'#empresa-carreira', passport:'#empresa-passaportes', future: '#empresa-futuros', overview: '#empresa-visao-geral', listings: '#empresa-divulgacoes', applications: '#empresa-candidaturas', metrics: '#empresa-metricas', growth: '#empresa-planos', profile: '#empresa-perfil', team: '#empresa-equipe' };
+const roleLabels: Record<string, string> = { OWNER: 'Proprietário', RECRUITER: 'Recrutador', ANALYST: 'Analista' };
 const emptyForm: ListingForm = { kind: 'job', title: '', area: '', description: '', requirements: '', location: '', modality: 'Presencial', url: '', contactEmail: '', salary: '', contractType: 'CLT', workSchedule: 'Integral', workload: '', prerequisites: '', benefits: '', coursePrice: '', certificate: '', isInternship: false, acceptedCourses: '', headcount: '', applicationDeadline: '' };
 const field = 'mt-2 w-full rounded-xl border border-white/15 bg-[#0b1421] px-4 py-3 text-ink placeholder:text-ink/35';
 const statusLabels: Record<Listing['publicationStatus'], string> = { DRAFT: 'Rascunho', PUBLISHED: 'Publicado', PAUSED: 'Pausado', CLOSED: 'Encerrado', AWAITING_PAYMENT: 'Aguardando pagamento' };
-const roleLabels: Record<string, string> = { OWNER: 'Proprietário', RECRUITER: 'Recrutador', ANALYST: 'Analista' };
 
 function summarizeFailures(failures: { area: string; message: string }[]) {
   if (failures.length === 0) return '';
@@ -35,7 +36,7 @@ function summarizeFailures(failures: { area: string; message: string }[]) {
   return `Não foi possível carregar ${areas.join(', ')}. ${details.join(' ')}`;
 }
 
-export function CompanyDashboard({ token, onLogout }: { token: string; onLogout: () => void }) {
+export function CompanyDashboard({ token }: { token: string; onLogout: () => void }) {
   const [page, setPage] = useState<CompanyPage>(companyPageFromHash);
   const [listingsLoaded,setListingsLoaded]=useState(false),[applicationsLoaded,setApplicationsLoaded]=useState(false);
   const [listingCity,setListingCity]=useState(''),[listingQuery,setListingQuery]=useState(''),[listingStatus,setListingStatusFilter]=useState('');
@@ -251,10 +252,13 @@ export function CompanyDashboard({ token, onLogout }: { token: string; onLogout:
   const percent = (value: number, base: number) => base ? `${(value / base * 100).toFixed(1).replace('.', ',')}%` : '—';
 
   if (loading && !company) return <><RibbonStrip /><main className="min-h-screen p-6"><LoadingStatus label="Carregando seu painel empresarial…" /></main></>;
-  return <><RibbonStrip /><header className="border-b border-white/10 px-[6vw] py-5"><div className="mx-auto flex max-w-7xl items-center justify-between"><a href="#painel" className="font-serif font-black text-[22px] tracking-[-0.5px] text-ink no-underline">Trampol<span className="text-brand-red">i</span>m <span className="ml-2 font-sans text-xs font-extrabold uppercase tracking-widest text-brand-yellow">Empresas</span></a><div className="flex items-center gap-2"><a href="#inicio" className="hidden rounded-full border border-white/15 px-3 py-2 text-xs font-bold no-underline sm:inline-flex">Ecossistema</a><a href="#capacita" className="hidden rounded-full border border-white/15 px-3 py-2 text-xs font-bold no-underline sm:inline-flex">Capacita</a><span className="hidden text-sm text-ink/60 sm:inline">{company ? roleLabels[normalizedRole || ''] || 'Conta empresarial' : 'Portal empresarial'}</span><button onClick={onLogout} className="rounded-full border border-white/15 bg-transparent px-5 py-2 font-bold text-ink">Sair</button></div></div></header>
-      <nav aria-label="Navegação empresarial" className="sticky top-0 z-30 border-b border-white/10 bg-[#0b1421]/95 px-0 py-3 backdrop-blur"><div className="mobile-nav-scroll mx-auto flex max-w-7xl gap-2 overflow-x-auto overscroll-x-contain px-[6vw] pb-1">
-        {([['overview', 'Visão geral'], ['listings', 'Vagas e cursos'], ['future', 'Talentos futuros'], ['career','Desafios e impacto'], ...(canRecruit ? [['applications', 'Candidaturas'],['passport','Passaportes recebidos']] : []), ['metrics', 'Métricas'], ...(canRecruit ? [['growth', 'Planos e parcerias']] : []), ['profile', 'Perfil público'], ...(isOwner ? [['team', 'Equipe']] : [])] as [CompanyPage, string][]).map(([destination, label]) => <button key={destination} type="button" aria-current={page === destination ? 'page' : undefined} onClick={() => navigateCompanyPage(destination)} className={`min-h-11 shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-bold transition-colors ${page === destination ? 'border-ink bg-ink text-brand-white' : 'border-ink/15 bg-transparent text-ink hover:border-ink/40 hover:bg-paper'}`}>{label}</button>)}
-      </div></nav>
+  return <><WorkspaceNavigation label="Navegação empresarial" active={page} groups={[
+ {id:'principal',label:'Principal',items:[{id:'overview',label:'Visão geral',onSelect:()=>navigateCompanyPage('overview')},{id:'listings',label:'Vagas e cursos',onSelect:()=>navigateCompanyPage('listings')},...(canRecruit?[{id:'publish',label:'Publicar vaga',onSelect:()=>openListingForm('job')}]:[])]},
+ {id:'recrutamento',label:'Recrutamento',items:[...(canRecruit?[{id:'applications',label:'Candidaturas',onSelect:()=>navigateCompanyPage('applications')},{id:'passport',label:'Passaportes recebidos',onSelect:()=>navigateCompanyPage('passport')}]:[]),{id:'future',label:'Talentos futuros',onSelect:()=>navigateCompanyPage('future')},{id:'career',label:'Desafios e impacto',onSelect:()=>navigateCompanyPage('career')}]},
+ {id:'gestao',label:'Gestão',items:[{id:'metrics',label:'Métricas',onSelect:()=>navigateCompanyPage('metrics')},...(canRecruit?[{id:'growth',label:'Planos e parcerias',onSelect:()=>navigateCompanyPage('growth')}]:[])]},
+ {id:'conta',label:'Conta empresarial',items:[{id:'profile',label:'Perfil público',onSelect:()=>navigateCompanyPage('profile')},...(isOwner?[{id:'team',label:'Equipe',onSelect:()=>navigateCompanyPage('team')}]:[])]}
+ ]}/>
+
     <main id="painel" className="mx-auto min-h-[calc(100vh-11rem)] w-full max-w-[1600px] px-[6vw] pb-10">
       {page === 'overview' && <>
       {company&&<><DashboardActions title="Ações rápidas da empresa" description={company.tradeName+' · '+company.city+(company.state?' / '+company.state:'')+'. Publique, acompanhe os anúncios e organize o recrutamento com os dados da sua empresa.'} actions={[

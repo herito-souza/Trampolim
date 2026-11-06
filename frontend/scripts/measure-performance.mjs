@@ -17,7 +17,7 @@ const profile={profile:{name:'Pessoa sintética de medição',email:'fixture@exa
 const config={defaultRegion:'irece-ba',referenceMunicipality:{code:'2914604',name:'Irecê',state:'BA'},regions:[{id:'irece-ba',name:'Irecê e região',municipalityCodes:['2914604']}]};
 const scenarios=[... [320,375,768,1024,1440].map(width=>({area:'homepage',width})),...['candidate','company','capacita'].flatMap(area=>[375,1440].map(width=>({area,width})))];
 try{
- for(const scenario of scenarios)for(let run=1;run<=3;run++){
+ for(const scenario of scenarios.filter(scenario=>!process.env.PERF_WIDTH||scenario.width===Number(process.env.PERF_WIDTH)))for(let run=1;run<=3;run++){
  const context=await browser.newContext({viewport:{width:scenario.width,height:900},deviceScaleFactor:1});const page=await context.newPage();const cdp=await context.newCDPSession(page);
  await cdp.send('Network.enable');await cdp.send('Network.setCacheDisabled',{cacheDisabled:true});await cdp.send('Network.emulateNetworkConditions',{offline:false,latency:150,downloadThroughput:1600000/8,uploadThroughput:750000/8,connectionType:'cellular4g'});await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
  await page.addInitScript({content:probe+`;window.__measuredVitals={};for(const name of ['LCP','INP','CLS'])webVitals['on'+name](metric=>{window.__measuredVitals[name]=metric.value},{reportAllChanges:true,durationThreshold:16});`});
@@ -34,7 +34,7 @@ try{
  if(scenario.area==='homepage'){for(let i=0;i<4;i++)await page.getByRole('button',{name:i%2?'Mostrar menos':'Saiba mais',exact:true}).first().click();await page.getByLabel('Cargo ou área profissional').fill('atendimento');}
  if(scenario.area==='candidate'){await page.getByRole('button',{name:'Consultar cursos disponíveis',exact:true}).click();await page.getByLabel('Buscar por nome ou palavra-chave').fill('informática');}
  if(scenario.area==='company'){await page.getByRole('button',{name:'Gerenciar anúncios',exact:true}).click();await page.getByLabel('Cargo, área ou requisito do anúncio').fill('auxiliar');}
- if(scenario.area==='capacita'){await page.getByRole('searchbox',{name:'Buscar cursos',exact:true}).fill('Tecnologia');await page.getByRole('button',{name:'Meu aprendizado',exact:true}).click();}
+ if(scenario.area==='capacita'){await page.getByRole('searchbox',{name:'Buscar cursos',exact:true}).fill('Tecnologia');const learning=page.getByRole('button',{name:'Meu aprendizado',exact:true,includeHidden:true});if(!await learning.isVisible())await page.getByRole('button',{name:'Alternar menu lateral',exact:true}).click();await learning.click();}
  await page.waitForTimeout(1200);const other=await context.newPage();await other.bringToFront();await page.waitForTimeout(150);
  const metrics=await page.evaluate(()=>({...window.__measuredVitals}));const sample={...scenario,run,LCP:metrics.LCP??null,INP:metrics.INP??null,CLS:metrics.CLS??null,requests,encodedBytes:bytes,heavyRequests:heavy.length,elapsedMs:Date.now()-start};results.push(sample);console.log(JSON.stringify(sample));await context.close();
  }

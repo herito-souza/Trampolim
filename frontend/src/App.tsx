@@ -1,3 +1,7 @@
+import {useProfilePhoto} from './features/account/useProfilePhoto';
+import {AppLayout} from './components/workspace/AppLayout';
+import {accountGroups,isAccountView,readAccountView} from './features/account/accountNavigationModel';
+import type {AccountSurface} from './features/account/accountNavigationModel';
 const RecruiterPortfolio=lazy(()=>import('./features/career/PortfolioPanel').then(module=>({default:module.RecruiterPortfolio})));
 const CareerPanel = lazy(() => import('./features/career/CareerPanel').then(module => ({default:module.CareerPanel})));
 const CredentialVerification=lazy(()=>import('./features/learning/PassportVerification').then(module=>({default:module.CredentialVerification})));
@@ -46,7 +50,7 @@ function readPublicArea(): PublicArea {
   if (new URLSearchParams(window.location.search).has('companyInvite')) return 'empresas';
   if (new URLSearchParams(window.location.search).has('organizationInvite')) return 'empresas';
   if (!hash && localStorage.getItem('trampolim_account_type') === 'COMPANY') return 'empresas';
-  if (hash === 'empresa-carreira' || hash === 'empresa-futuros') return 'empresas';
+  if (hash.startsWith('empresa-') || ['painel','divulgacoes','selecao','crescimento','perfil-publico','equipe'].includes(hash)) return 'empresas';
   if (hash === 'como-funciona' || hash === 'diagnostico' || hash === 'vagas') return 'oportunidades';
   return hash === 'oportunidades' || hash === 'empresas' || hash === 'capacita' ? hash : 'home';
 }
@@ -57,10 +61,19 @@ function App() {
   const [studentToken, setStudentToken] = useState(() => localStorage.getItem('trampolim_capacita_token'));
   const [profileReady, setProfileReady] = useState(false);
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
-  const [profileView, setProfileView] = useState<'career' | 'future' | 'radar' | 'welcome' | 'details' | 'opportunities' | 'diagnostic' | 'catalog-courses' | 'catalog-jobs' | 'premium' | 'admin' | 'admin-capacita' | 'admin-saas' | 'association' | 'capacita' | 'ecosystem' | 'company-entry'>(() => {
-    const step = localStorage.getItem('trampolim_profile_step');
-    return step === 'career' || step === 'future' || step === 'radar' || step === 'details' || step === 'opportunities' || step === 'diagnostic' || step === 'catalog-courses' || step === 'catalog-jobs' || step === 'premium' || step === 'admin' ? step : 'welcome';
-  });
+  const [photoRevision,setPhotoRevision]=useState(0);
+  const userPhoto=useProfilePhoto(token,profile?.profile.photoFileName,photoRevision);
+  function updatePhoto(photoFileName:string|null){setProfile(value=>value?{...value,profile:{...value.profile,photoFileName}}:value);setPhotoRevision(value=>value+1)}
+  const [profileView,setProfileViewState]=useState<AccountSurface>(()=>readAccountView(window.location.hash,localStorage.getItem('trampolim_profile_step')));
+  function setProfileView(view:typeof profileView){
+    setProfileViewState(view);
+    const external:Record<string,PublicArea>={ecosystem:'home','company-entry':'empresas',capacita:'capacita'};
+    const area=external[view]||'oportunidades';
+    const hash=external[view]?(area==='home'?'#inicio':'#'+area):'#oportunidades/'+view;
+    if(window.location.hash!==hash)window.history.pushState(null,'',window.location.pathname+window.location.search+hash);
+    if(!external[view])localStorage.setItem('trampolim_profile_step',view);
+    setPublicArea(area);
+  }
   const [authMode, setAuthMode] = useState<'login' | 'cadastro' | null>(() => {
     const params = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
@@ -77,6 +90,9 @@ function App() {
   const verifyToken = new URLSearchParams(window.location.search).get('verifyToken') || (window.location.hash.includes('/verify') ? initialHashParams.get('token') : null);
   const [emailConfirmation, setEmailConfirmation] = useState<{ message: string; error: boolean } | null>(null);
   const [publicArea, setPublicArea] = useState<PublicArea>(readPublicArea);
+  const [,refreshLocation]=useState(0);
+  function finishCorporateLink(){const url=new URL(window.location.href);for(const key of ['portfolio','passport','hubCompanyInvite'])url.searchParams.delete(key);url.hash='empresas';window.history.pushState(null,'',url);setPublicArea('empresas');refreshLocation(value=>value+1)}
+  const corporateLinkLayout=(content:React.ReactNode)=><AppLayout trail="empresas" title="Compartilhamento autorizado" onLogout={logoutCompany} groups={[{id:'principal',label:'Empresas',items:[{id:'overview',label:'Painel da empresa',onSelect:finishCorporateLink}]}]}>{content}</AppLayout>;
   const [companySignupIntent, setCompanySignupIntent] = useState(false);
   const [canManageSaas, setCanManageSaas] = useState(false);
   const [managedAssociations, setManagedAssociations] = useState<Organization[]>([]);
@@ -94,16 +110,20 @@ function App() {
   useEffect(() => { const id = Number(new URLSearchParams(window.location.search).get('hubProgram')); if (Number.isSafeInteger(id) && id > 0) sessionStorage.setItem('trampolim_hub_program_intent', String(id)); }, []);
 
   useEffect(() => {
-    const syncArea = () => setPublicArea(readPublicArea());
+    const syncArea = () => {const area=readPublicArea();setPublicArea(area);if(area==='home'){setProfileViewState('ecosystem');return}const view=window.location.hash.split('/')[1];if(area==='oportunidades'&&isAccountView(view)){setProfileViewState(view);localStorage.setItem('trampolim_profile_step',view)}else if(window.location.hash==='#diagnostico')setProfileViewState('diagnostic');};
     window.addEventListener('hashchange', syncArea);
     window.addEventListener('popstate', syncArea);
     return () => { window.removeEventListener('hashchange', syncArea); window.removeEventListener('popstate', syncArea); };
   }, []);
 
+  useEffect(()=>{if(token&&profileReady&&publicArea==='oportunidades'&&window.location.hash==='#oportunidades'&&isAccountView(profileView))window.history.replaceState(null,'',window.location.pathname+window.location.search+'#oportunidades/'+profileView)},[token,profileReady,publicArea,profileView]);
+
   function navigatePublicArea(area: PublicArea) {
     const hash = area === 'home' ? '#inicio' : `#${area}`;
     window.history.pushState(null, '', `${window.location.pathname}${window.location.search}${hash}`);
     setPublicArea(area);
+    if(area==='oportunidades')setProfileViewState('opportunities');
+    if(area==='home')setProfileViewState('ecosystem');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -223,10 +243,10 @@ function App() {
   }
 
   if (currentParams.has('credential')) return <CredentialVerification id={currentParams.get('credential')||''}/>;
-  if (currentParams.has('portfolio') && companyToken && !authMode) return <main><RecruiterPortfolio token={companyToken} initial={currentParams.get('portfolio')||''} onDone={()=>window.location.assign('/#empresas')}/></main>;
-  if (currentParams.has('passport') && companyToken && !authMode) return <main><RecruiterPassport token={companyToken} initial={currentParams.get('passport')||''} onDone={()=>window.location.assign('/#empresas')}/></main>;
+  if (currentParams.has('portfolio') && companyToken && !authMode) return corporateLinkLayout(<main><RecruiterPortfolio token={companyToken} initial={currentParams.get('portfolio')||''} onDone={finishCorporateLink}/></main>);
+  if (currentParams.has('passport') && companyToken && !authMode) return corporateLinkLayout(<main><RecruiterPassport token={companyToken} initial={currentParams.get('passport')||''} onDone={finishCorporateLink}/></main>);
   if (currentParams.has('hub')) return <HubPublicPage slug={currentParams.get('hub') || ''}/>;
-  if (currentParams.has('hubCompanyInvite') && companyToken && !authMode) return <HubCompanyInvitation token={companyToken} invite={currentParams.get('hubCompanyInvite') || ''} onDone={() => window.location.assign('/#empresas')}/>;
+  if (currentParams.has('hubCompanyInvite') && companyToken && !authMode) return corporateLinkLayout(<HubCompanyInvitation token={companyToken} invite={currentParams.get('hubCompanyInvite') || ''} onDone={finishCorporateLink}/>);
   if (currentParams.has('competencia')) return <SharedCompetency shareToken={currentParams.get('competencia') || ''} />;
   if (shareId) return <PublicProfilePage shareId={shareId} />;
   if (companySlug) return <CompanyPublicPage slug={companySlug} />;
@@ -276,7 +296,7 @@ function App() {
       if (destination === 'home') { setProfileView('ecosystem'); return; }
       if (destination === 'companies') { setProfileView('company-entry'); return; }
       if (destination === 'capacita') { setProfileView('capacita'); return; }
-      if (destination === 'association' && managedAssociations.length) { setProfileView('association'); return; }
+      if (destination === 'association' && managedAssociations.length) { navigatePublicArea('empresas'); return; }
       if (destination === 'opportunities') { openOpportunities(); return; }
       if (destination === 'courses') { openCatalog('course'); return; }
       if (destination === 'jobs') { openCatalog('job'); return; }
@@ -300,6 +320,8 @@ function App() {
       if (destination === 'admin-capacita' && canManageCatalog) setProfileView('admin-capacita');
       if (destination === 'admin-saas' && canManageCatalog) setProfileView('admin-saas');
     };
+    const accountContent=(()=>{
+    if(['admin','admin-capacita','admin-saas'].includes(profileView)&&!canManageCatalog)return <main className="p-6"><section role="alert"><h1 className="text-2xl font-bold">Acesso restrito</h1><p>Sua conta não tem permissão para esta área.</p><button className="mt-4 rounded-full border border-white/20 p-3" onClick={()=>navigateAccount('opportunities')}>Voltar às oportunidades</button></section></main>;
     if (profileView === 'career') return <CareerPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog}/>;
     if (profileView === 'future') return <FutureTalentPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog} />;
     if (profileView === 'radar') return <RadarPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog} />;
@@ -317,7 +339,12 @@ function App() {
     if (profileView === 'opportunities') return <OpportunitiesPage token={token} profile={profile.profile} onEditProfile={openDetails} onLogout={logout} onRetakeDiagnostic={retakeDiagnostic} onOpenCatalog={openCatalog} canManage={canManageCatalog} onNavigate={navigateAccount} />;
     if (profileView === 'premium') return <PremiumPage token={token} profile={profile} onLogout={logout} onNavigate={navigateAccount} />;
     if (profileView === 'catalog-courses' || profileView === 'catalog-jobs') return <CatalogPage key={profileView} kind={profileView === 'catalog-courses' ? 'course' : 'job'} token={token} profile={profile.profile} onLogout={logout} onRetakeDiagnostic={retakeDiagnostic} onNavigate={navigateAccount} canManage={canManageCatalog} />;
-    return <ProfilePage token={token} onLogout={logout} onBack={openWelcome} onComplete={openOpportunities} onNavigate={navigateAccount} canManage={canManageCatalog} />;
+    return <ProfilePage token={token} photoUrl={userPhoto} onPhotoChange={updatePhoto} onLogout={logout} onBack={openWelcome} onComplete={openOpportunities} onNavigate={navigateAccount} canManage={canManageCatalog} />;
+    })();
+    if(['ecosystem','company-entry','capacita','association'].includes(profileView))return accountContent;
+    const active=({'catalog-courses':'courses','catalog-jobs':'jobs',details:'profile',welcome:'profile'} as Record<string,string>)[profileView]||profileView;
+    return <AppLayout trail="oportunidades" title="Trampolim Oportunidades" userName={profile.profile.name} userPhoto={userPhoto} active={active} groups={accountGroups(navigateAccount,canManageCatalog,managedAssociations.length>0)} onProfile={()=>navigateAccount('profile')} onNotice={()=>navigateAccount('future')} onLogout={logout}>{accountContent}</AppLayout>;
+
   }
   if (publicArea === 'oportunidades') return <Home onAuth={mode => openAuth('oportunidades', mode)} />;
   return <EcosystemHome onDiagnostic={() => { window.location.hash = 'diagnostico'; setPublicArea('oportunidades'); }} onNavigate={navigatePublicArea} />;

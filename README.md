@@ -217,3 +217,5 @@ Mapa regional sob demanda: consulte [MAPA_REGIONAL.md](MAPA_REGIONAL.md) para in
 
 - [Auditoria de prontidão para Irecê e região — 05/11/2026](QA_IMPLANTACAO_IRECE.md).
 - [Guia de homologação e liberação regional](ops/GUIA_HOMOLOGACAO_IRECE.md).
+
+- [Navegação SaaS: Sidebar e Topbar](NAVIGACAO_SAAS.md): arquitetura, menus, responsividade, permissões e validação.

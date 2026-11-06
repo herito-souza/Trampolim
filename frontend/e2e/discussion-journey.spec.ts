@@ -1,3 +1,4 @@
+import {activate} from './navigation-helpers';
 import { expect, test } from '@playwright/test';
 import type { Page, Route } from '@playwright/test';
 import path from 'node:path';
@@ -30,7 +31,7 @@ test('professor revisa destinatários e repete lote com a mesma chave após falh
     }
     return common(route, true);
   });
-  await page.goto('/#capacita'); await page.getByRole('button', { name: 'Dúvidas recebidas', exact: true }).click();
+  await page.goto('/#capacita'); await activate(page,'Dúvidas recebidas');
   await page.getByLabel('Selecionar dúvida 101').check(); await page.getByLabel('Selecionar dúvida 102').check();
   await page.getByLabel('Mensagem ou descrição textual').fill('Uma resposta geral revisada pelo professor.'); expect(requests).toBe(0);
   await page.getByRole('button', { name: 'Revisar resposta e destinatários' }).click();

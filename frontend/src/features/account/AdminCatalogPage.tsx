@@ -1,3 +1,4 @@
+import {LegacyPageHeader} from '../../components/workspace/WorkspaceSlots';
 import {MunicipalityAssignment} from '../geography/MunicipalityAssignment';
 import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -74,7 +75,7 @@ export function AdminCatalogPage({ token, onBack, onLogout, onProfile, navigatio
   return <div className="min-h-screen bg-paper pb-16">
     <RibbonStrip />
     <a href="#admin-main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-white focus:px-4 focus:py-3 focus:font-bold">Pular para o conteúdo</a>
-    <header className="flex items-center justify-between border-b border-ink/10 px-[6vw] py-5"><button onClick={onBack} className="border-0 bg-transparent font-serif text-2xl font-black">Trampol<span className="text-brand-red">i</span>m · Gestão</button><AccountHeaderActions onProfile={onProfile} onLogout={onLogout} /></header>
+    <LegacyPageHeader className="flex items-center justify-between border-b border-ink/10 px-[6vw] py-5"><button onClick={onBack} className="border-0 bg-transparent font-serif text-2xl font-black">Trampol<span className="text-brand-red">i</span>m · Gestão</button><AccountHeaderActions onProfile={onProfile} onLogout={onLogout} /></LegacyPageHeader>
     {navigation}
     <main id="admin-main" className="mx-auto max-w-7xl px-[6vw]">
       <div className="py-10"><p className="text-sm font-extrabold uppercase tracking-widest text-brand-green">Painel administrativo</p><h1 className="mt-2 text-4xl font-black">Gerenciar catálogo</h1><p className="mt-2 text-ink/65">Cada publicação ou alteração passa por revisão antes de aparecer para as pessoas.</p></div>

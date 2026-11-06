@@ -1,3 +1,5 @@
+import {ProfileAvatar} from '../../components/workspace/ProfileAvatar';
+import {LegacyPageHeader} from '../../components/workspace/WorkspaceSlots';
 import { useCallback, useEffect, useState } from 'react';
 import type { ChangeEvent, FormEvent, InputHTMLAttributes, ReactNode } from 'react';
 import { API_URL, api } from './api';
@@ -15,6 +17,8 @@ interface ProfilePageProps {
   onComplete: (profile: Profile) => void;
   onNavigate: (destination: AccountDestination) => void;
   canManage?: boolean;
+  photoUrl?:string|null;
+  onPhotoChange?:(fileName:string|null)=>void;
 }
 
 const emptyExperience = { position: '', company: '', startDate: '', endDate: '', current: false, description: '' };
@@ -29,7 +33,7 @@ function Card({ title, description, children, defaultOpen = false }: { title: st
   return <details open={defaultOpen || undefined} className="group rounded-3xl border border-white/10 bg-[#121c2b] p-5 shadow-sm md:p-6"><summary className="flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden"><span><span className="block text-xl font-black">{title}</span>{description && <span className="mt-1 block text-sm font-normal text-ink/60">{description}</span>}</span><span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/10 text-brand-yellow transition-transform group-open:rotate-180">⌄</span></summary><div className="mt-5 border-t border-white/10 pt-5">{children}</div></details>;
 }
 
-export function ProfilePage({ token, onLogout, onBack, onComplete, onNavigate, canManage }: ProfilePageProps) {
+export function ProfilePage({ token, onLogout, onBack, onComplete, onNavigate, canManage, photoUrl, onPhotoChange }: ProfilePageProps) {
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [experience, setExperience] = useState(emptyExperience);
@@ -98,6 +102,16 @@ export function ProfilePage({ token, onLogout, onBack, onComplete, onNavigate, c
     runAction(() => api('/profile/educations', token, { method: 'POST', body: JSON.stringify(education) }), 'Formação adicionada.');
     setEducation(emptyEducation);
   }
+
+  async function uploadPhoto(event:ChangeEvent<HTMLInputElement>){
+    const file=event.currentTarget.files?.[0];event.currentTarget.value='';if(!file)return;
+    setError('');setNotice('');
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type)){setError('Escolha uma imagem JPG, PNG ou WEBP.');return;}
+    if(file.size>5*1024*1024){setError('A foto deve ter no máximo 5 MB.');return;}
+    setBusy(true);
+    try{const body=new FormData();body.append('file',file);const saved=await api<Profile>('/profile/photo',token,{method:'POST',body});setProfile(value=>value?{...value,photoFileName:saved.photoFileName}:value);onPhotoChange?.(saved.photoFileName);setNotice('Foto de perfil atualizada.');}catch(cause){setError(cause instanceof Error?cause.message:'Não foi possível enviar a foto.');}finally{setBusy(false);}
+  }
+  async function removePhoto(){setBusy(true);setError('');setNotice('');try{await api('/profile/photo',token,{method:'DELETE'});setProfile(value=>value?{...value,photoFileName:null}:value);onPhotoChange?.(null);setNotice('Foto de perfil removida.');}catch(cause){setError(cause instanceof Error?cause.message:'Não foi possível remover a foto.');}finally{setBusy(false);}}
 
   async function uploadResume(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -183,10 +197,10 @@ export function ProfilePage({ token, onLogout, onBack, onComplete, onNavigate, c
     <div className="min-h-screen pb-16">
       <RibbonStrip />
       <a href="#perfil" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-white focus:px-4 focus:py-3 focus:font-bold">Pular para o conteúdo</a>
-      <header className="flex items-center justify-between border-b border-ink/10 px-[6vw] py-5">
+      <LegacyPageHeader className="flex items-center justify-between border-b border-ink/10 px-[6vw] py-5">
         <button onClick={onBack} className="border-0 bg-transparent font-serif text-2xl font-black text-ink cursor-pointer">Trampol<span className="text-brand-red">i</span>m</button>
         <div className="flex items-center gap-3"><span className="hidden text-sm font-semibold md:inline">Olá, {profile.name.split(' ')[0]}</span><AccountHeaderActions onProfile={() => onNavigate('profile')} onLogout={onLogout} /></div>
-      </header>
+      </LegacyPageHeader>
       <AccountNavigation active="profile" onNavigate={onNavigate} canManage={canManage} />
 
       <main id="perfil" className="mx-auto max-w-5xl px-[6vw]">
@@ -194,6 +208,9 @@ export function ProfilePage({ token, onLogout, onBack, onComplete, onNavigate, c
         {notice && <p role="status" className="mb-5 rounded-xl bg-green-50 p-4 font-semibold text-brand-green">{notice}</p>}
         {error && <p role="alert" className="mb-5 rounded-xl bg-red-50 p-4 font-semibold text-brand-red">{error}</p>}
         {favoriteError && <p role="alert" className="mb-5 rounded-xl bg-red-50 p-4 font-semibold text-brand-red">{favoriteError}</p>}
+        <section aria-labelledby="profile-photo-title" className="mb-6 rounded-3xl border border-white/10 bg-[#121c2b] p-5 md:p-6">
+          <div className="flex flex-wrap items-center gap-5"><ProfileAvatar src={photoUrl} alt="Sua foto de perfil" className="size-20 border border-white/20 bg-white/5"/><div className="min-w-0 flex-1"><h2 id="profile-photo-title" className="text-xl font-black">Foto de perfil</h2><p id="profile-photo-help" className="mt-2 text-sm text-ink/70">Opcional. JPG, PNG ou WEBP de até 5 MB. Sua foto permanece privada e aparece no menu da sua conta.</p><label className="mt-4 block text-sm font-bold">Adicionar ou trocar foto<input type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="profile-photo-help" disabled={busy} onChange={uploadPhoto} className="mt-2 block w-full max-w-full rounded-xl border border-white/20 p-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-brand-yellow file:px-3 file:py-2 file:font-bold file:text-[#101725] disabled:opacity-50"/></label>{profile.photoFileName&&<button type="button" disabled={busy} onClick={()=>void removePhoto()} className="mt-3 min-h-11 rounded-full border border-white/20 px-4 py-2 text-sm font-bold disabled:opacity-50">Remover foto</button>}{busy&&<p role="status" className="mt-2 text-sm">Salvando alterações…</p>}</div></div>
+        </section>
         <section className="mb-6 rounded-3xl border border-ink/10 bg-brand-white p-6 shadow-sm" aria-label="Progresso do perfil">
           <div className="flex items-center justify-between gap-4"><div><h2 className="text-xl font-black">Perfil profissional</h2><p className="mt-1 text-sm text-ink/60">{completion}% preenchido</p></div><span className="text-sm font-bold text-brand-green">{completion === 100 ? 'Perfil completo' : 'Continue quando puder'}</span></div>
           <div className="mt-4 h-3 overflow-hidden rounded-full bg-[#e7e0d0]" role="progressbar" aria-label="Progresso do perfil" aria-valuemin={0} aria-valuemax={100} aria-valuenow={completion}><div className="h-full rounded-full bg-brand-green transition-[width]" style={{ width: `${completion}%` }} /></div>
@@ -262,7 +279,7 @@ export function ProfilePage({ token, onLogout, onBack, onComplete, onNavigate, c
           <Card title="Seus dados e sua conta" description="Você pode baixar uma cópia dos seus dados ou excluir sua conta e as informações vinculadas a ela.">
             <div className="space-y-6"><button type="button" onClick={exportAccountData} className="rounded-full border-2 border-ink px-5 py-3 font-bold">Baixar meus dados (JSON)</button><form onSubmit={deleteAccount} className="space-y-3 border-t border-ink/10 pt-5"><h3 className="font-extrabold text-brand-red">Excluir conta permanentemente</h3><p className="text-sm text-ink/65">Esta ação remove seu perfil, currículo, foto, diagnóstico, experiências, formações e candidaturas. Para confirmar, digite sua senha e a palavra EXCLUIR.</p><div className="grid gap-3 sm:grid-cols-2"><Field label="Senha atual" type="password" required value={deletePassword} onChange={event => setDeletePassword(event.target.value)} /><Field label="Digite EXCLUIR" required value={deleteConfirmation} onChange={event => setDeleteConfirmation(event.target.value)} /></div><button disabled={busy || deleteConfirmation !== 'EXCLUIR'} className="rounded-full bg-brand-red px-5 py-3 font-bold text-white disabled:opacity-50">Excluir minha conta</button></form></div>
           </Card>
-          <div className="rounded-3xl bg-brand-yellow/25 p-6 text-center md:p-8"><h2 className="text-2xl font-black">Pronto para encontrar sua próxima oportunidade?</h2><p className="mx-auto mt-2 max-w-xl text-sm text-ink/65">Confirme seus dados e acesse cursos e vagas recomendados para você. O currículo é opcional e pode ser enviado depois.</p><button onClick={confirmProfile} disabled={busy} className="mt-5 rounded-full border-0 bg-ink px-7 py-4 font-extrabold text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-40">{busy ? 'Confirmando...' : 'Confirmar dados e ver oportunidades'}</button></div>
+          <div className="rounded-3xl bg-brand-yellow/25 p-6 text-center md:p-8"><h2 className="text-2xl font-black">Pronto para encontrar sua próxima oportunidade?</h2><p className="mx-auto mt-2 max-w-xl text-sm text-ink/80">Confirme seus dados e acesse cursos e vagas recomendados para você. O currículo é opcional e pode ser enviado depois.</p><button onClick={confirmProfile} disabled={busy} className="mt-5 rounded-full border-0 bg-ink px-7 py-4 font-extrabold text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-40">{busy ? 'Confirmando...' : 'Confirmar dados e ver oportunidades'}</button></div>
         </div>
       </main>
     </div>

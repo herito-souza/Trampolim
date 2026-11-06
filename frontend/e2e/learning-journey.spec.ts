@@ -1,3 +1,4 @@
+import {activate} from './navigation-helpers';
 import { expect, test } from '@playwright/test';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,7 +29,7 @@ for (const device of [{ name: 'computador', width: 1440, height: 900 }, { name: 
       return route.fulfill({ json: [] });
     });
     await page.goto('/#capacita');
-    await page.getByRole('button', { name: 'Gerenciar cursos', exact: true }).click();
+    await activate(page,'Gerenciar cursos');
     await page.getByRole('button', { name: 'Organizar curso', exact: true }).click();
     await page.getByRole('button', { name: 'Módulo de teste', exact: true }).click();
     await page.getByRole('button', { name: 'Criar videoaula', exact: true }).click();

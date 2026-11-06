@@ -1,9 +1,19 @@
+import {WorkspaceNavigation} from '../../components/workspace/WorkspaceNavigation';
+import {useWorkspace} from '../../components/workspace/workspaceContext';
 import { useRef } from 'react';
 
 type Item = { id: string; label: string };
 
-export function CapacitaModuleNav({ label, value, items, onChange }: { label: string; value: string; items: Item[]; onChange: (id: string) => void }) {
+export function CapacitaModuleNav({ label, value, items, onChange, current=true }: { current?:boolean; label: string; value: string; items: Item[]; onChange: (id: string) => void }) {
+  const shell=useWorkspace();
   const controls = useRef<(HTMLButtonElement | null)[]>([]);
+  if(shell){
+    const communication=items.filter(item=>['questions','inbox'].includes(item.id));
+    const account=items.filter(item=>['support','account'].includes(item.id));
+    const main=items.filter(item=>!communication.includes(item)&&!account.includes(item));
+    const group=(id:string,name:string,entries:Item[])=>({id,label:name,items:entries.map(item=>({...item,onSelect:()=>onChange(item.id)}))});
+    return <WorkspaceNavigation label={label} active={current?value:''} groups={[group(label==='Módulos do Capacita'?'areas':'aprendizagem',label==='Módulos do Capacita'?'Capacita':'Aprendizagem',main),...(communication.length?[group('comunicacao','Comunicação',communication)]:[]),...(account.length?[group('apoio','Conta e apoio',account)]:[])]}/>;
+  }
   return <nav aria-label={label} className="border-b border-white/10 bg-[#0b1421] py-3">
     <div className="mx-auto flex w-full max-w-7xl flex-wrap gap-2 px-4 md:px-7">
       {items.map((item, index) => <button key={item.id} ref={element => { controls.current[index] = element; }} type="button"

@@ -1,3 +1,5 @@
+import {WorkspaceNavigation} from '../../components/workspace/WorkspaceNavigation';
+import {NotificationSlot} from '../../components/workspace/WorkspaceSlots';
 import { AsyncPanel } from '../../components/ui/Feedback';
 import { DashboardActions } from '../dashboard/DashboardActions';
 const ObservatoryPanel=lazy(()=>import('../career/ObservatoryPanel').then(module=>({default:module.ObservatoryPanel})));
@@ -26,9 +28,12 @@ import { buttonClass, inputClass } from './types';
 type Account = { id: number; name: string; email: string; teacher: boolean; admin: boolean };
 const root = '/capacita/learning';
 
-export function LearningPortal({ token }: { token: string }) {
+export function LearningPortal({ token,navigationActive=true,onActivate,onName }: { token: string;navigationActive?:boolean;onActivate?:()=>void;onName?:(name:string)=>void }) {
   const [activeModule, setActiveModule] = useState('courses');
-  function selectModule(id: string) {
+  const nameCallback=useRef(onName);nameCallback.current=onName;
+  function selectModule(id: string,write=true) {
+    onActivate?.();
+    if(write){const hash='#capacita/learning/'+id+(manage?'?mode=teacher':'');if(window.location.hash!==hash)window.history.pushState(null,'',window.location.pathname+window.location.search+hash)}
     setActiveModule(id); setQuestionScope(null); setLibraryScope(null); setAssessmentScope(null); setPerformance(false); setSupport(false);
     if (id === 'library') setLibraryScope({});
     if (id === 'assessments') setAssessmentScope({});
@@ -37,6 +42,7 @@ export function LearningPortal({ token }: { token: string }) {
     if (id === 'inbox') setQuestionScope({ inbox: true });
     if (id === 'support') setSupport(true);
   }
+  function chooseLearningMode(teacher:boolean){selectModule('courses',false);setManage(teacher);setPage(0);closeCourse();const hash='#capacita/learning/courses'+(teacher?'?mode=teacher':'');if(window.location.hash!==hash)window.history.pushState(null,'',window.location.pathname+window.location.search+hash)}
   const courseArea = useRef<HTMLDivElement>(null);
   useEffect(() => { if (activeModule !== 'courses') courseArea.current?.querySelectorAll('video, audio').forEach(media => (media as HTMLMediaElement).pause()); }, [activeModule]);
   const courseTrigger = useRef<HTMLElement | null>(null);
@@ -68,9 +74,11 @@ export function LearningPortal({ token }: { token: string }) {
   useEffect(() => {
     let active = true;
     const abort = new AbortController();
-    api<Account>(`${root}/me`, token, { signal: abort.signal }).then(user => { if (active) setAccount(user); }).catch(failure => { if (active) setError(failure.message); });
+    api<Account>(`${root}/me`, token, { signal: abort.signal }).then(user => { if (active) {setAccount(user);if(user.name)nameCallback.current?.(user.name)} }).catch(failure => { if (active) setError(failure.message); });
     return () => { active = false; abort.abort(); };
   }, [token, revision]);
+  const routeSelect=useRef(selectModule);routeSelect.current=selectModule;
+  useEffect(()=>{if(!account)return;const sync=()=>{const parts=window.location.hash.split('/');if(parts[0]!=='#capacita'||parts[1]!=='learning')return;const id=parts[2]?.split('?')[0]||'courses';const allowed=['courses','adaptive','passport','library','assessments','performance','observatory','young','hub','questions','support',...(account.teacher?['inbox']:[])];setManage(account.teacher&&new URLSearchParams(window.location.hash.split('?')[1]||'').get('mode')==='teacher');routeSelect.current(allowed.includes(id)?id:'courses',false)};sync();window.addEventListener('hashchange',sync);window.addEventListener('popstate',sync);return()=>{window.removeEventListener('hashchange',sync);window.removeEventListener('popstate',sync)}},[account]);
   useEffect(() => {
     let active = true; const abort = new AbortController(); setLoading(true); setError('');
     api<Course[]>(`${root}/courses?manage=${manage}&limit=25&offset=${page * 24}&q=${encodeURIComponent(query)}`, token, { signal: abort.signal })
@@ -108,7 +116,7 @@ export function LearningPortal({ token }: { token: string }) {
   const lessons = modules.flatMap(item => item.lessons || []);
   const next = lesson ? lessons[lessons.findIndex(item => item.id === lesson.id) + 1] : undefined;
   return <section id="videoaulas" className="mb-14 space-y-6 rounded-[28px] border border-brand-blue/20 bg-[#0b1421] p-4 md:p-7" aria-label="Cursos e videoaulas">
-    <header className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-brand-blue">Aprendizagem em pequenos passos</p><h2 className="mt-2 text-3xl font-black">{manage ? 'Painel do professor' : 'Cursos e videoaulas'}</h2></div><nav aria-label="Ambiente educacional" className="flex flex-wrap gap-2"><button className={buttonClass} aria-pressed={!manage} onClick={() => { selectModule('courses'); setManage(false); setPage(0); closeCourse(); }}>Meu aprendizado</button>{account?.teacher && <button className={buttonClass} aria-pressed={manage} onClick={() => { selectModule('courses'); setManage(true); setPage(0); closeCourse(); }}>Gerenciar cursos</button>}</nav></header>
+    <header className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-brand-blue">Aprendizagem em pequenos passos</p><h2 className="mt-2 text-3xl font-black">{manage ? 'Painel do professor' : 'Cursos e videoaulas'}</h2></div><WorkspaceNavigation label="Ambiente educacional" active={navigationActive&&activeModule==='courses'?(manage?'teacher':'student'):''} groups={[{id:'modo',label:account?.teacher?'Professor e aluno':'Meus estudos',items:[{id:'student',label:'Meu aprendizado',onSelect:()=>chooseLearningMode(false)},...(account?.teacher?[{id:'teacher',label:'Gerenciar cursos',onSelect:()=>chooseLearningMode(true)}]:[])]}]}/></header>
     {activeModule === 'hub' && <AsyncPanel><HubParticipationPanel token={token} student onOpenCourse={id => { selectModule('courses'); void openCourse(id); }}/></AsyncPanel>}
     {activeModule==='courses'&&!course&&!editingCourse&&<><DashboardActions title={manage?'Ensinar e acompanhar':'Organize seu aprendizado'} description={manage?'Use as ferramentas dos seus cursos para publicar aulas, materiais e avaliações e acompanhar estudantes autorizados.':'Para estudantes e pessoas que buscam qualificação, o primeiro emprego ou novos caminhos. Escolha o conteúdo conforme seu objetivo; os requisitos reais das vagas podem orientar suas prioridades.'} actions={[
       ...(manage&&account?.teacher?[{label:'Criar um curso',description:'Organizar disciplinas, módulos e videoaulas pelo formulário existente.',onSelect:()=>setEditingCourse(true)},{label:'Responder dúvidas recebidas',description:'Abrir a caixa de dúvidas dos cursos em que você tem permissão.',onSelect:()=>selectModule('inbox')}]:[{label:'Explorar cursos e videoaulas',description:'Pesquisar pelo título ou categoria no catálogo disponível.',onSelect:()=>{courseArea.current?.scrollIntoView({behavior:'smooth',block:'start'});courseArea.current?.querySelector<HTMLInputElement>('input[type="search"]')?.focus()}},...(history.find(item=>!item.completed_at&&item.course_id&&item.lesson_id)?[{label:'Retomar meu estudo',description:(()=>{const item=history.find(item=>!item.completed_at&&item.course_id&&item.lesson_id)!;return (item.course_title||'Curso')+' · '+(item.title||'Aula em andamento')})(),onSelect:()=>{const item=history.find(item=>!item.completed_at&&item.course_id&&item.lesson_id)!;void openCourse(item.course_id!).then(opened=>{if(opened)setLesson({id:item.lesson_id!} as Lesson)});}}]:[]),{label:'Acompanhar progresso e competências',description:'Consultar resultados, histórico e conquistas verificadas, sem confundir com certificados formais.',onSelect:()=>selectModule('performance')}]),
@@ -117,8 +125,8 @@ export function LearningPortal({ token }: { token: string }) {
       {label:manage?'Escolher curso para acompanhar alunos':'Organizar minhas trilhas',description:manage?'Escolher um curso próprio e usar o acompanhamento dos alunos.':'Consultar objetivos e recomendações de aprendizagem existentes.',onSelect:()=>{if(manage){courseArea.current?.scrollIntoView({behavior:'smooth'});}else selectModule('adaptive');}},
       ...(!manage?[{label:'Tirar uma dúvida',description:'Enviar texto ou mídia ao professor, conforme as permissões do curso.',onSelect:()=>selectModule('questions')},{label:'Estágios e primeiro emprego',description:'Consultar oportunidades públicas e orientações para começar.',onSelect:()=>selectModule('young')}]:[])
     ]}/>{historyLoading&&!manage&&<p role="status">Preparando seu histórico de estudos…</p>}{historyError&&!manage&&<p role="status">{historyError}</p>}</>}
-    <QuestionNotifications token={token} onOpen={(id, inbox) => { selectModule(inbox ? 'inbox' : 'questions'); setQuestionScope({ question: id, inbox }); }} />
-    <CapacitaModuleNav label="Funcionalidades de aprendizagem" value={activeModule} onChange={selectModule} items={[
+    <NotificationSlot><QuestionNotifications token={token} onOpen={(id, inbox) => { selectModule(inbox ? 'inbox' : 'questions'); setQuestionScope({ question: id, inbox }); }} /></NotificationSlot>
+    <CapacitaModuleNav label="Funcionalidades de aprendizagem" value={activeModule} current={navigationActive} onChange={id=>selectModule(id)} items={[
       { id: 'courses', label: 'Cursos e videoaulas' }, { id: 'adaptive', label: 'Minhas Trilhas' }, { id: 'passport', label: 'Passaporte Digital' }, { id: 'library', label: 'Biblioteca virtual' },
       { id: 'assessments', label: 'Mini provas' }, { id: 'performance', label: 'Meu desempenho e competências' },
       { id: 'observatory', label: 'Observatório regional' }, { id: 'young', label: 'Estágios e aprendizagem' }, { id: 'hub', label: 'Programas institucionais' }, { id: 'questions', label: 'Minhas dúvidas' }, ...(account?.teacher ? [{ id: 'inbox', label: 'Dúvidas recebidas' }] : []),

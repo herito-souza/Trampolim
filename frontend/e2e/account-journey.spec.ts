@@ -1,3 +1,4 @@
+import {activate} from './navigation-helpers';
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
@@ -56,17 +57,17 @@ test('login abre o diagnóstico e a navegação percorre catálogo e perfil em t
   await page.getByLabel('E-mail').fill('pessoa@example.com');
   await page.getByLabel('Senha', { exact: true }).fill('senha-segura');
   await page.getByRole('button', { name: 'Entrar na minha conta' }).click();
+  await page.getByRole('button',{name:'Alternar menu lateral',exact:true}).click();
   await expect(page.getByRole('navigation', { name: 'Navegação da conta' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Navegação da conta' }).getByRole('button', { name: 'Diagnóstico' })).toHaveAttribute('aria-current', 'page');
 
-  const navigation = page.getByRole('navigation', { name: 'Navegação da conta' });
-  await navigation.getByRole('button', { name: 'Oportunidades' }).click();
+  await activate(page,'Oportunidades','Navegação da conta');
   await expect(page.getByRole('heading', { name: /Oportunidades para você/ })).toBeVisible();
   await expectNoSevereAccessibilityIssues(page);
-  await navigation.getByRole('button', { name: 'Vagas' }).click();
+  await activate(page,'Vagas','Navegação da conta');
   await expect(page.getByRole('heading', { name: /Vagas e áreas para explorar/ })).toBeVisible();
   await expectNoSevereAccessibilityIssues(page);
-  await page.getByRole('button', { name: 'Meu perfil' }).click();
+  await activate(page,'Meu perfil');
   await expect(page.getByRole('heading', { name: 'Meu perfil' })).toBeVisible();
   await expectNoSevereAccessibilityIssues(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
@@ -123,8 +124,8 @@ test('pessoa salva uma vaga, acompanha a candidatura e sinaliza um anúncio', as
   await page.getByLabel('E-mail').fill('pessoa@example.com');
   await page.getByLabel('Senha').fill('senha-segura');
   await page.getByRole('button', { name: 'Entrar na minha conta' }).click();
-  const navigation = page.getByRole('navigation', { name: 'Navegação da conta' });
-  await navigation.getByRole('button', { name: 'Vagas' }).click();
+
+  await activate(page,'Vagas','Navegação da conta');
   const jobCard = page.getByRole('article').filter({ has: page.getByRole('heading', { name: listedJob.title }) });
   const areaCard = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Atendente ou recepcionista' }) });
   await expect(jobCard).toBeVisible();
@@ -146,8 +147,8 @@ test('tela de oportunidades não tem violações graves WCAG A/AA', async ({ pag
   await page.getByLabel('E-mail').fill('pessoa@example.com');
   await page.getByLabel('Senha').fill('senha-segura');
   await page.getByRole('button', { name: 'Entrar na minha conta' }).click();
-  const navigation = page.getByRole('navigation', { name: 'Navegação da conta' });
-  await navigation.getByRole('button', { name: 'Oportunidades' }).click();
+
+  await activate(page,'Oportunidades','Navegação da conta');
   await expect(page.getByRole('heading', { name: /Oportunidades para você/ })).toBeVisible();
   await expectNoSevereAccessibilityIssues(page);
 });
@@ -161,7 +162,7 @@ test('catálogo consulta vagas empresariais sem compartilhar token do candidato'
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ id: 9, companySlug: 'fixture-company', companyName: 'Empresa de teste', title: 'Vaga empresarial integrada', area: 'Tecnologia', description: 'Anúncio de teste', requirements: 'Requisitos de teste', location: 'Recife', modality: 'Remoto', internship: true }]) });
   });
   await page.goto('/#oportunidades');
-  await page.getByRole('navigation', { name: 'Navegação da conta' }).getByRole('button', { name: 'Vagas', exact: true }).click();
+  await activate(page,'Vagas','Navegação da conta');
   await expect(page.getByRole('heading', { name: 'Vaga empresarial integrada' })).toBeVisible();
   expect(publicAuthorization).toBeUndefined();
   await expect(page.getByRole('link', { name: 'Ver vaga na empresa' })).toHaveAttribute('href', '/?empresa=fixture-company');
@@ -192,7 +193,7 @@ test('administração altera somente a trilha selecionada com justificativa', as
     return route.fulfill({ status: 200, contentType: 'application/json', body: path.endsWith('/overview') ? JSON.stringify({ users: 0, verifiedUsers: 0, activeUsers30d: 0, companies: 0, associations: 0, associationLinks: 0, publishedJobs: 0, publishedInternships: 0, publishedLearningContents: 0, applications: 0, pendingPublications: 0, paidInternshipPayments: 0, internshipRevenueCents: 0, revenueByMonth: [] }) : path.endsWith('/preview') ? '{}' : '[]' });
   });
   await page.goto('/#oportunidades');
-  await page.getByRole('button', { name: 'Gestão SaaS', exact: true }).click();
+  await activate(page,'Gestão SaaS');
   await expect(page.getByRole('heading', { name: 'Contas por trilha' })).toBeVisible();
   await expect(page.getByText(/company@example.test/)).toBeVisible();
   await page.getByLabel('Trilha administrada').selectOption('capacita');

@@ -1,8 +1,10 @@
+import {useWorkspace} from '../../components/workspace/workspaceContext';
 import { useEffect, useRef } from 'react';
 export function useErrorFocus(error: string) { const ref = useRef<HTMLParagraphElement>(null); useEffect(() => { if (error) ref.current?.focus(); }, [error]); return ref; }
 export function usePanelFocus() {
+  const returnTarget=useWorkspace()?.returnTarget;
   const ref = useRef<HTMLElement>(null);
-  useEffect(() => { const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null; const node = ref.current; const frame = requestAnimationFrame(() => { if (node) { node.tabIndex = -1; node.focus(); } }); return () => { cancelAnimationFrame(frame); if (previous?.isConnected && (document.activeElement === document.body || node?.contains(document.activeElement))) previous.focus(); }; }, []);
+  useEffect(() => { const active=document.activeElement instanceof HTMLElement?document.activeElement:null;const previous=active?.matches('button,a,input,select,textarea,summary')?active:returnTarget?.()||active; const node = ref.current; const frame = requestAnimationFrame(() => { if (node) { node.tabIndex = -1; node.focus(); } }); return () => { cancelAnimationFrame(frame); if (previous?.isConnected && (document.activeElement === document.body || node?.contains(document.activeElement))) {if(previous.getClientRects().length)previous.focus();else document.querySelector<HTMLElement>('.workspace-content')?.focus({preventScroll:true});} }; }, [returnTarget]);
   return ref;
 }
 export function useDialogFocus(open: boolean, close: () => void) {

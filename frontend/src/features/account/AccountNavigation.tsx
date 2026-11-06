@@ -1,3 +1,4 @@
+import {useWorkspace} from '../../components/workspace/workspaceContext';
 export type AccountDestination = 'career' | 'future' | 'radar' | 'home' | 'companies' | 'opportunities' | 'courses' | 'jobs' | 'profile' | 'diagnostic' | 'premium' | 'admin' | 'admin-capacita' | 'admin-saas' | 'association' | 'capacita';
 
 interface AccountNavigationProps {
@@ -22,8 +23,10 @@ const links: { destination: AccountDestination; label: string }[] = [
 ];
 
 export function AccountNavigation({ active, onNavigate, canManage = false, hasAssociation = false }: AccountNavigationProps) {
+  const shell=useWorkspace();
   const destinations = [...links, ...(hasAssociation ? [{ destination: 'association' as const, label: 'Associação' }] : []), ...(canManage ? [{ destination: 'admin' as const, label: 'Administração' }, { destination: 'admin-capacita' as const, label: 'Conteúdos Capacita' }, { destination: 'admin-saas' as const, label: 'Gestão SaaS' }] : [])];
 
+  if(shell)return null;
   return (
     <nav aria-label="Navegação da conta" className="border-b border-white/10 bg-[#0b1421] px-0 py-3">
       <div className="mobile-nav-scroll mx-auto flex max-w-7xl gap-2 overflow-x-auto overscroll-x-contain px-[6vw] pb-1">

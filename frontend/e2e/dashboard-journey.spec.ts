@@ -1,3 +1,4 @@
+import {activate} from './navigation-helpers';
 import {test,expect} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 const geography={defaultRegion:'irece-ba',referenceMunicipality:{code:'2914604',name:'Irecê',state:'BA'},states:['BA'],regions:[{id:'irece-ba',name:'Irecê e região',municipalityCodes:['2914604']}]};
@@ -17,7 +18,7 @@ for(const width of [320,375,768,1024,1440]){
  return route.fulfill({json:[]});});
  await page.goto('/#oportunidades');await expect(page.getByRole('heading',{name:'Seu próximo passo',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Completar meu perfil',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Vaga acompanhada sintética',exact:true})).toBeVisible();await audit(page);await page.screenshot({path:`test-results/dashboard-candidate-${width}.png`,fullPage:true});
  await page.getByRole('button',{name:'Buscar vagas em Irecê',exact:true}).focus();await page.keyboard.press('Enter');await expect.poll(()=>calls.some(p=>p.get('municipalityCode')==='2914604')).toBe(true);
- await page.getByRole('navigation',{name:'Navegação da conta',exact:true}).getByRole('button',{name:'Oportunidades',exact:true}).click();await page.getByRole('button',{name:'Encontrar vagas remotas',exact:true}).click();await expect.poll(()=>calls.at(-1)?.get('modality')).toBe('Remoto');expect(calls.at(-1)?.has('municipalityCode')).toBe(false);expect(calls.at(-1)?.has('region')).toBe(false);
+ await activate(page,'Oportunidades','Navegação da conta');await page.getByRole('button',{name:'Encontrar vagas remotas',exact:true}).click();await expect.poll(()=>calls.at(-1)?.get('modality')).toBe('Remoto');expect(calls.at(-1)?.has('municipalityCode')).toBe(false);expect(calls.at(-1)?.has('region')).toBe(false);
  expect(await page.evaluate(()=>localStorage.getItem('trampolim_capacita_token'))).toBe('student-preserved');
  });
  test(`empresa filtra anúncios e candidaturas com dados autorizados em ${width}px`,async({page})=>{
@@ -31,9 +32,9 @@ for(const width of [320,375,768,1024,1440]){
  return route.fulfill({json:[]});});
  await page.goto('/#empresas');await expect(page.getByRole('heading',{name:'Ações rápidas da empresa',exact:true})).toBeVisible();await audit(page);
  await page.getByRole('button',{name:'Gerenciar anúncios',exact:true}).click();await page.getByLabel('Município/local da divulgação',{exact:true}).fill('irece');await expect(page.getByRole('heading',{name:'Auxiliar sintético',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Estágio sintético',exact:true})).toHaveCount(0);await page.getByRole('button',{name:'Limpar filtros de anúncios',exact:true}).click();await expect(page.getByRole('heading',{name:'Estágio sintético',exact:true})).toBeVisible();
- await page.getByRole('navigation',{name:'Navegação empresarial',exact:true}).getByRole('button',{name:'Candidaturas',exact:true}).click();await page.getByLabel('Município/local da vaga',{exact:true}).fill('Irecê');await page.getByLabel('Competência mencionada na candidatura',{exact:true}).fill('excel');await expect(page.getByRole('heading',{name:'Pessoa A',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Pessoa B',exact:true})).toHaveCount(0);await audit(page);await page.screenshot({path:`test-results/dashboard-company-${width}.png`,fullPage:true});
+ await activate(page,'Candidaturas','Navegação empresarial');await page.getByLabel('Município/local da vaga',{exact:true}).fill('Irecê');await page.getByLabel('Competência mencionada na candidatura',{exact:true}).fill('excel');await expect(page.getByRole('heading',{name:'Pessoa A',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Pessoa B',exact:true})).toHaveCount(0);await audit(page);await page.screenshot({path:`test-results/dashboard-company-${width}.png`,fullPage:true});
  await page.getByRole('button',{name:'Limpar filtros de candidaturas',exact:true}).click();await expect(page.getByRole('heading',{name:'Pessoa B',exact:true})).toBeVisible();
- await page.getByRole('navigation',{name:'Navegação empresarial',exact:true}).getByRole('button',{name:'Visão geral',exact:true}).click();await page.getByRole('button',{name:'Divulgar estágio · R$ 50,00',exact:true}).click();await expect(page.getByRole('heading',{name:'Detalhes do estágio',exact:true})).toBeVisible();await expect(page.getByLabel('Localidade',{exact:true})).toHaveValue('');expect(await page.evaluate(()=>localStorage.getItem('trampolim_capacita_token'))).toBe('student-preserved');
+ await activate(page,'Visão geral','Navegação empresarial');await page.getByRole('button',{name:'Divulgar estágio · R$ 50,00',exact:true}).click();await expect(page.getByRole('heading',{name:'Detalhes do estágio',exact:true})).toBeVisible();await expect(page.getByLabel('Localidade',{exact:true})).toHaveValue('');expect(await page.evaluate(()=>localStorage.getItem('trampolim_capacita_token'))).toBe('student-preserved');
  });
 }
 for(const width of [320,375,768,1024,1440])for(const teacher of [false,true])test(`Capacita organiza aprendizado e ferramentas com professor=${teacher} em ${width}px`,async({page})=>{
@@ -48,7 +49,7 @@ for(const width of [320,375,768,1024,1440])for(const teacher of [false,true])tes
  if(p.endsWith('/stream'))return route.fulfill({contentType:'text/event-stream',body:'event: ready\ndata: {}\n\n'});
  return route.fulfill({json:[]});});
  await page.goto('/#capacita');await expect(page.getByRole('heading',{name:'Organize seu aprendizado',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Retomar meu estudo',exact:true})).toBeVisible();expect(performanceCalls).toBe(0);const initialHistory=historyCalls;await page.getByRole('button',{name:'Tecnologia',exact:true}).click();await expect(page.getByRole('searchbox',{name:'Buscar cursos',exact:true})).toHaveValue('Tecnologia');expect(historyCalls).toBe(initialHistory);await audit(page);
- if(teacher){await page.getByRole('button',{name:'Gerenciar cursos',exact:true}).click();await expect(page.getByRole('heading',{name:'Ensinar e acompanhar',exact:true})).toBeVisible();await page.getByRole('button',{name:'Criar um curso',exact:true}).click();await expect(page.getByRole('button',{name:'Salvar curso',exact:true})).toBeVisible();}
+ if(teacher){await activate(page,'Gerenciar cursos');await expect(page.getByRole('heading',{name:'Ensinar e acompanhar',exact:true})).toBeVisible();await page.getByRole('button',{name:'Criar um curso',exact:true}).click();await expect(page.getByRole('button',{name:'Salvar curso',exact:true})).toBeVisible();}
  else{await expect(page.getByRole('button',{name:'Gerenciar cursos',exact:true})).toHaveCount(0);await page.getByRole('button',{name:'Acompanhar progresso e competências',exact:true}).click();await expect.poll(()=>performanceCalls).toBeGreaterThan(0);}
  expect(await page.evaluate(()=>localStorage.getItem('trampolim_empresas_token'))).toBe('company-preserved');
 });

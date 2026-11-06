@@ -1,6 +1,9 @@
+import {useWorkspace} from '../workspace/workspaceContext';
 import { AccountHeaderActions } from '../../features/account/AccountHeaderActions';
 
 export function Header({ onLogin, isAuthenticated = false, onProfile, onLogout }: { onLogin: () => void; isAuthenticated?: boolean; onProfile?: () => void; onLogout?: () => void }) {
+  const shell=useWorkspace();
+  if(shell)return null;
   return (
     <header className="px-[6vw] py-5 flex justify-between items-center">
       <a href="#oportunidades" className="font-serif font-black text-[22px] tracking-[-0.5px] text-ink no-underline">

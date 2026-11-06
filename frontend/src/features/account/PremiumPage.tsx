@@ -1,3 +1,4 @@
+import {LegacyPageHeader} from '../../components/workspace/WorkspaceSlots';
 import { useEffect, useMemo, useState } from 'react';
 import { getRecommendations, loadDiagnosticResult } from '../diagnostic/recommendations';
 import type { CatalogItem, ProfileResponse } from './api';
@@ -131,7 +132,7 @@ export function PremiumPage({ token, profile, onLogout, onNavigate }: { token: s
   return <div className="min-h-screen bg-[#0b1421] text-white">
     <style>{`@media print { @page { margin: 18mm; } body { background: white !important; } body * { visibility: hidden !important; } #premium-resume-preview, #premium-resume-preview * { visibility: visible !important; } #premium-resume-preview { position: absolute !important; inset: 0 auto auto 0 !important; width: 100% !important; max-height: none !important; overflow: visible !important; border: 0 !important; border-radius: 0 !important; background: white !important; color: #111827 !important; box-shadow: none !important; font-size: 11pt !important; } }`}</style>
     <RibbonStrip />
-    <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-[6vw] py-5"><a href="#premium" className="font-serif text-2xl font-black text-white no-underline">Trampol<span className="text-brand-yellow">i</span>m</a><AccountHeaderActions onProfile={() => onNavigate('profile')} onLogout={onLogout} /></header>
+    <LegacyPageHeader className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-[6vw] py-5"><a href="#premium" className="font-serif text-2xl font-black text-white no-underline">Trampol<span className="text-brand-yellow">i</span>m</a><AccountHeaderActions onProfile={() => onNavigate('profile')} onLogout={onLogout} /></LegacyPageHeader>
     <AccountNavigation active="premium" onNavigate={onNavigate} />
     <main id="premium" className="mx-auto max-w-7xl px-[6vw] pb-20">
       <section className="relative mt-8 overflow-hidden rounded-[30px] bg-ink px-7 py-10 text-brand-white md:mt-12 md:px-12 md:py-14">

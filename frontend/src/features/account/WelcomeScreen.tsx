@@ -1,3 +1,4 @@
+import {LegacyPageHeader} from '../../components/workspace/WorkspaceSlots';
 import { useEffect, useRef, useState } from 'react';
 import { API_URL, api } from './api';
 import type { Profile } from './api';
@@ -54,10 +55,10 @@ export function WelcomeScreen({ token, profile, onProfileChange, onContinue, onL
     <div className="min-h-screen pb-16">
       <RibbonStrip />
       <a href="#welcome-main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-white focus:px-4 focus:py-3 focus:font-bold">Pular para o conteúdo</a>
-      <header className="flex items-center justify-between border-b border-ink/10 px-[6vw] py-5">
+      <LegacyPageHeader className="flex items-center justify-between border-b border-ink/10 px-[6vw] py-5">
         <span className="font-serif text-2xl font-black text-ink">Trampol<span className="text-brand-red">i</span>m</span>
         <AccountHeaderActions onProfile={() => onNavigate('profile')} onLogout={onLogout} />
-      </header>
+      </LegacyPageHeader>
       <AccountNavigation active="profile" onNavigate={onNavigate} canManage={canManage} />
       <main id="welcome-main" className="mx-auto flex min-h-[75vh] max-w-3xl flex-col items-center justify-center py-14 text-center">
         <p className="text-sm font-extrabold uppercase tracking-[0.18em] text-brand-green">Vamos personalizar seu perfil</p>

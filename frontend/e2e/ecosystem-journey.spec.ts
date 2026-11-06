@@ -1,3 +1,4 @@
+import {activate,prepareNavigation} from './navigation-helpers';
 import { expect, test } from '@playwright/test';
 
 test('exclusão empresarial trata bloqueio e preserva sessão educacional', async ({ page }) => {
@@ -20,7 +21,7 @@ test('exclusão empresarial trata bloqueio e preserva sessão educacional', asyn
     return route.fulfill({ status: request.method() === 'POST' ? 204 : 200, contentType: 'application/json', body: request.method() === 'POST' ? '' : '[]' });
   });
   await page.goto('/#empresas');
-  await page.getByRole('button', { name: 'Excluir meu acesso empresarial' }).click();
+  await activate(page,'Excluir meu acesso empresarial');
   const confirm = page.getByRole('button', { name: 'Confirmar exclusão' });
   await expect(confirm).toBeDisabled();
   await page.getByLabel('Senha atual').fill('blocked-password');
@@ -71,7 +72,7 @@ test('página institucional conecta oportunidades, empresas e Capacita', async (
   await page.getByRole('button', { name: 'Conhecer o Capacita' }).click();
   await expect(page.getByRole('heading', { name: 'Trampolim Capacita' })).toBeVisible();
   await page.getByRole('button', { name: 'Conclusão do ensino médio e início profissional' }).click();
-  await page.getByRole('navigation', { name: 'Módulos do Capacita', exact: true }).getByRole('button', { name: 'Preparação profissional', exact: true }).click();
+  await activate(page,'Preparação profissional','Módulos do Capacita');
   await expect(page.getByRole('heading', { name: 'Vagas de estágio' })).toBeVisible();
   await expect(page.getByText('Nenhuma vaga de estágio disponível agora')).toBeVisible();
   await page.getByRole('button', { name: 'Fazer diagnóstico para o primeiro trabalho' }).click();
@@ -117,6 +118,7 @@ test('Empresas e Capacita usam logins e sessões separados, e cada logout preser
   await page.getByLabel('E-mail').fill('capacita@example.com');
   await page.getByLabel('Senha').fill('senha-segura');
   await page.getByRole('button', { name: 'Entrar na minha conta' }).click();
+  await prepareNavigation(page,'Sair do Capacita');
   await expect(page.getByRole('button', { name: 'Sair do Capacita' })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('trampolim_capacita_token'))).toBe('capacita-session');
   expect(await page.evaluate(() => localStorage.getItem('trampolim_empresas_token'))).toBe('empresas-session');
@@ -130,19 +132,19 @@ test('Empresas e Capacita usam logins e sessões separados, e cada logout preser
   expect(await page.evaluate(() => localStorage.getItem('trampolim_token'))).toBe('oportunidades-session');
   expect(await page.evaluate(() => localStorage.getItem('trampolim_empresas_token'))).toBe('empresas-session');
   expect(await page.evaluate(() => localStorage.getItem('trampolim_capacita_token'))).toBe('capacita-session');
-  await page.getByRole('button', { name: 'Sair' }).click();
+  await activate(page,'Sair');
   expect(await page.evaluate(() => localStorage.getItem('trampolim_token'))).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem('trampolim_empresas_token'))).toBe('empresas-session');
   expect(await page.evaluate(() => localStorage.getItem('trampolim_capacita_token'))).toBe('capacita-session');
 
   await page.goto('/#capacita');
-  await page.getByRole('button', { name: 'Sair do Capacita' }).click();
+  await activate(page,'Sair do Capacita');
   await expect(page.getByRole('button', { name: 'Entrar', exact: true })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('trampolim_capacita_token'))).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem('trampolim_empresas_token'))).toBe('empresas-session');
 
   await page.goto('/#empresas');
-  await page.getByRole('button', { name: 'Sair' }).click();
+  await activate(page,'Sair');
   expect(await page.evaluate(() => localStorage.getItem('trampolim_empresas_token'))).toBeNull();
   expect(authRequests).toEqual(['/empresas/auth/login', '/capacita/auth/login', '/auth/login']);
   expect(logoutRequests).toEqual([
@@ -190,9 +192,9 @@ test('exportação do Capacita usa apenas a sessão estudantil e baixa JSON', as
     return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
   });
   await page.goto('/#capacita');
-  await page.getByRole('button', { name: 'Minha conta', exact: true }).click();
+  await activate(page,'Minha conta');
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Baixar meus dados' }).click();
+  await activate(page,'Baixar meus dados');
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('trampolim-capacita-meus-dados.json');
   const stream = await download.createReadStream();
@@ -222,7 +224,7 @@ test('exclusão do Capacita exige confirmação e preserva sessão empresarial',
     return route.fulfill({ status: request.method() === 'POST' ? 204 : 200, contentType: 'application/json', body: request.method() === 'POST' ? '' : '[]' });
   });
   await page.goto('/#capacita');
-  await page.getByRole('button', { name: 'Minha conta', exact: true }).click();
+  await activate(page,'Minha conta');
   await page.getByRole('button', { name: 'Excluir conta do Capacita' }).click();
   const confirm = page.getByRole('button', { name: 'Confirmar exclusão' });
   await expect(confirm).toBeDisabled();
@@ -259,7 +261,7 @@ test('exportação empresarial usa sessão corporativa mesmo com Capacita conect
   });
   await page.goto('/#empresas');
   const downloaded = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Baixar meus dados' }).click();
+  await activate(page,'Baixar meus dados');
   const download = await downloaded;
   expect(download.suggestedFilename()).toBe('trampolim-empresas-meus-dados.json');
   expect(exports).toEqual(['/api/empresas/account/export']);
@@ -312,7 +314,7 @@ test('conta antiga declara faixa etária somente no Capacita', async ({ page }) 
     return route.fulfill({status:200,contentType:'application/json',body:'[]'});
   });
   await page.goto('/#capacita');
-  await page.getByRole('button', { name: 'Minha conta', exact: true }).click();
+  await activate(page,'Minha conta');
   await expect(page.getByRole('button',{name:'Salvar faixa etária'})).toBeDisabled();
   await page.getByLabel('Faixa etária declarada').selectOption('AGE_14_17');
   await page.getByRole('button',{name:'Salvar faixa etária'}).click();

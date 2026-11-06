@@ -1,0 +1,123 @@
+{
+  "date": "2026-11-05",
+  "baseCommit": "d2321cb9fd8cf2516bdc93f1f704f5e573e81770",
+  "scope": "Frontend navigation only; no API, database, dependencies or auth contract changes",
+  "frontend": {
+    "lint": "passed",
+    "types": "passed via tsc -b in npm run build",
+    "unit": {
+      "passed": 15,
+      "failed": 0
+    },
+    "e2e": {
+      "passed": 160,
+      "failed": 0,
+      "skipped": 0,
+      "workers": 2,
+      "sourceFrozen": true
+    },
+    "build": "passed"
+  },
+  "backend": {
+    "selectedSuites": [
+      {
+        "suite": "com.trampolim.api.auth.AuthControllerTrailIsolationTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.trampolim.api.education.LearningHttpPostgresTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.trampolim.api.hub.HubHttpPostgresTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.trampolim.api.security.JwtAuthenticationFilterTrailIsolationTest",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "com.trampolim.api.security.TrailTokenServiceTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "isolatedTestSchemas": true,
+    "productionDataUsed": false
+  },
+  "responsiveWidths": [
+    320,
+    375,
+    768,
+    1024,
+    1440
+  ],
+  "roles": [
+    "candidate",
+    "platform admin",
+    "company owner",
+    "company analyst",
+    "student",
+    "teacher"
+  ],
+  "accessibility": {
+    "automatedAxe": true,
+    "keyboardBrowserTests": true,
+    "screenshotsVisuallyInspected": true,
+    "physicalDevices": false,
+    "humanScreenReaderAudit": false
+  },
+  "notes": [
+    "Final frozen run supersedes an interrupted HMR run.",
+    "No deployment or GitHub publication performed."
+  ],
+  "performance": {
+    "artifact": "ops/performance-sidebar-2026-11-05.json",
+    "samples": 12,
+    "medians": [
+      {
+        "area": "Institucional",
+        "LCPms": 2044,
+        "INPms": 96,
+        "CLS": 0,
+        "heavyRequests": 0
+      },
+      {
+        "area": "Oportunidades",
+        "LCPms": 2864,
+        "INPms": 72,
+        "CLS": 0.014948588425925925,
+        "heavyRequests": 0
+      },
+      {
+        "area": "Empresas",
+        "LCPms": 2908,
+        "INPms": 168,
+        "CLS": 0.024770370370370373,
+        "heavyRequests": 0
+      },
+      {
+        "area": "Capacita",
+        "LCPms": 2300,
+        "INPms": 176,
+        "CLS": 0,
+        "heavyRequests": 0
+      }
+    ],
+    "productionMeasurements": false
+  }
+}

@@ -1,3 +1,4 @@
+import {activate,prepareNavigation} from './navigation-helpers';
 import { test, expect } from '@playwright/test';
 
 for (const width of [1280, 390]) {
@@ -19,30 +20,33 @@ for (const width of [1280, 390]) {
     await page.goto('/#capacita');
     const modules = page.getByRole('navigation', { name: 'Módulos do Capacita', exact: true });
     const tools = page.getByRole('navigation', { name: 'Funcionalidades de aprendizagem' });
+    await prepareNavigation(page,'Aprendizagem','Módulos do Capacita');
     await expect(modules.getByRole('button', { name: 'Aprendizagem', exact: true })).toHaveAttribute('aria-current', 'page');
     await expect(tools.getByRole('button', { name: 'Administração', exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Gerenciar cursos', exact: true })).toHaveCount(0);
+    if(width<768)await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Conhecer curso' }).click();
     await expect(page.getByRole('heading', { name: course.title, exact: true })).toBeVisible();
-    await tools.getByRole('button', { name: 'Biblioteca virtual', exact: true }).click();
+    await activate(page,'Biblioteca virtual','Funcionalidades de aprendizagem');
     await expect(page.getByRole('region', { name: 'Biblioteca virtual', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: course.title, exact: true })).not.toBeVisible();
-    await tools.getByRole('button', { name: 'Mini provas', exact: true }).click();
+    await activate(page,'Mini provas','Funcionalidades de aprendizagem');
     await expect(page.getByRole('region', { name: 'Biblioteca virtual', exact: true })).toHaveCount(0);
     await expect(page.getByRole('region', { name: 'Avaliações educacionais' })).toBeVisible();
-    await tools.getByRole('button', { name: 'Cursos e videoaulas', exact: true }).click();
+    await activate(page,'Cursos e videoaulas','Funcionalidades de aprendizagem');
     await expect(page.getByRole('heading', { name: course.title, exact: true })).toBeVisible();
-    await modules.getByRole('button', { name: 'Minha conta', exact: true }).click();
+    await activate(page,'Minha conta','Módulos do Capacita');
     await expect(page.getByRole('heading', { name: 'Minha conta e privacidade' })).toBeVisible();
-    await expect(tools).not.toBeVisible();
-    await modules.getByRole('button', { name: 'Preparação profissional', exact: true }).click();
+    await expect(page.getByRole('button',{name:'Minha conta',exact:true,includeHidden:true})).toHaveAttribute('aria-current','page');
+    await activate(page,'Preparação profissional','Módulos do Capacita');
     await expect(page.getByRole('heading', { name: 'Vagas de estágio', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Minha conta e privacidade' })).not.toBeVisible();
-    await modules.getByRole('button', { name: 'Conteúdos por etapa', exact: true }).click();
+    await activate(page,'Conteúdos por etapa','Módulos do Capacita');
     await expect(page.getByRole('searchbox', { name: 'Buscar conteúdo' })).toBeVisible();
     const stages = page.locator('#conteudos');
     await stages.getByRole('button', { name: 'Ensino superior', exact: true }).click();
     await expect(stages.getByRole('button', { name: 'Ensino superior', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await prepareNavigation(page,'Visão geral','Módulos do Capacita');
     const first = modules.getByRole('button', { name: 'Visão geral', exact: true });
     await first.focus(); await page.keyboard.press('ArrowRight');
     await expect(modules.getByRole('button', { name: 'Aprendizagem', exact: true })).toBeFocused();
