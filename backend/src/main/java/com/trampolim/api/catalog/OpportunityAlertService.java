@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class OpportunityAlertService {
+    @org.springframework.beans.factory.annotation.Autowired @org.springframework.beans.factory.annotation.Qualifier("opportunitiesCommunications") private com.trampolim.api.communication.CommunicationStore communications;
     private final AppUserRepository users;
     private final CatalogItemRepository items;
     private final ObjectMapper mapper;
@@ -25,6 +26,7 @@ public class OpportunityAlertService {
     public void published(CatalogItem item) {
         if (!item.isActive() || !"job".equals(item.getKind())) return;
         for (AppUser user : users.findAllByAlertPreferencesIsNotNull()) {
+            if (!user.isEmailVerified() || !"PERSON".equals(user.getAccountType())) continue;
             try {
                 var prefs = mapper.readTree(user.getAlertPreferences());
                 if (!prefs.path("enabled").asBoolean(false) || !matches(prefs, item)) continue;
@@ -47,6 +49,7 @@ public class OpportunityAlertService {
         if (!jobsEnabled) return;
         boolean weeklyDay = java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")).getDayOfWeek() == java.time.DayOfWeek.MONDAY;
         for (AppUser user : users.findAllByAlertPreferencesIsNotNull()) {
+            if (!user.isEmailVerified() || !"PERSON".equals(user.getAccountType())) continue;
             try {
                 var prefs = mapper.readTree(user.getAlertPreferences());
                 String frequency = prefs.path("frequency").asText("weekly");
@@ -61,7 +64,7 @@ public class OpportunityAlertService {
     private List<Long> readPending(AppUser user) throws Exception {
         return user.getPendingAlertIds() == null ? new ArrayList<>() : mapper.readValue(user.getPendingAlertIds(), new TypeReference<>() {});
     }
-    private boolean matches(com.fasterxml.jackson.databind.JsonNode prefs, CatalogItem item) {
+    public static boolean matches(com.fasterxml.jackson.databind.JsonNode prefs, CatalogItem item) {
         if (!prefs.path("areas").toString().contains("\"" + item.getArea() + "\"")) return false;
         if (prefs.path("useDistance").asBoolean(false) && !withinRadius(prefs, item)) return false;
         return containsOrEmpty(prefs.path("city").asText(""), item.getLocation())
@@ -70,7 +73,7 @@ public class OpportunityAlertService {
                 && equalsOrEmpty(prefs.path("workSchedule").asText(""), item.getWorkSchedule())
                 && keywordMatch(prefs.path("keywords").asText(""), item.getTitle() + " " + item.getDescription() + " " + item.getProvider());
     }
-    private boolean withinRadius(com.fasterxml.jackson.databind.JsonNode prefs, CatalogItem item) {
+    private static boolean withinRadius(com.fasterxml.jackson.databind.JsonNode prefs, CatalogItem item) {
         if (item.getLatitude() == null || item.getLongitude() == null || !prefs.hasNonNull("latitude")
                 || !prefs.hasNonNull("longitude") || !prefs.hasNonNull("radiusKm")) return false;
         double userLat = prefs.path("latitude").asDouble(); double userLon = prefs.path("longitude").asDouble();
@@ -81,13 +84,13 @@ public class OpportunityAlertService {
         double km = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return km <= prefs.path("radiusKm").asInt();
     }
-    private boolean containsOrEmpty(String filter, String value) {
+    private static boolean containsOrEmpty(String filter, String value) {
         return filter == null || filter.isBlank() || (value != null && com.trampolim.api.radar.RadarModel.normalize(value).contains(com.trampolim.api.radar.RadarModel.normalize(filter)));
     }
-    private boolean equalsOrEmpty(String filter, String value) {
+    private static boolean equalsOrEmpty(String filter, String value) {
         return filter == null || filter.isBlank() || (value != null && filter.equalsIgnoreCase(value));
     }
-    private boolean keywordMatch(String filters, String searchableText) {
+    private static boolean keywordMatch(String filters, String searchableText) {
         if (filters == null || filters.isBlank()) return true;
         String searchable = searchableText == null ? "" : searchableText.toLowerCase(java.util.Locale.ROOT);
         return java.util.Arrays.stream(filters.split(",")).map(String::trim).filter(term -> !term.isEmpty())
@@ -95,7 +98,7 @@ public class OpportunityAlertService {
     }
     private boolean send(AppUser user, List<CatalogItem> matches) {
         JavaMailSender sender = mailSenders.getIfAvailable();
-        if (!mailEnabled || sender == null) return false;
+        if (!mailEnabled || sender == null || !communications.allowed(user.getId(),"NEW_MATCH")) return false;
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(user.getEmail()); message.setSubject("Novas oportunidades para você no Trampolim");
         message.setText("Encontramos " + matches.size() + " nova(s) oportunidade(s) nas áreas selecionadas:\n\n" + matches.stream().map(item -> "• " + item.getTitle() + " — " + item.getProvider() + (item.getLocation() == null ? "" : " (" + item.getLocation() + ")") + "\n" + item.getUrl()).collect(java.util.stream.Collectors.joining("\n\n")));

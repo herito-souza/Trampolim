@@ -293,7 +293,7 @@ test('cadastro Capacita exige faixa etária e envia declaração somente à tril
   await page.getByLabel('Confirme sua senha').fill('student-password');
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Criar meu perfil' }).click();
-  await expect(page.getByRole('alert')).toContainText('Selecione sua faixa etária');
+  await expect(page.getByRole('alert')).toContainText('Faixa etária: Selecione uma opção.');
   expect(registrations).toBe(0);
   await page.getByRole('combobox', { name: /Faixa etária/ }).selectOption('AGE_14_17');
   await page.getByRole('button', { name: 'Criar meu perfil' }).click();

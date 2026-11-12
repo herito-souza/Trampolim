@@ -47,6 +47,9 @@ public class OperationalRequestFilter extends OncePerRequestFilter {
                 }
             }
             chain.doFilter(request, response);
+        } catch (IOException | ServletException | RuntimeException error) {
+            log.error("http_request_failed method={} error_type={}", request.getMethod(), error.getClass().getSimpleName());
+            throw error;
         } finally {
             long elapsed = (System.nanoTime() - started) / 1_000_000;
             if (!request.isAsyncStarted() && (response.getStatus() >= 500 || elapsed >= 1000)) {

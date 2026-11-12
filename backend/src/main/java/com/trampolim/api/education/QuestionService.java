@@ -15,10 +15,11 @@ import org.springframework.web.server.ResponseStatusException;
 @ConditionalOnProperty(name="trampolim.datasource.capacita.enabled",havingValue="true")
 public class QuestionService {
     private final JdbcTemplate jdbc;private final LearningAccess access;private final LearningController learning;
+    private final com.trampolim.api.communication.CommunicationStore communications;
     @Value("${capacita.questions.max-questions-hour:10}") private int maxQuestions=10;
     @Value("${capacita.questions.max-messages-hour:60}") private int maxMessages=60;
     @Value("${capacita.questions.max-teacher-messages-hour:300}") private int maxTeacherMessages=300;
-    public QuestionService(@Qualifier("capacitaJdbcTemplate") JdbcTemplate jdbc,LearningAccess access,LearningController learning) {this.jdbc=jdbc;this.access=access;this.learning=learning;}
+    public QuestionService(@Qualifier("capacitaJdbcTemplate") JdbcTemplate jdbc,LearningAccess access,LearningController learning,@Qualifier("learningCommunications") com.trampolim.api.communication.CommunicationStore communications) {this.jdbc=jdbc;this.access=access;this.learning=learning;this.communications=communications;}
     public record MessageInput(UUID clientKey,String body,UUID mediaId,String transcript,String captionsVtt) {}
     public record QuestionInput(UUID clientKey,long courseId,Long moduleId,Long lessonId,String title,String body,UUID mediaId,String transcript,String captionsVtt) {}
     public record BatchInput(UUID clientKey,List<Long> questionIds,String body,UUID mediaId,String transcript,String captionsVtt,boolean confirmed) {}
@@ -109,7 +110,7 @@ public class QuestionService {
     }
     private boolean canTeach(LearningAccess.Account user,Map<String,Object> thread) {return user.admin()||(user.teacher()&&number(thread,"teacher_id")==user.id());}
     private long insertMessage(LearningAccess.Account user,long id,MessageInput input,boolean teacher,UUID batch) {return jdbc.queryForObject("INSERT INTO learning_question_messages(question_id,author_id,author_role,body,media_id,transcript,captions_vtt,client_key,request_hash,batch_id) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING id",Long.class,id,user.id(),teacher?"TEACHER":"STUDENT",text(input.body(),6000),input.mediaId(),text(input.transcript(),20000),captions(input.captionsVtt()),input.clientKey(),fingerprint(input),batch);}
-    private void notify(long receiver,long actor,long thread,Long message,String kind) {if(receiver!=actor) jdbc.update("INSERT INTO learning_notifications(user_id,question_id,message_id,kind) VALUES (?,?,?,?) ON CONFLICT DO NOTHING",receiver,thread,message,kind);}
+    private void notify(long receiver,long actor,long thread,Long message,String kind) {if(receiver!=actor) communications.question(receiver,thread,message,kind);}
     private void audit(long actor,long id,String event) {jdbc.update("INSERT INTO learning_question_audit(actor_id,question_id,event) VALUES (?,?,?)",actor,id,event);}
     private void lockAccount(long id) {jdbc.queryForObject("SELECT id FROM student_users WHERE id=? FOR NO KEY UPDATE",Long.class,id);}
     private void mediaOwner(LearningAccess.Account user,UUID id) {if(id==null)return;var owners=jdbc.query("SELECT owner_id FROM learning_question_media WHERE id=? FOR UPDATE",(rs,row)->rs.getLong(1),id);if(owners.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Mídia indisponível.");if(owners.get(0)!=user.id()) denied();jdbc.update("UPDATE learning_question_media SET last_attached_at=CURRENT_TIMESTAMP WHERE id=?",id);}

@@ -126,9 +126,9 @@ Execução com dois processos Java, schemas temporários nos três bancos e cont
 
 ## Evidências e comandos
 
-Evidências sanitizadas em [tools/performance/results](tools/performance/results): JSON de carga antes/depois, dois nós, orçamento de consultas, EXPLAIN, inventário de fontes/dependências e resumo npm. Não contêm tokens/senhas das contas fictícias. Os traces locais de navegador devem continuar privados/ignorados.
+Evidências sanitizadas em [tools/performance/results](../../tools/performance/results): JSON de carga antes/depois, dois nós, orçamento de consultas, EXPLAIN, inventário de fontes/dependências e resumo npm. Não contêm tokens/senhas das contas fictícias. Os traces locais de navegador devem continuar privados/ignorados.
 
-Instruções de execução, fixtures e limites: [tools/performance/README.md](tools/performance/README.md). Operação, mídia, métricas, probes, migração, backup e recuperação: [ops/OPERACAO_E_ESCALA.md](ops/OPERACAO_E_ESCALA.md). CI mantém as verificações e preserva evidências sintéticas de banco; a porta de gerenciamento dos testes usa alocação dinâmica pelo Surefire.
+Instruções de execução, fixtures e limites: [tools/performance/README.md](../../tools/performance/README.md). Operação, mídia, métricas, probes, migração, backup e recuperação: [ops/OPERACAO_E_ESCALA.md](../../ops/OPERACAO_E_ESCALA.md). CI mantém as verificações e preserva evidências sintéticas de banco; a porta de gerenciamento dos testes usa alocação dinâmica pelo Surefire.
 
 ## Arquivos desta auditoria
 

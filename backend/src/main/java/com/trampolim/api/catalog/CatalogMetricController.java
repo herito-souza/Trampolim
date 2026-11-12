@@ -12,7 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.concurrent.ConcurrentHashMap;
+
 
 @RestController
 @RequestMapping("/api")
@@ -21,8 +21,7 @@ public class CatalogMetricController {
     private final CatalogMetricRepository metrics;
     private final CatalogItemRepository items;
     private final PlatformAccess platformAccess;
-    private final ConcurrentHashMap<String, RateWindow> eventRates = new ConcurrentHashMap<>();
-    private record RateWindow(Instant expiresAt, int count) {}
+    private final com.trampolim.api.security.BoundedRateLimiter eventRates = new com.trampolim.api.security.BoundedRateLimiter();
 
     public record MetricEvent(String eventType, String kind, String itemKey) {}
     public record MetricSummary(String day, String kind, String eventType, String itemTitle, Long total) {}
@@ -48,11 +47,7 @@ public class CatalogMetricController {
     }
 
     private void limitEvents(String remoteAddress) {
-        Instant now = Instant.now();
-        RateWindow current = eventRates.compute(remoteAddress, (key, previous) -> previous == null || previous.expiresAt().isBefore(now)
-                ? new RateWindow(now.plus(1, ChronoUnit.HOURS), 1) : new RateWindow(previous.expiresAt(), previous.count() + 1));
-        if (eventRates.size() > 10_000) eventRates.entrySet().removeIf(entry -> entry.getValue().expiresAt().isBefore(now));
-        if (current.count() > 240) throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Limite de eventos temporariamente atingido.");
+        if (!eventRates.allow(remoteAddress,240,java.time.Duration.ofHours(1))) throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Limite de eventos temporariamente atingido.");
     }
 
     @GetMapping("/admin/metrics")

@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-12",
+  "lint": "passed",
+  "unitTests": {
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0
+  },
+  "productionBuild": "passed",
+  "typecheck": "passed via tsc -b in npm run build",
+  "warnings": [
+    "Módulos de mapa/PDF maiores que 500 kB; aviso de build preservado."
+  ],
+  "endToEnd": "not rerun for documentation consolidation",
+  "performance": "not remeasured"
+}

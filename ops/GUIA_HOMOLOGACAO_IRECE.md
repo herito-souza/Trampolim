@@ -1,6 +1,6 @@
 # Homologação e liberação regional
 
-Este procedimento prepara uma homologação. Não autoriza implantação de produção nem substitui a revisão das pendências em [QA_IMPLANTACAO_IRECE.md](../QA_IMPLANTACAO_IRECE.md).
+Este procedimento prepara uma homologação. Não autoriza implantação de produção nem substitui a revisão das pendências em [QA_IMPLANTACAO_IRECE.md](../docs/historico/QA_IMPLANTACAO_IRECE.md).
 
 ## Ambiente e dependências
 
@@ -53,7 +53,7 @@ O instrumento usa porta local 4180, gzip, três amostras por cenário, respostas
 
 A referência inicial vem de `GEOGRAPHY_REGIONS` (recurso aceito pelo Spring: por exemplo, arquivo externo com prefixo file:). Copiar o formato de backend/src/main/resources/geography/regions.json, definir defaultRegion, referenceMunicipality e regiões com códigos oficiais válidos. Validar em homologação antes de substituir a configuração em execução. Não é necessário alterar usuários ou autenticação. Atualizar o dataset oficial é uma operação separada de manutenção dos dados de referência.
 
-Preservar as três URLs, credenciais, JWT e permissões independentes. Referências: [SAAS_ARCHITECTURE.md](../SAAS_ARCHITECTURE.md), [BUSCA_REGIONAL.md](../BUSCA_REGIONAL.md), [MAPA_REGIONAL.md](../MAPA_REGIONAL.md), [PERFORMANCE_ACESSIBILIDADE.md](../PERFORMANCE_ACESSIBILIDADE.md).
+Preservar as três URLs, credenciais, JWT e permissões independentes. Referências: [SAAS_ARCHITECTURE.md](../docs/historico/SAAS_ARCHITECTURE.md), [BUSCA_REGIONAL.md](../docs/historico/BUSCA_REGIONAL.md), [MAPA_REGIONAL.md](../docs/historico/MAPA_REGIONAL.md), [PERFORMANCE_ACESSIBILIDADE.md](../docs/historico/PERFORMANCE_ACESSIBILIDADE.md).
 
 ## Antes da liberação pública
 

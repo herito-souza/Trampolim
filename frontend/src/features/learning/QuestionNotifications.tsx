@@ -3,19 +3,21 @@ import {NavIcon} from '../../components/workspace/NavIcon';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_URL, api } from '../account/api';
 import { buttonClass } from './types';
-type Notice = { id: number; question_id: number; kind: string; read_at: string | null; created_at: string };
+export type Notice = { id: number; question_id: number; kind: string; read_at: string | null; created_at: string };
 const root = '/capacita/learning/notifications';
 export const questionEvent = 'capacita-question-notifications';
-export function QuestionNotifications({ token, onOpen }: { token: string; onOpen: (id: number, inbox: boolean) => void }) {
+export function QuestionNotifications({ token, onOpen, onSummary }: { token: string; onOpen: (id: number, inbox: boolean) => void; onSummary?:(summary:{unread:number;items:Notice[]}|null)=>void }) {
+  const [loaded,setLoaded]=useState(false);const activeToken=useRef(token);activeToken.current=token;
   const compact=Boolean(useWorkspace()),container=useRef<HTMLElement>(null),trigger=useRef<HTMLButtonElement>(null);
   const [items, setItems] = useState<Notice[]>([]); const [unread, setUnread] = useState(0); const [open, setOpen] = useState(false); const [connection, setConnection] = useState('Conectando…'); const [more, setMore] = useState(false);
   useEffect(()=>{if(!compact||!open)return;const outside=(event:PointerEvent)=>{if(!container.current?.contains(event.target as Node))setOpen(false)};const escape=(event:KeyboardEvent)=>{if(event.key==='Escape'){setOpen(false);trigger.current?.focus()}};document.addEventListener('pointerdown',outside);document.addEventListener('keydown',escape);return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape)}},[compact,open]);
+  useEffect(()=>{onSummary?.(loaded?{unread,items:items.slice(0,3)}:null)},[onSummary,loaded,unread,items]);
   const cursor = useRef(0); const current = useRef(true);
-  const load = useCallback(async (before?: number) => { const data = await api<{ items?: Notice[]; unreadCount?: number }>(`${root}${before ? `?before=${before}` : ''}`, token); const rows = Array.isArray(data.items) ? data.items : []; if (current.current) { setItems(previous => [...new Map([...previous, ...rows].map(item => [item.id, item])).values()].sort((a, b) => b.id - a.id)); setUnread(data.unreadCount || 0); setMore(rows.length === 50); } return rows; }, [token]);
+  const load = useCallback(async (before?: number,signal?:AbortSignal) => { const data = await api<{ items?: Notice[]; unreadCount?: number }>(`${root}${before ? `?before=${before}` : ''}`, token,{signal}); const rows = Array.isArray(data.items) ? data.items : []; if (!signal?.aborted&&current.current&&activeToken.current===token) { setLoaded(true); setItems(previous => [...new Map([...previous, ...rows].map(item => [item.id, item])).values()].sort((a, b) => b.id - a.id)); setUnread(data.unreadCount || 0); setMore(rows.length === 50); } return rows; }, [token]);
   useEffect(() => {
-    current.current = true; cursor.current = 0; setItems([]); setUnread(0); const abort = new AbortController();
+    current.current = true; cursor.current = 0; setLoaded(false); setItems([]); setUnread(0); const abort = new AbortController();
     async function connect() {
-      try { const initial = await load(); cursor.current = initial.reduce((max, item) => Math.max(max, item.id), 0); } catch { /* Persisted history is retried after reconnection. */ }
+      try { const initial = await load(undefined,abort.signal); cursor.current = initial.reduce((max, item) => Math.max(max, item.id), 0); } catch { /* Persisted history is retried after reconnection. */ }
       let delay = 1000;
       while (!abort.signal.aborted) {
         try {
@@ -26,7 +28,7 @@ export function QuestionNotifications({ token, onOpen }: { token: string; onOpen
           while (!abort.signal.aborted) {
             const chunk = await reader.read(); if (chunk.done) break; buffer += decoder.decode(chunk.value, { stream: true });
             const events = buffer.split(/\r?\n\r?\n/); buffer = events.pop() || '';
-            for (const event of events) { const lines = event.split(/\r?\n/); const name = lines.find(line => line.startsWith('event:'))?.slice(6).trim(); const id = Number(lines.find(line => line.startsWith('id:'))?.slice(3).trim() || 0); if (name === 'notifications') { const data = JSON.parse(lines.filter(line => line.startsWith('data:')).map(line => line.slice(5).trim()).join('\n')); if (Number.isSafeInteger(id)) cursor.current = Math.max(cursor.current, id); void load().catch(() => undefined); window.dispatchEvent(new CustomEvent(questionEvent, { detail: (data.items || []).map((item: Notice) => item.question_id) })); } }
+            for (const event of events) { const lines = event.split(/\r?\n/); const name = lines.find(line => line.startsWith('event:'))?.slice(6).trim(); const id = Number(lines.find(line => line.startsWith('id:'))?.slice(3).trim() || 0); if (name === 'notifications') { const data = JSON.parse(lines.filter(line => line.startsWith('data:')).map(line => line.slice(5).trim()).join('\n')); if (Number.isSafeInteger(id)) cursor.current = Math.max(cursor.current, id); void load(undefined,abort.signal).catch(() => undefined); window.dispatchEvent(new CustomEvent(questionEvent, { detail: (data.items || []).map((item: Notice) => item.question_id) })); } }
           }
         } catch { if (abort.signal.aborted) break; }
         if (abort.signal.aborted) break; setConnection('Reconectando… histórico preservado.');

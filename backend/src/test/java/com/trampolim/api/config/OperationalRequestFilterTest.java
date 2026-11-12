@@ -31,4 +31,13 @@ class OperationalRequestFilterTest {
         filter.doFilter(new MockHttpServletRequest("GET", "/actuator/health/liveness"), health, (a,b) -> {});
         assertEquals(200, health.getStatus());
     }
+
+    @Test void oneServerGeneratedIdAndNoPrivatePathOrExceptionTextInLogs() throws Exception {
+        var logger=(ch.qos.logback.classic.Logger)org.slf4j.LoggerFactory.getLogger(OperationalRequestFilter.class);
+        var appender=new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();appender.start();logger.addAppender(appender);
+        try {var request=new MockHttpServletRequest("GET","/api/shared/opaque-secret-ticket");request.addHeader("X-Request-ID","untrusted-id");var response=new MockHttpServletResponse();
+            assertThrows(jakarta.servlet.ServletException.class,()->new OperationalRequestFilter("").doFilter(request,response,(a,b)->{assertEquals(response.getHeader("X-Request-ID"),MDC.get("requestId"));throw new jakarta.servlet.ServletException("sensitive internal error");}));
+            assertNotEquals("untrusted-id",response.getHeader("X-Request-ID"));assertNull(MDC.get("requestId"));assertFalse(appender.list.isEmpty());for(var event:appender.list){assertFalse(event.getFormattedMessage().contains("opaque-secret-ticket"));assertFalse(event.getFormattedMessage().contains("sensitive internal error"));assertEquals(response.getHeader("X-Request-ID"),event.getMDCPropertyMap().get("requestId"));}
+        } finally {logger.detachAppender(appender);appender.stop();}
+    }
 }

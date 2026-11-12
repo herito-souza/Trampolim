@@ -7,7 +7,7 @@ const CareerPanel = lazy(() => import('./features/career/CareerPanel').then(modu
 const CredentialVerification=lazy(()=>import('./features/learning/PassportVerification').then(module=>({default:module.CredentialVerification})));
 const RecruiterPassport=lazy(()=>import('./features/learning/PassportVerification').then(module=>({default:module.RecruiterPassport})));
 import { ApiError } from './features/account/api';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { PageBoundary } from './components/ui/PageBoundary';
 const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
 const AuthScreen = lazy(() => import('./features/account/AuthScreen').then(module => ({ default: module.AuthScreen })));
@@ -15,13 +15,14 @@ import { api, confirmEmail, confirmTrailEmail, API_URL, revokeTrailSession } fro
 import type { AuthResponse, AuthTrail, Profile, ProfileResponse } from './features/account/api';
 const ProfilePage = lazy(() => import('./features/account/ProfilePage').then(module => ({ default: module.ProfilePage })));
 const WelcomeScreen = lazy(() => import('./features/account/WelcomeScreen').then(module => ({ default: module.WelcomeScreen })));
-const OpportunitiesPage = lazy(() => import('./features/account/OpportunitiesPage').then(module => ({ default: module.OpportunitiesPage })));
+const loadOpportunitiesPage = () => import('./features/account/OpportunitiesPage').then(module => ({ default: module.OpportunitiesPage }));
+const OpportunitiesPage = lazy(loadOpportunitiesPage);
 const CatalogPage = lazy(() => import('./features/account/CatalogPage').then(module => ({ default: module.CatalogPage })));
 const AdminCatalogPage = lazy(() => import('./features/account/AdminCatalogPage').then(module => ({ default: module.AdminCatalogPage })));
 const PublicProfilePage = lazy(() => import('./features/account/PublicProfilePage').then(module => ({ default: module.PublicProfilePage })));
 import { AccountNavigation } from './features/account/AccountNavigation';
 import type { AccountDestination } from './features/account/AccountNavigation';
-import { loadDiagnosticResult } from './features/diagnostic/recommendations';
+import { loadDiagnosticResult } from './features/diagnostic/diagnosticStorage';
 import type { DiagnosticResult } from './features/diagnostic/recommendations';
 import { RibbonStrip } from './components/ui/RibbonStrip';
 const CompanyPublicPage = lazy(() => import('./features/account/CompanyPublicPage').then(module => ({ default: module.CompanyPublicPage })));
@@ -39,6 +40,7 @@ const CompanyPortal = lazy(() => import('./features/account/CompanyPortal').then
 const HubPublicPage = lazy(() => import('./features/hub/HubPublicPage').then(module => ({ default: module.HubPublicPage })));
 const HubCompanyInvitation = lazy(() => import('./features/hub/HubCompanyInvitation').then(module => ({ default: module.HubCompanyInvitation })));
 const FutureTalentPanel = lazy(() => import('./features/future/FutureTalentPanel').then(module => ({ default: module.FutureTalentPanel })));
+const EmployabilityPlanPage = lazy(()=>import('./features/planning/EmployabilityPlanPage').then(module=>({default:module.EmployabilityPlanPage})));
 const RadarPanel = lazy(() => import('./features/radar/RadarPanel').then(module => ({ default: module.RadarPanel })));
 
 type PublicArea = 'home' | 'oportunidades' | 'empresas' | 'capacita';
@@ -61,6 +63,8 @@ function App() {
   const [studentToken, setStudentToken] = useState(() => localStorage.getItem('trampolim_capacita_token'));
   const [profileReady, setProfileReady] = useState(false);
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
+  const verifiedProfile=useRef<{token:string;data:ProfileResponse}|null>(null);
+  useEffect(()=>{if(profile&&verifiedProfile.current?.token===token&&profile.profile.email===verifiedProfile.current.data.profile.email)verifiedProfile.current.data=profile},[token,profile]);
   const [photoRevision,setPhotoRevision]=useState(0);
   const userPhoto=useProfilePhoto(token,profile?.profile.photoFileName,photoRevision);
   function updatePhoto(photoFileName:string|null){setProfile(value=>value?{...value,profile:{...value.profile,photoFileName}}:value);setPhotoRevision(value=>value+1)}
@@ -95,16 +99,20 @@ function App() {
   const corporateLinkLayout=(content:React.ReactNode)=><AppLayout trail="empresas" title="Compartilhamento autorizado" onLogout={logoutCompany} groups={[{id:'principal',label:'Empresas',items:[{id:'overview',label:'Painel da empresa',onSelect:finishCorporateLink}]}]}>{content}</AppLayout>;
   const [companySignupIntent, setCompanySignupIntent] = useState(false);
   const [canManageSaas, setCanManageSaas] = useState(false);
-  const [managedAssociations, setManagedAssociations] = useState<Organization[]>([]);
+  const [associationSnapshot,setAssociationSnapshot]=useState<{token:string;items:Organization[];error?:string}|null>(null);
+  const associations = associationSnapshot?.token===companyToken?associationSnapshot:null;
+  const managedAssociations=associations?.items||[];
 
   useEffect(() => {
-    if (!token) { setCanManageSaas(false); setManagedAssociations([]); return; }
+    if (!token) { setCanManageSaas(false); return; }
     api<unknown>('/admin/saas/overview', token).then(() => setCanManageSaas(true)).catch(() => setCanManageSaas(false));
   }, [token]);
 
   useEffect(() => {
-    if (!companyToken) { setManagedAssociations([]); return; }
-    api<Organization[]>('/empresas/association/organizations', companyToken).then(setManagedAssociations).catch(() => setManagedAssociations([]));
+    if (!companyToken) { setAssociationSnapshot(null); return; }
+    const abort=new AbortController();
+    api<Organization[]>('/empresas/association/organizations', companyToken,{signal:abort.signal}).then(items=>{if(!abort.signal.aborted)setAssociationSnapshot({token:companyToken,items})}).catch(cause=>{if(!abort.signal.aborted)setAssociationSnapshot({token:companyToken,items:[],error:cause instanceof Error?cause.message:'Não foi possível consultar sua organização.'})});
+    return()=>abort.abort();
   }, [companyToken]);
 
   useEffect(() => { const id = Number(new URLSearchParams(window.location.search).get('hubProgram')); if (Number.isSafeInteger(id) && id > 0) sessionStorage.setItem('trampolim_hub_program_intent', String(id)); }, []);
@@ -153,32 +161,47 @@ function App() {
   }, [verifyToken, authTrail]);
 
   useEffect(() => {
-    if (!token) { setProfile(null); setProfileReady(true); return; }
+    if (!token) { verifiedProfile.current=null;setProfile(null); setProfileReady(true); return; }
     if (localStorage.getItem('trampolim_account_type') === 'COMPANY') { setProfile(null); setProfileReady(true); return; }
-    api<ProfileResponse>('/profile', token)
+    if(verifiedProfile.current?.token===token){setProfile(verifiedProfile.current.data);setProfileReady(true);return;}
+    const abort=new AbortController();setProfileReady(false);
+    // Warm only the selected candidate dashboard, without fetching private data.
+    if(readPublicArea()==='oportunidades'&&readAccountView(window.location.hash,localStorage.getItem('trampolim_profile_step'))==='opportunities')void loadOpportunitiesPage().catch(()=>undefined);
+    // Both endpoints enforce this same candidate token. Consume the diagnostic only
+    // after the profile is validated; aborted/failed sessions never update storage.
+    const diagnosticRequest=api<DiagnosticResult|null>('/profile/diagnostic',token,{signal:abort.signal})
+      .then(value=>({ok:true as const,value}),()=>({ok:false as const}));
+    api<ProfileResponse>('/profile', token,{signal:abort.signal})
       .then(async result => {
-        setProfile(result);
+        if(abort.signal.aborted)return;
         try {
-          const savedDiagnostic = await api<DiagnosticResult | null>('/profile/diagnostic', token);
+          const diagnosticResponse = await diagnosticRequest;
+          if(!diagnosticResponse.ok)throw new Error('Diagnostic temporarily unavailable');
+          const savedDiagnostic = diagnosticResponse.value;
+          if(abort.signal.aborted)return;
           if (savedDiagnostic) {
             sessionStorage.setItem('trampolim_diagnostic_result', JSON.stringify(savedDiagnostic));
           } else {
             const pendingDiagnostic = loadDiagnosticResult();
             if (pendingDiagnostic) {
-              await api<DiagnosticResult>('/profile/diagnostic', token, { method: 'PUT', body: JSON.stringify(pendingDiagnostic) });
+              await api<DiagnosticResult>('/profile/diagnostic', token, { method: 'PUT', body: JSON.stringify(pendingDiagnostic),signal:abort.signal });
             }
           }
         } catch {
           // O perfil continua acessível se a consulta ao diagnóstico falhar.
         }
-        setProfileReady(true);
+        if(abort.signal.aborted)return;
+        verifiedProfile.current={token,data:result};
+        setProfile(result);setProfileReady(true);
       })
       .catch((error: unknown) => {
+        if(abort.signal.aborted)return;
         if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
           localStorage.removeItem('trampolim_token'); setToken(null);
         }
         setProfile(null); setProfileReady(true);
       });
+    return()=>abort.abort();
   }, [token]);
 
   function onSuccess(result: AuthResponse, mode: 'login' | 'cadastro') {
@@ -253,13 +276,13 @@ function App() {
   if (verifyToken && !emailConfirmation) return <><RibbonStrip /><main className="grid min-h-screen place-items-center bg-paper p-6"><section className="max-w-lg rounded-3xl border border-white/10 bg-brand-white p-8 text-center shadow-sm"><h1 className="text-3xl font-black">Confirmando seu e-mail…</h1><p className="mt-3 text-ink/65">Estamos validando o link de confirmação.</p></section></main></>;
   if (authMode || emailConfirmation) return <AuthScreen key={authTrail} trail={authTrail} initialMode={authMode || 'login'} initialCompanySignup={companySignupIntent} initialNotice={emailConfirmation?.error ? '' : emailConfirmation?.message || ''} initialError={emailConfirmation?.error ? emailConfirmation.message : ''} onSuccess={onSuccess} onBack={() => { setAuthMode(null); setCompanySignupIntent(false); }} />;
   if (publicArea === 'empresas') return companyToken
-    ? <CompanyPortal token={companyToken} onLogout={logoutCompany} />
+    ? <CompanyPortal key={companyToken} token={companyToken} organizations={associations?.items} organizationsError={associations?.error} onLogout={logoutCompany} />
     : <CompanyEntryPage onLogin={() => openAuth('empresas', 'login')} onRegister={() => openAuth('empresas', 'cadastro')} onNavigate={area => navigatePublicArea(area)} />;
   if (publicArea === 'capacita') return <CapacitaPage token={studentToken || undefined} onNavigate={area => navigatePublicArea(area)} onAuth={mode => openAuth('capacita', mode)} onLogout={studentToken ? logoutStudent : undefined} />;
   if (publicArea === 'home' && !token) return <EcosystemHome onDiagnostic={() => { window.location.hash = 'diagnostico'; setPublicArea('oportunidades'); }} onNavigate={navigatePublicArea} />;
   if (token) {
     if (profileReady && !profile) return <main className="grid min-h-screen place-items-center bg-paper p-6"><section role="alert" className="max-w-lg rounded-3xl border border-ink/20 p-8 text-center"><h1 className="text-2xl font-bold">Não foi possível carregar seu perfil</h1><p className="mt-4">Sua sessão foi preservada. Tente novamente em alguns instantes.</p><button onClick={() => window.location.reload()} className="mt-6 rounded-full bg-brand-yellow px-6 py-3 font-bold text-[#101725]">Tentar novamente</button></section></main>;
-    if (!profileReady || !profile) return <main className="min-h-screen p-10 text-center">Carregando sua sessão...</main>;
+    if (!profileReady || !profile) return <main className="min-h-screen p-10 text-center"><p role="status" aria-live="polite">Carregando sua sessão...</p></main>;
     const openDetails = () => { localStorage.setItem('trampolim_profile_step', 'details'); setProfileView('details'); };
     const openWelcome = () => { localStorage.setItem('trampolim_profile_step', 'welcome'); setProfileView('welcome'); };
     const openOpportunities = (savedProfile: Profile = profile.profile) => {
@@ -302,6 +325,7 @@ function App() {
       if (destination === 'jobs') { openCatalog('job'); return; }
       if (destination === 'career') { localStorage.setItem('trampolim_profile_step','career'); setProfileView('career'); return; }
       if (destination === 'future') { localStorage.setItem('trampolim_profile_step', 'future'); setProfileView('future'); return; }
+      if (destination === 'plan') { setProfileView('plan'); return; }
       if (destination === 'radar') { localStorage.setItem('trampolim_profile_step', 'radar'); setProfileView('radar'); return; }
       if (destination === 'profile') { openDetails(); return; }
       if (destination === 'premium') {
@@ -324,10 +348,11 @@ function App() {
     if(['admin','admin-capacita','admin-saas'].includes(profileView)&&!canManageCatalog)return <main className="p-6"><section role="alert"><h1 className="text-2xl font-bold">Acesso restrito</h1><p>Sua conta não tem permissão para esta área.</p><button className="mt-4 rounded-full border border-white/20 p-3" onClick={()=>navigateAccount('opportunities')}>Voltar às oportunidades</button></section></main>;
     if (profileView === 'career') return <CareerPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog}/>;
     if (profileView === 'future') return <FutureTalentPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog} />;
+    if (profileView === 'plan') return <EmployabilityPlanPage key={token} token={token} onNavigate={navigateAccount}/>;
     if (profileView === 'radar') return <RadarPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog} />;
     if (profileView === 'ecosystem') return <EcosystemHome onDiagnostic={() => { localStorage.setItem('trampolim_profile_step', 'diagnostic'); setProfileView('diagnostic'); window.location.hash = 'diagnostico'; }} onNavigate={area => area === 'home' ? setProfileView('ecosystem') : area === 'oportunidades' ? navigateAccount('opportunities') : area === 'capacita' ? setProfileView('capacita') : setProfileView('company-entry')} />;
     if (profileView === 'company-entry') return companyToken
-      ? <CompanyPortal token={companyToken} onLogout={logoutCompany} />
+      ? <CompanyPortal key={companyToken} token={companyToken} organizations={associations?.items} organizationsError={associations?.error} onLogout={logoutCompany} />
       : <CompanyEntryPage onLogin={() => openAuth('empresas', 'login')} onRegister={() => openAuth('empresas', 'cadastro')} onNavigate={area => area === 'home' ? setProfileView('ecosystem') : area === 'oportunidades' ? navigateAccount('opportunities') : setProfileView('capacita')} />;
     if (profileView === 'capacita') return <CapacitaPage token={studentToken || undefined} onNavigate={area => area === 'oportunidades' ? navigateAccount('opportunities') : area === 'capacita' ? setProfileView('capacita') : area === 'home' ? setProfileView('ecosystem') : setProfileView('company-entry')} onAuth={mode => openAuth('capacita', mode)} onLogout={studentToken ? logoutStudent : undefined} />;
     if (profileView === 'admin-capacita' && canManageCatalog) return <AdminCapacitaPage token={token} onBack={() => setProfileView('admin')} />;
@@ -336,14 +361,14 @@ function App() {
     if (profileView === 'admin' && canManageCatalog) return <AdminCatalogPage token={token} onBack={backToOpportunities} onLogout={logout} onProfile={() => navigateAccount('profile')} navigation={<AccountNavigation active="admin" onNavigate={navigateAccount} canManage hasAssociation={managedAssociations.length > 0} />} />;
     if (profileView === 'diagnostic') return <Home isAuthenticated hasPreviousDiagnostic={Boolean(loadDiagnosticResult())} startNewTest={sessionStorage.getItem('trampolim_diagnostic_retake') === '1'} onAuth={() => { sessionStorage.removeItem('trampolim_diagnostic_retake'); openOpportunities(); }} onDiagnosticComplete={result => { sessionStorage.removeItem('trampolim_diagnostic_retake'); saveDiagnostic(result); }} onProfile={() => navigateAccount('profile')} onLogout={logout} accountNavigation={<AccountNavigation active="diagnostic" onNavigate={navigateAccount} canManage={canManageCatalog} hasAssociation={managedAssociations.length > 0} />} />;
     if (profileView === 'welcome') return <WelcomeScreen token={token} profile={profile.profile} onProfileChange={next => setProfile(current => current ? { ...current, profile: next } : current)} onContinue={openDetails} onLogout={logout} onNavigate={navigateAccount} canManage={canManageCatalog} />;
-    if (profileView === 'opportunities') return <OpportunitiesPage token={token} profile={profile.profile} onEditProfile={openDetails} onLogout={logout} onRetakeDiagnostic={retakeDiagnostic} onOpenCatalog={openCatalog} canManage={canManageCatalog} onNavigate={navigateAccount} />;
+    if (profileView === 'opportunities') return <OpportunitiesPage token={token} profile={profile.profile} profileDetails={profile} onEditProfile={openDetails} onLogout={logout} onRetakeDiagnostic={retakeDiagnostic} onOpenCatalog={openCatalog} canManage={canManageCatalog} onNavigate={navigateAccount} />;
     if (profileView === 'premium') return <PremiumPage token={token} profile={profile} onLogout={logout} onNavigate={navigateAccount} />;
     if (profileView === 'catalog-courses' || profileView === 'catalog-jobs') return <CatalogPage key={profileView} kind={profileView === 'catalog-courses' ? 'course' : 'job'} token={token} profile={profile.profile} onLogout={logout} onRetakeDiagnostic={retakeDiagnostic} onNavigate={navigateAccount} canManage={canManageCatalog} />;
-    return <ProfilePage token={token} photoUrl={userPhoto} onPhotoChange={updatePhoto} onLogout={logout} onBack={openWelcome} onComplete={openOpportunities} onNavigate={navigateAccount} canManage={canManageCatalog} />;
+    return <ProfilePage token={token} onSnapshot={snapshot=>setProfile(current=>current?.profile.email===snapshot.profile.email?snapshot:current)} photoUrl={userPhoto} onPhotoChange={updatePhoto} onLogout={logout} onBack={openWelcome} onComplete={openOpportunities} onNavigate={navigateAccount} canManage={canManageCatalog} />;
     })();
     if(['ecosystem','company-entry','capacita','association'].includes(profileView))return accountContent;
     const active=({'catalog-courses':'courses','catalog-jobs':'jobs',details:'profile',welcome:'profile'} as Record<string,string>)[profileView]||profileView;
-    return <AppLayout trail="oportunidades" title="Trampolim Oportunidades" userName={profile.profile.name} userPhoto={userPhoto} active={active} groups={accountGroups(navigateAccount,canManageCatalog,managedAssociations.length>0)} onProfile={()=>navigateAccount('profile')} onNotice={()=>navigateAccount('future')} onLogout={logout}>{accountContent}</AppLayout>;
+    return <AppLayout trail="oportunidades" title={profileView==='plan'?'Meu Plano de Empregabilidade':'Trampolim Oportunidades'} userName={profile.profile.name} userPhoto={userPhoto} active={active} groups={accountGroups(navigateAccount,canManageCatalog,managedAssociations.length>0)} onProfile={()=>navigateAccount('profile')} onNotice={()=>navigateAccount('future')} onLogout={logout}>{accountContent}</AppLayout>;
 
   }
   if (publicArea === 'oportunidades') return <Home onAuth={mode => openAuth('oportunidades', mode)} />;

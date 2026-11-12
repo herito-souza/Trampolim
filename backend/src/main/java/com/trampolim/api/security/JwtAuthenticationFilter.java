@@ -69,8 +69,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         var subject = legacyTokensEnabled ? jwtUtil.validateToken(token) : ""; // Legacy Oportunidades tokens remain valid only in this context.
-        if (subject != null && !subject.isEmpty() && jwtUtil.getTokenVersion(token) >= 0 && users.findByEmail(subject)
-                .filter(user -> user.getTokenVersion() == jwtUtil.getTokenVersion(token)).isPresent()) {
+        if (subject != null && !subject.isEmpty() && jwtUtil.getTokenVersion(token) >= 0 && users.findSessionByEmail(subject)
+                .filter(user -> user.tokenVersion() == jwtUtil.getTokenVersion(token)).isPresent()) {
             SecurityContextHolder.getContext().setAuthentication(
                     new UsernamePasswordAuthenticationToken(subject, null, Collections.emptyList()));
             return;
@@ -78,10 +78,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var decoded = trailTokens.verify(token, TrailTokenService.Trail.OPORTUNIDADES);
         if (decoded == null) return;
         int version = decoded.getClaim("ver").asInt();
-        users.findByEmail(decoded.getSubject()).filter(user -> user.getTokenVersion() == version
-                        && java.util.Objects.equals(user.getId(), decoded.getClaim("uid").asLong()))
+        users.findSessionByEmail(decoded.getSubject()).filter(user -> user.tokenVersion() == version
+                        && java.util.Objects.equals(user.id(), decoded.getClaim("uid").asLong()))
                 .ifPresent(user -> SecurityContextHolder.getContext().setAuthentication(
-                        new UsernamePasswordAuthenticationToken(user.getEmail(), null, Collections.emptyList())));
+                        new UsernamePasswordAuthenticationToken(user.email(), null, Collections.emptyList())));
     }
 
     private void authenticateIndependent(String token, TrailTokenService.Trail trail,
@@ -100,7 +100,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String recoverToken(HttpServletRequest request) {
         var authHeader = request.getHeader("Authorization");
-        if (authHeader == null) return null;
-        return authHeader.replace("Bearer ", "");
+        if (authHeader == null || authHeader.length() > 8192 || !authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) return null;
+        String value = authHeader.substring(7);
+        // Exactly one opaque bearer credential; never accept cookies, Basic or bare JWTs.
+        return value.isEmpty() || value.chars().anyMatch(Character::isWhitespace) ? null : value;
     }
 }

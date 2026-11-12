@@ -6,7 +6,17 @@ public final class RegionalQuery {
  public record Sql(String where,List<Object> args){}
  public static Sql filter(TerritorialCatalog geo,Filters f,String alias){return filter(geo,f,alias,false);}
  public static Sql filter(TerritorialCatalog geo,Filters f,String alias,boolean corporate){if(f==null||f.before()<1||f.limit()<1||f.limit()>50||f.q().length()>120||f.city().length()>120||f.area().length()>120||f.modality().length()>40)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Revise os filtros; use páginas de até cinquenta anúncios.");var args=new ArrayList<Object>();StringBuilder sql=new StringBuilder(" AND "+alias+".id<?");args.add(f.before());var codes=geo.selection(f.region(),f.municipalityCode());if(!codes.isEmpty()){var names=geo.legacyAliases(codes);sql.append(" AND (").append(alias).append(".municipality_code IN (").append(placeholders(codes.size())).append(") OR (").append(alias).append(".municipality_code IS NULL AND geo_normalize(").append(alias).append(".location) IN (").append(placeholders(names.size())).append("))");args.addAll(codes);args.addAll(names);if(f.includeRemote())sql.append(" OR geo_normalize(").append(alias).append(".modality) IN ('remoto','online')");sql.append(")");}
-  if(!f.q().isBlank()){sql.append(" AND geo_normalize(concat_ws(' ',").append(alias).append(".title,").append(alias).append(".description,").append(alias).append(".location,").append(alias).append(".area,").append(corporate?"c.trade_name":alias+".provider").append(")) LIKE ?");args.add("%"+TerritorialCatalog.normalize(f.q())+"%");}
+  if(!f.q().isBlank()){
+   String text="concat_ws(' ',"+alias+".title,"+alias+".description,"+alias+".location,"+alias+".area,"+(corporate?"c.trade_name":alias+".provider")+")";
+   String term=TerritorialCatalog.normalize(f.q());
+   // A normalized single ASCII term cannot cross a separator. This cheap necessary
+   // condition avoids regex normalization on non-matches; the canonical predicate
+   // remains authoritative, including accents, punctuation and multi-field phrases.
+   if(!term.isEmpty()&&term.chars().allMatch(c->c>='a'&&c<='z'||c>='0'&&c<='9')){
+    sql.append(" AND translate(lower(").append(text).append("),'áàâãäéèêëíìîïóòôõöúùûüçñ','aaaaaeeeeiiiiooooouuuucn') LIKE ?");args.add("%"+term+"%");
+   }
+   sql.append(" AND geo_normalize(").append(text).append(") LIKE ?");args.add("%"+term+"%");
+  }
   if(!f.city().isBlank()){sql.append(" AND geo_normalize(").append(alias).append(".location) LIKE ?");args.add("%"+TerritorialCatalog.normalize(f.city())+"%");}
   if(!f.area().isBlank()){var names=areaNames(f.area());sql.append(" AND geo_normalize(").append(alias).append(".area) IN (").append(placeholders(names.size())).append(")");args.addAll(names);}
   if(!f.modality().isBlank()){sql.append(" AND geo_normalize(").append(alias).append(".modality)=?");args.add(TerritorialCatalog.normalize(f.modality()));}

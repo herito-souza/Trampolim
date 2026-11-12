@@ -26,9 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 @ConditionalOnProperty(name = "trampolim.datasource.empresas.enabled", havingValue = "true")
 public class CompanyController {
     private final JdbcTemplate jdbc;
+    private final RecruitmentService recruitment;
     @Value("${app.frontend-url:http://localhost:5173}") private String frontendUrl;
 
-    public CompanyController(@Qualifier("empresasJdbcTemplate") JdbcTemplate jdbc) { this.jdbc = jdbc; }
+    public CompanyController(@Qualifier("empresasJdbcTemplate") JdbcTemplate jdbc, RecruitmentService recruitment) { this.jdbc = jdbc; this.recruitment = recruitment; }
 
     public record CompanySummary(String legalName, String tradeName, String cnpj, String phone, String industry, String city, String state, String website, String description, String publicSlug, String role) {}
     public record CompanyProfileInput(String tradeName, String industry, String phone, String website, String city, String state, String description) {}
@@ -36,7 +37,9 @@ public class CompanyController {
             String location, String modality, String url, String contactEmail, String salary, String contractType,
             String workSchedule, String workload, String prerequisites, String benefits, String coursePrice, String certificate,
             boolean isInternship, String acceptedCourses, Integer headcount, LocalDate applicationDeadline) {}
-    public record StatusInput(String status) {}
+    public record StatusInput(String status, Long expectedRevision, UUID requestKey) {
+        public StatusInput(String status) { this(status,null,null); }
+    }
     public record RenewInput(LocalDate expiresAt) {}
     public record MemberInviteInput(String email, String role) {}
     public record ListingView(long id, String kind, String title, String area, String description, String requirements,
@@ -77,10 +80,12 @@ public class CompanyController {
     }
 
     @GetMapping("/listings")
-    public List<ListingView> listings(@AuthenticationPrincipal String email) {
+    public List<ListingView> listings(@AuthenticationPrincipal String email,@RequestParam(required=false) Integer limit,@RequestParam(defaultValue="0") int page) {
         Membership member = requireCompany(email);
-        return jdbc.query(listingSql() + " WHERE l.company_id=? ORDER BY l.created_at DESC", listingMapper(), member.companyId());
+        return jdbc.query(listingSql() + " WHERE l.company_id=? ORDER BY l.created_at DESC,l.id DESC"+new com.trampolim.api.query.ListWindow(limit,page).sql(), listingMapper(), member.companyId());
     }
+
+    public List<ListingView> listings(String email){return listings(email,null,0);}
 
     @PostMapping("/listings")
     @Transactional(transactionManager = "empresasTransactionManager")
@@ -132,20 +137,19 @@ public class CompanyController {
     }
 
     @GetMapping("/applications")
-    public List<ApplicationView> applications(@AuthenticationPrincipal String email) {
-        Membership member = requireCompany(email); requireRole(member, "OWNER", "RECRUITER");
-        return jdbc.query("SELECT a.id, a.listing_id, l.title, l.kind, a.candidate_name, a.candidate_email, a.candidate_phone, a.message, a.status, a.created_at FROM company_applications a JOIN company_listings l ON l.id=a.listing_id WHERE l.company_id=? ORDER BY a.created_at DESC",
-                (rs, row) -> new ApplicationView(rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6), rs.getString(7) == null ? "" : rs.getString(7), rs.getString(8) == null ? "" : rs.getString(8), rs.getString(9), rs.getTimestamp(10).toInstant().toString()), member.companyId());
+    public List<ApplicationView> applications(@AuthenticationPrincipal String email,@RequestParam(required=false) Integer limit,@RequestParam(defaultValue="0") int page) {
+        long companyId = recruitment.actor(email).companyId();
+        return jdbc.query("SELECT a.id, a.listing_id, l.title, l.kind, a.candidate_name, a.candidate_email, a.candidate_phone, a.message, a.status, a.created_at FROM company_applications a JOIN company_listings l ON l.id=a.listing_id WHERE l.company_id=? ORDER BY a.created_at DESC,a.id DESC"+new com.trampolim.api.query.ListWindow(limit,page).sql(),
+                (rs, row) -> new ApplicationView(rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6), rs.getString(7) == null ? "" : rs.getString(7), rs.getString(8) == null ? "" : rs.getString(8), rs.getString(9), rs.getTimestamp(10).toInstant().toString()), companyId);
     }
+
+    public List<ApplicationView> applications(String email){return applications(email,null,0);}
 
     @PutMapping("/applications/{id}/status")
     @Transactional(transactionManager = "empresasTransactionManager")
     public java.util.Map<String, String> applicationStatus(@AuthenticationPrincipal String email, @PathVariable long id, @RequestBody StatusInput input) {
-        Membership member = requireCompany(email); requireRole(member, "OWNER", "RECRUITER");
-        if (input == null || !Set.of("RECEIVED", "IN_REVIEW", "CONTACTED", "ACCEPTED", "DECLINED").contains(input.status())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escolha uma etapa válida para a candidatura.");
-        int updated = jdbc.update("UPDATE company_applications a SET status=?, updated_at=CURRENT_TIMESTAMP FROM company_listings l WHERE a.listing_id=l.id AND a.id=? AND l.company_id=?", input.status(), id, member.companyId());
-        if (updated == 0) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Candidatura não encontrada.");
-        return java.util.Map.of("status", input.status());
+        var result = recruitment.legacyChange(email,id,input == null ? null : new RecruitmentService.Change(input.status(),input.expectedRevision(),input.requestKey(),false));
+        return java.util.Map.of("status",result.status());
     }
 
     @GetMapping("/commercial-interests")

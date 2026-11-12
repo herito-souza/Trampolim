@@ -1,1 +1,6 @@
 .env.local
+
+# Artefatos locais de auditoria e execução: preservar no computador, não publicar.
+/*
+!/.gitignore
+!/scripts/

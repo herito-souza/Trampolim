@@ -19,7 +19,7 @@ import com.trampolim.api.security.TrailTokenService;
 @RequestMapping("/api/capacita/learning/notifications")
 @ConditionalOnProperty(name="trampolim.datasource.capacita.enabled",havingValue="true")
 public class LearningNotifications {
-    private final JdbcTemplate jdbc;private final LearningAccess access;private final TrailTokenService tokens;
+    private final JdbcTemplate jdbc;private final LearningAccess access;private final TrailTokenService tokens;private final com.trampolim.api.communication.CommunicationStore communications;
     private final ConcurrentHashMap<UUID,Channel> channels=new ConcurrentHashMap<>();
     private final ExecutorService sending=Executors.newVirtualThreadPerTaskExecutor();
     @Value("${capacita.questions.sse-max-clients:500}") private int maximum=500;
@@ -37,13 +37,14 @@ public class LearningNotifications {
         volatile long cursor;volatile Instant heartbeat=Instant.EPOCH;
         Channel(long user,int version,Instant expires,long cursor){this.user=user;this.version=version;this.expires=expires;this.cursor=cursor;}
     }
-    public LearningNotifications(@Qualifier("capacitaJdbcTemplate") JdbcTemplate jdbc,LearningAccess access,TrailTokenService tokens){this.jdbc=jdbc;this.access=access;this.tokens=tokens;}
+    public LearningNotifications(@Qualifier("capacitaJdbcTemplate") JdbcTemplate jdbc,LearningAccess access,TrailTokenService tokens,@Qualifier("learningCommunications") com.trampolim.api.communication.CommunicationStore communications){this.jdbc=jdbc;this.access=access;this.tokens=tokens;this.communications=communications;}
     @GetMapping public Map<String,Object> history(@AuthenticationPrincipal String email,@RequestParam(required=false)Long before) {
         var user=access.account(email);var rows=jdbc.queryForList("SELECT id,question_id,kind,read_at,created_at FROM learning_notifications WHERE user_id=? AND id<? ORDER BY id DESC LIMIT 50",user.id(),before==null?Long.MAX_VALUE:before);
         return Map.of("items",rows,"unreadCount",jdbc.queryForObject("SELECT count(*) FROM learning_notifications WHERE user_id=? AND read_at IS NULL",Long.class,user.id()));
     }
+    @org.springframework.transaction.annotation.Transactional("capacitaTransactionManager")
     @PutMapping("/{id}/read") @ResponseStatus(HttpStatus.NO_CONTENT) public void read(@AuthenticationPrincipal String email,@PathVariable long id) {
-        if(jdbc.update("UPDATE learning_notifications SET read_at=COALESCE(read_at,CURRENT_TIMESTAMP) WHERE id=? AND user_id=?",id,access.account(email).id())==0) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        communications.readLegacy(email,id);
     }
     @GetMapping(value="/stream",produces=MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> stream(@AuthenticationPrincipal String email,@RequestHeader("Authorization")String authorization,@RequestParam(defaultValue="0")long after) throws java.io.IOException {

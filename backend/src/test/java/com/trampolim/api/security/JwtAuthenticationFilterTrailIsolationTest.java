@@ -125,7 +125,7 @@ class JwtAuthenticationFilterTrailIsolationTest {
         user.setEmail("legacy@example.test");
         when(legacyTokens.validateToken("old-token")).thenReturn(user.getEmail());
         when(legacyTokens.getTokenVersion("old-token")).thenReturn(0);
-        when(users.findByEmail(user.getEmail())).thenReturn(java.util.Optional.of(user));
+        when(users.findSessionByEmail(user.getEmail())).thenAnswer(call -> java.util.Optional.of(new com.trampolim.api.user.SessionAccount(user.getId(),user.getEmail(),user.getTokenVersion())));
         applyOpportunitiesToken("old-token");
         assertNull(SecurityContextHolder.getContext().getAuthentication());
         verifyNoInteractions(legacyTokens);
@@ -140,7 +140,7 @@ class JwtAuthenticationFilterTrailIsolationTest {
         var user = new com.trampolim.api.user.AppUser();
         user.setId(7L);
         user.setEmail("candidate@example.test");
-        when(users.findByEmail(user.getEmail())).thenReturn(java.util.Optional.of(user));
+        when(users.findSessionByEmail(user.getEmail())).thenAnswer(call -> java.util.Optional.of(new com.trampolim.api.user.SessionAccount(user.getId(),user.getEmail(),user.getTokenVersion())));
         applyOpportunitiesToken(tokens.issue(TrailTokenService.Trail.OPORTUNIDADES, user.getEmail(), 8L, 0));
         assertNull(SecurityContextHolder.getContext().getAuthentication());
         applyOpportunitiesToken(tokens.issue(TrailTokenService.Trail.OPORTUNIDADES, user.getEmail(), 7L, 1));
@@ -161,7 +161,7 @@ class JwtAuthenticationFilterTrailIsolationTest {
         var admin = new com.trampolim.api.user.AppUser();
         admin.setId(7L);
         admin.setEmail(adminEmail);
-        when(users.findByEmail(adminEmail)).thenReturn(java.util.Optional.of(admin));
+        when(users.findSessionByEmail(adminEmail)).thenAnswer(call -> java.util.Optional.of(new com.trampolim.api.user.SessionAccount(admin.getId(),admin.getEmail(),admin.getTokenVersion())));
         for (var trail : List.of(TrailTokenService.Trail.EMPRESAS, TrailTokenService.Trail.CAPACITA)) {
             for (String path : List.of("/api/admin/saas/organizations", "/api/admin/capacita/legacy-migration/execute",
                     "/api/admin/empresas/legacy-migration/execute")) {
@@ -195,5 +195,27 @@ class JwtAuthenticationFilterTrailIsolationTest {
         ObjectProvider<JdbcTemplate> provider = mock(ObjectProvider.class);
         when(provider.getIfAvailable()).thenReturn(jdbc);
         return provider;
+    }
+
+    @Test void rejectsBareBasicMultipleAndOversizedAuthorizationCredentials() throws Exception {
+        String token=tokens.issue(TrailTokenService.Trail.EMPRESAS,"company@example.com",1,0);
+        for(String header:List.of(token,"Basic "+token,"Bearer "+token+" extra","Bearer Bearer "+token,"Bearer "+"x".repeat(9000))){
+            var request=new MockHttpServletRequest("GET","/api/company/dashboard");request.addHeader("Authorization",header);
+            filter.doFilter(request,new MockHttpServletResponse(),(a,b)->{});assertNull(SecurityContextHolder.getContext().getAuthentication());
+        }
+        verifyNoInteractions(companyDatabase,studentDatabase,users);
+    }
+    @Test @SuppressWarnings("unchecked") void acceptsCaseInsensitiveBearerScheme() throws Exception {
+        doReturn(List.of("company@example.com")).when(companyDatabase).query(anyString(),any(RowMapper.class),any(Object[].class));
+        var request=new MockHttpServletRequest("GET","/api/company/dashboard");request.addHeader("Authorization","bearer "+tokens.issue(TrailTokenService.Trail.EMPRESAS,"company@example.com",1,0));
+        filter.doFilter(request,new MockHttpServletResponse(),(a,b)->{});assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+    @Test void revokedSessionIsRecheckedWithoutLoadingProfileBinaryData() throws Exception {
+        var account=new com.trampolim.api.user.SessionAccount(7L,"candidate@example.test",0);
+        when(users.findSessionByEmail(account.email())).thenReturn(java.util.Optional.of(account),java.util.Optional.of(new com.trampolim.api.user.SessionAccount(7L,account.email(),1)));
+        String token=tokens.issue(TrailTokenService.Trail.OPORTUNIDADES,account.email(),7L,0);
+        applyOpportunitiesToken(token);assertNotNull(SecurityContextHolder.getContext().getAuthentication());SecurityContextHolder.clearContext();
+        applyOpportunitiesToken(token);assertNull(SecurityContextHolder.getContext().getAuthentication());
+        org.mockito.Mockito.verify(users,org.mockito.Mockito.never()).findByEmail(anyString());verifyNoInteractions(companyDatabase,studentDatabase,legacyTokens);
     }
 }

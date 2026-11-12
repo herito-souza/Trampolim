@@ -60,7 +60,7 @@ public class AuthController {
         String name = request.name() == null ? "" : request.name().trim();
         String email = normalizeEmail(request.email());
         String password = request.password() == null ? "" : request.password();
-        if (name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome completo: preencha este campo.");
+        if (name.isBlank() || name.length() > 120) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome completo: preencha este campo.");
         if (!validEmail(email)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail: informe um endereço válido.");
         PasswordPolicy.validate(password);
         if (!request.termsAccepted()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Aceite os termos para criar sua conta.");
@@ -248,7 +248,7 @@ public class AuthController {
     }
 
     private String clean(String value) { return value == null ? "" : value.trim(); }
-    private boolean validEmail(String email) { return email != null && email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"); }
+    private boolean validEmail(String email) { return email != null && email.length() <= 180 && email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"); }
 
     private String hashToken(String token) {
         try {

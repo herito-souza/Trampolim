@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
  */
 @Configuration
 public class TrailDataSourceConfig {
+    @org.springframework.beans.factory.annotation.Value("${operations.jdbc-query-timeout-seconds:15}") private int queryTimeout=15;
+    private JdbcTemplate boundedJdbc(DataSource dataSource){if(queryTimeout<1||queryTimeout>300)throw new IllegalArgumentException("JDBC query timeout must be between 1 and 300 seconds");var template=new JdbcTemplate(dataSource);template.setQueryTimeout(queryTimeout);return template;}
     private static final Logger log = LoggerFactory.getLogger(TrailDataSourceConfig.class);
     @Bean(name = "oportunidadesDataSourceProperties")
     @Primary
@@ -36,7 +38,7 @@ public class TrailDataSourceConfig {
         return new DataSourceProperties();
     }
 
-    @org.springframework.context.annotation.DependsOn("trailDatabaseIsolationGuard")
+    @org.springframework.context.annotation.DependsOn({"trailDatabaseIsolationGuard", "productionSecurityGuard"})
     @Bean(name = "dataSource", destroyMethod = "close")
     @ConfigurationProperties("spring.datasource.hikari")
     @Primary
@@ -48,7 +50,7 @@ public class TrailDataSourceConfig {
     @Bean(name = "jdbcTemplate")
     @Primary
     public JdbcTemplate oportunidadesJdbcTemplate(@Qualifier("dataSource") DataSource dataSource) {
-        return new JdbcTemplate(dataSource);
+        return boundedJdbc(dataSource);
     }
 
     /**
@@ -69,7 +71,7 @@ public class TrailDataSourceConfig {
         return new DataSourceProperties();
     }
 
-    @org.springframework.context.annotation.DependsOn("trailDatabaseIsolationGuard")
+    @org.springframework.context.annotation.DependsOn({"trailDatabaseIsolationGuard", "productionSecurityGuard"})
     @Bean(name = "empresasDataSource", destroyMethod = "close")
     @ConfigurationProperties("trampolim.datasource.empresas.hikari")
     @ConditionalOnProperty(name = "trampolim.datasource.empresas.enabled", havingValue = "true")
@@ -81,7 +83,7 @@ public class TrailDataSourceConfig {
     @Bean(name = "empresasJdbcTemplate")
     @ConditionalOnProperty(name = "trampolim.datasource.empresas.enabled", havingValue = "true")
     public JdbcTemplate empresasJdbcTemplate(@Qualifier("empresasDataSource") DataSource dataSource) {
-        return new JdbcTemplate(dataSource);
+        return boundedJdbc(dataSource);
     }
 
     @Bean(name = "empresasTransactionManager")
@@ -103,7 +105,7 @@ public class TrailDataSourceConfig {
         return new DataSourceProperties();
     }
 
-    @org.springframework.context.annotation.DependsOn("trailDatabaseIsolationGuard")
+    @org.springframework.context.annotation.DependsOn({"trailDatabaseIsolationGuard", "productionSecurityGuard"})
     @Bean(name = "capacitaDataSource", destroyMethod = "close")
     @ConfigurationProperties("trampolim.datasource.capacita.hikari")
     @ConditionalOnProperty(name = "trampolim.datasource.capacita.enabled", havingValue = "true")
@@ -115,7 +117,7 @@ public class TrailDataSourceConfig {
     @Bean(name = "capacitaJdbcTemplate")
     @ConditionalOnProperty(name = "trampolim.datasource.capacita.enabled", havingValue = "true")
     public JdbcTemplate capacitaJdbcTemplate(@Qualifier("capacitaDataSource") DataSource dataSource) {
-        return new JdbcTemplate(dataSource);
+        return boundedJdbc(dataSource);
     }
 
     @Bean(name = "capacitaTransactionManager")

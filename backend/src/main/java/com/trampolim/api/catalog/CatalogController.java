@@ -35,19 +35,19 @@ public class CatalogController {
                                     boolean active, LocalDate expiresAt, Instant createdAt, Instant publishedAt, String linkStatus, Instant lastLinkCheckAt) {}
 
     @GetMapping("/opportunities/{kind}")
-    public List<PublicCatalogItem> list(@PathVariable String kind) {
+    public List<PublicCatalogItem> list(@PathVariable String kind,@RequestParam(required=false) Integer limit,@RequestParam(defaultValue="0") int page) {
         validateKind(kind);
-        return items.findAllByKindAndActiveTrueOrderByCreatedAtDesc(kind).stream()
-                .filter(item -> "APPROVED".equals(item.getModerationStatus()))
-                .filter(item -> item.getExpiresAt() == null || !item.getExpiresAt().isBefore(todayBrazil()))
+        return items.findPublic(kind,todayBrazil(),new com.trampolim.api.query.ListWindow(limit,page).pageable()).stream()
                 .map(item -> new PublicCatalogItem(item.getId(), item.getKind(), item.getTitle(), item.getProvider(), item.getDescription(), item.getUrl(), item.getArea(), item.getLocation(), item.getModality(), item.getExperienceLevel(), item.getSalary(), item.getAccessibility(), item.getContractType(), item.getWorkSchedule(), item.getLatitude(), item.getLongitude(), item.isActive(), item.getExpiresAt(), item.getCreatedAt(), item.getPublishedAt(), item.getLinkStatus(), item.getLastLinkCheckAt()))
                 .toList();
     }
 
+    public List<PublicCatalogItem> list(String kind){return list(kind,null,0);}
+
     @GetMapping("/admin/catalog/{kind}")
-    public List<CatalogItem> adminList(@AuthenticationPrincipal String email, @PathVariable String kind) {
+    public List<CatalogItem> adminList(@AuthenticationPrincipal String email, @PathVariable String kind,@RequestParam(required=false) Integer limit,@RequestParam(defaultValue="0") int page) {
         requireAdmin(email); validateKind(kind);
-        return items.findAllByKindOrderByCreatedAtDesc(kind);
+        return items.findByKindOrderByCreatedAtDescIdDesc(kind,new com.trampolim.api.query.ListWindow(limit,page).pageable());
     }
 
     @PostMapping("/admin/catalog")

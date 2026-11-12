@@ -5,3 +5,5 @@ export type Lesson = { id: number; module_id: number; title: string; description
 export type Progress = { lesson_id?: number; course_id?: number; title?: string; course_title?: string; position_seconds?: number; watched_seconds?: number; completed_at?: string | null };
 export const inputClass = 'mt-1 w-full rounded-xl border border-white/20 bg-[#0b1421] px-3 py-2 text-ink';
 export const buttonClass = 'min-h-11 rounded-full border border-white/20 px-4 py-2 text-sm font-bold hover:border-brand-blue disabled:opacity-50';
+
+export function statusLabel(status: string) { return ({ DRAFT: 'Rascunho', PUBLISHED: 'Publicado', HIDDEN: 'Oculto' } as Record<string, string>)[status] || status; }

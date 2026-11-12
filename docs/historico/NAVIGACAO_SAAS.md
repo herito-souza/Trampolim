@@ -91,7 +91,7 @@ Backend: JwtAuthenticationFilterTrailIsolationTest, TrailTokenServiceTest, AuthC
 
 Axe não encontrou violações nos estados efetivamente examinados pelos testes. Foram exercitados Tab, Shift+Tab, setas, Escape, foco/restauração, overlay, ampliação de fonte/espaçamento, URLs diretas, voltar/atualizar, menus por perfil, notificações e recusa de sessões. Isso não substitui avaliação humana com tecnologias assistivas.
 
-Evidências: [resultados estruturados](ops/navigation-2026-11-05/validation.json), [log Playwright final](ops/navigation-2026-11-05/playwright-final.log) e capturas sintéticas [Oportunidades desktop](ops/navigation-2026-11-05/candidate-1440.png), [Empresas desktop](ops/navigation-2026-11-05/owner-1440.png), [Capacita desktop](ops/navigation-2026-11-05/student-1440.png), [Capacita celular](ops/navigation-2026-11-05/student-375.png), [menu móvel](ops/navigation-2026-11-05/drawer-375.png).
+Evidências: [resultados estruturados](../../ops/navigation-2026-11-05/validation.json), [log Playwright final](../../ops/navigation-2026-11-05/playwright-final.log) e capturas sintéticas [Oportunidades desktop](../../ops/navigation-2026-11-05/candidate-1440.png), [Empresas desktop](../../ops/navigation-2026-11-05/owner-1440.png), [Capacita desktop](../../ops/navigation-2026-11-05/student-1440.png), [Capacita celular](../../ops/navigation-2026-11-05/student-375.png), [menu móvel](../../ops/navigation-2026-11-05/drawer-375.png).
 
 ### Problemas corrigidos
 
@@ -119,7 +119,7 @@ Nenhuma amostra baixou mapa, worker de PDF ou vídeo desnecessariamente no carre
 
 O JavaScript de entrada ficou em aproximadamente 86,4 kB gzip (registro anterior de QA: 83,8 kB). O build preserva os chunks separados de mapa/PDF e seu aviso de tamanho já existente. Nenhuma dependência nova.
 
-[Dados completos da medição](ops/performance-sidebar-2026-11-05.json). Para repetir na pasta frontend, após npm run build: PERF_WIDTH=375 seleciona somente essa largura no script scripts/measure-performance.mjs; sem a variável, mantém todos os cenários originais.
+[Dados completos da medição](../../ops/performance-sidebar-2026-11-05.json). Para repetir na pasta frontend, após npm run build: PERF_WIDTH=375 seleciona somente essa largura no script scripts/measure-performance.mjs; sem a variável, mantém todos os cenários originais.
 
 ## Limitações
 
@@ -127,7 +127,7 @@ Não foi feita homologação humana com NVDA/VoiceOver nem testes em aparelhos f
 
 ## Arquivos criados e modificados
 
-Lista integral: [manifesto de arquivos](ops/navigation-2026-11-05/changed-files.json). O arquivo preexistente e não relacionado Trampolim foi preservado.
+Lista integral: [manifesto de arquivos](../../ops/navigation-2026-11-05/changed-files.json). O arquivo preexistente e não relacionado Trampolim foi preservado.
 
 ### Implementação
 

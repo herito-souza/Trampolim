@@ -69,6 +69,12 @@ test('login abre o diagnóstico e a navegação percorre catálogo e perfil em t
   await expectNoSevereAccessibilityIssues(page);
   await activate(page,'Meu perfil');
   await expect(page.getByRole('heading', { name: 'Meu perfil' })).toBeVisible();
+  const resume = page.locator('#curriculo');
+  await resume.locator('summary').click();
+  await resume.locator('summary').focus();
+  await page.keyboard.press('Tab');
+  await expect(resume.locator('input[type=file]')).toBeFocused();
+  await expect(resume.getByText('PDF de até 10 MB.', { exact: false })).toBeVisible();
   await expectNoSevereAccessibilityIssues(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });

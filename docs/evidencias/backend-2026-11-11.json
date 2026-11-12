@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-11",
+  "command": "ops/scripts/Test-BackendSecurity.ps1",
+  "registeredTests": 266,
+  "passed": 265,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 1,
+  "skippedReason": "Ensaio opcional de carga não habilitado",
+  "realDataUsed": false,
+  "verifyExitCode": 0,
+  "scope": "Backend em schemas PostgreSQL locais descartáveis. Não comprova produção ou capacidade de carga."
+}

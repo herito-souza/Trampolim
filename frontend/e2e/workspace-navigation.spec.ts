@@ -3,12 +3,13 @@ import AxeBuilder from '@axe-core/playwright';
 import {activate} from './navigation-helpers';
 import type {Page} from '@playwright/test';
 import {mkdir} from 'node:fs/promises';
-const evidence='../ops/navigation-2026-11-05';
+const evidence=process.env.NAVIGATION_EVIDENCE_DIR||'test-results/navigation';
 async function fixture(page:Page,role:'candidate'|'admin'|'owner'|'analyst'|'student'|'teacher'){
  await page.addInitScript(({role})=>{if(['candidate','admin'].includes(role)){localStorage.setItem('trampolim_token','synthetic-candidate');localStorage.setItem('trampolim_profile_step','opportunities')}else if(['owner','analyst'].includes(role))localStorage.setItem('trampolim_empresas_token','synthetic-company');else localStorage.setItem('trampolim_capacita_token','synthetic-student')}, {role});
  const calls:string[]=[];
  await page.route('http://localhost:8080/api/**',async route=>{const request=route.request(),p=new URL(request.url()).pathname;calls.push(p);
  if(p==='/api/profile')return route.fulfill({json:{profile:{name:'Pessoa sintética QA',email:'qa@example.test',location:'Irecê/BA'},experiences:[],educations:[]}});
+ if(p==='/api/profile/public')return route.fulfill({json:{enabled:false,shareId:null,showLocation:false,showSummary:true,showExperiences:true,showEducation:true}});
  if(p==='/api/profile/diagnostic')return route.fulfill({json:null});
  if(p==='/api/admin/saas/overview')return route.fulfill(role==='admin'?{json:{}}:{status:403,json:{detail:'Acesso restrito'}});
  if(p==='/api/company/dashboard')return route.fulfill({json:{tradeName:'Empresa sintética QA',legalName:'Fixture',cnpj:'11222333000181',phone:'000',city:'Irecê',state:'BA',industry:'Fixture',role:role==='analyst'?'ANALYST':'OWNER'}});
@@ -87,4 +88,25 @@ for(const trail of ['oportunidades','empresas','capacita'] as const)test('sessã
  if(trail!=='oportunidades')expect(await page.evaluate(()=>localStorage.getItem('trampolim_token'))).toBe('expired-opportunities');
  if(trail!=='empresas')expect(await page.evaluate(()=>localStorage.getItem('trampolim_empresas_token'))).toBe('expired-company');
  if(trail!=='capacita')expect(await page.evaluate(()=>localStorage.getItem('trampolim_capacita_token'))).toBe('expired-student');
+});
+
+for(const width of [375,1024])for(const role of ['candidate','owner','student'] as const)test('histórico fecha o menu '+role+' em '+width+'px e Escape funciona no tablet',async({page})=>{
+ await page.setViewportSize({width,height:900});await fixture(page,role);
+ const area=role==='candidate'?'oportunidades':role==='owner'?'empresas':'capacita';
+ const scope=role==='candidate'?'Navegação da conta':role==='owner'?'Navegação empresarial':'Módulos do Capacita';
+ const first=role==='candidate'?'Vagas':role==='owner'?'Vagas e cursos':'Minha conta';
+ const second=role==='candidate'?'Cursos':role==='owner'?'Visão geral':'Aprendizagem';
+ await page.goto('/#'+area);await activate(page,first,scope);await activate(page,second,scope);
+ const toggle=page.getByRole('button',{name:'Alternar menu lateral',exact:true});await toggle.click();await expect(toggle).toHaveAttribute('aria-expanded','true');
+ if(width===1024){await page.keyboard.press('Escape');await expect(toggle).toHaveAttribute('aria-expanded','false');await expect(toggle).toBeFocused();await toggle.click();}
+ await page.goBack();await expect(toggle).toHaveAttribute('aria-expanded','false');
+ const target=role==='candidate'?/#oportunidades\/catalog-jobs/:role==='owner'?/#empresa-divulgacoes/:/#capacita\/account/;await expect(page).toHaveURL(target);
+ expect(await page.evaluate(()=>document.body.style.overflow)).not.toBe('hidden');
+ expect(await page.evaluate(()=>Boolean(document.activeElement?.closest('dialog.workspace-drawer')))).toBe(false);
+});
+test('voltar revela a página ativa mesmo quando a categoria estava recolhida',async({page})=>{
+ await page.setViewportSize({width:1440,height:900});await fixture(page,'candidate');await page.goto('/#oportunidades');await activate(page,'Vagas','Navegação da conta');await activate(page,'Perfil profissional','Navegação da conta');
+ const nav=page.getByRole('navigation',{name:'Navegação da conta',exact:true});const group=nav.getByRole('button',{name:'Principal',exact:true});await group.click();await expect(group).toHaveAttribute('aria-expanded','false');await expect(nav.getByRole('button',{name:'Vagas',exact:true})).toHaveCount(0);
+ await page.goBack();await expect(page).toHaveURL(/#oportunidades\/catalog-jobs/);await expect(group).toHaveAttribute('aria-expanded','true');await expect(nav.getByRole('button',{name:'Vagas',exact:true})).toHaveAttribute('aria-current','page');
+ await activate(page,'Cursos','Navegação da conta');await group.click();await expect(group).toHaveAttribute('aria-expanded','false');await page.goBack();await expect(page).toHaveURL(/#oportunidades\/catalog-jobs/);await expect(group).toHaveAttribute('aria-expanded','true');await expect(nav.getByRole('button',{name:'Vagas',exact:true})).toHaveAttribute('aria-current','page');
 });

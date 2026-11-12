@@ -17,13 +17,12 @@ public class LearningAccess {
     public record Account(long id,String name,String email,boolean teacher,boolean admin) {}
     public Account account(String email) {
         if(email==null||email.isBlank()) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Entre no Capacita.");
-        var rows=jdbc.query("SELECT id,full_name,email FROM student_users WHERE LOWER(email)=LOWER(?) AND account_status='ACTIVE' AND email_verified=TRUE",
-            (rs,row)->new Object[]{rs.getLong(1),rs.getString(2),rs.getString(3)},email);
+        var rows=jdbc.query("SELECT u.id,u.full_name,u.email,EXISTS(SELECT 1 FROM learning_account_roles r WHERE r.user_id=u.id AND r.role='ADMIN'),EXISTS(SELECT 1 FROM learning_account_roles r WHERE r.user_id=u.id AND r.role='TEACHER') FROM student_users u WHERE LOWER(u.email)=LOWER(?) AND u.account_status='ACTIVE' AND u.email_verified=TRUE",
+            (rs,row)->new Object[]{rs.getLong(1),rs.getString(2),rs.getString(3),rs.getBoolean(4),rs.getBoolean(5)},email);
         if(rows.isEmpty()) throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Conta educacional indisponível.");
         var row=rows.get(0); long id=(Long)row[0];
-        var roles=jdbc.queryForList("SELECT role FROM learning_account_roles WHERE user_id=?",String.class,id);
-        boolean admin=roles.contains("ADMIN")||Arrays.stream(bootstrapAdmins.split(",")).anyMatch(value->!value.isBlank()&&value.trim().equalsIgnoreCase(email));
-        return new Account(id,(String)row[1],(String)row[2],admin||roles.contains("TEACHER"),admin);
+        boolean admin=Boolean.TRUE.equals(row[3])||Arrays.stream(bootstrapAdmins.split(",")).anyMatch(value->!value.isBlank()&&value.trim().equalsIgnoreCase(email));
+        return new Account(id,(String)row[1],(String)row[2],admin||Boolean.TRUE.equals(row[4]),admin);
     }
     public Account teacher(String email) {var user=account(email);if(!user.teacher()) forbidden();return user;}
     public Account admin(String email) {var user=account(email);if(!user.admin()) forbidden();return user;}

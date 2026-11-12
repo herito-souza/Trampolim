@@ -1,0 +1,80 @@
+import {test,expect} from '@playwright/test';
+import type {Page} from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import type {Plan,Step} from '../src/features/planning/planTypes';
+import {activate} from './navigation-helpers';
+const key=(n:number)=>String(n).repeat(64);
+function step(n:number,kind:string,title:string,criteria:Step['criteria']={},resource:Step['resource']={}):Step{return{key:key(n),kind,title,criterionHash:key(n),criteria:{version:1,...criteria},resource};}
+const steps=[step(1,'REVIEW_OBJECTIVES','Revisar meu objetivo profissional'),step(2,'DIAGNOSTIC','Realizar ou revisar o diagnóstico vocacional'),step(3,'SKILL_DEVELOPMENT','Desenvolver sql',{skillCode:'sql',requiredLevel:2,mandatory:true}),step(4,'TRAINING','Consultar curso: Curso sintético SQL',{courseId:17,moduleId:8,coverage:[{skillCode:'sql',offeredLevel:1,requiredLevel:2,coverage:'PARTIAL'}]},{courseTitle:'Curso sintético SQL',moduleTitle:'Módulo de teste',notice:'Use sua conta independente do Capacita.'})];
+function fixture():Plan{return{exists:true,revision:2,generation:1,generatedAt:'2026-11-07T12:00:00Z',objectives:{occupation:'Analista de teste',area:'Tecnologia',city:'Irecê',modality:'Remoto',skills:[{skillCode:'sql',level:2,requireEvidence:false}],jobs:[]},localInputsChanged:false,snapshot:{ruleVersion:1,partial:false,truncated:false,notice:'Plano orientativo sem garantia de contratação.',diagnostic:{available:false},steps:structuredClone(steps),analyses:[{job:{id:1,title:'Vaga sintética isolada',company:'Empresa de teste',location:'Irecê'},catalog:[{code:'sql',name:'SQL'}],evidenceStatus:'NOT_LINKED',analysis:{score:40,skills:[{skillCode:'sql',requiredLevel:2,declaredLevel:1,verifiedLevel:0,status:'PARTIAL',mandatory:true,requiresEvidence:false}],factors:[{key:'MANDATORY',explanation:'Competência obrigatória parcialmente demonstrada.'}],eliminatoryNotDemonstrated:['SQL no nível solicitado'],pendingInformation:[],notice:'Pontuação não garante contratação.'}}]},progress:steps.map(s=>({step_key:s.key,state:'NOT_STARTED'}))};}
+async function setup(page:Page,initial=fixture(),options:{refreshFailure?:boolean;conflict?:boolean;profileFailure?:boolean}={}){
+ await page.addInitScript(()=>{localStorage.setItem('trampolim_token','candidate-plan');localStorage.setItem('trampolim_profile_step','plan');localStorage.setItem('trampolim_empresas_token','company-preserved')});
+ let plan=structuredClone(initial),refreshFailures=options.refreshFailure?1:0;const mutations:{path:string;body:Record<string,unknown>}[]=[],protectedCalls:string[]=[],historyQueries:string[]=[];
+ await page.route('http://localhost:8080/api/**',async route=>{const request=route.request(),url=new URL(request.url()),p=url.pathname;
+ if(p==='/api/profile')return route.fulfill({json:{profile:{name:'Pessoa sintética',email:'fixture@example.test',phone:null,summary:null,location:'Irecê/BA'},experiences:[],educations:[]}});
+ if(p==='/api/profile/diagnostic')return route.fulfill({status:204});
+ if(p==='/api/admin/saas/overview')return route.fulfill({status:403,json:{detail:'Fixture'}});
+ if(p==='/api/radar/profile'){expect(request.headers().authorization).toBe('Bearer candidate-plan');return route.fulfill(options.profileFailure?{status:503,json:{detail:'Fixture'}}:{json:{declarations:[{skill_code:'sql',name:'SQL',level:1}],evidence:[],preferences:{}}})}
+ if(p==='/api/public/skills')return route.fulfill({json:{items:[{code:'sql',name:'SQL',category:'Tecnologia',active:true,kind:'TECHNICAL'}]}});
+ if(p.startsWith('/api/employability-plan')){
+  expect(request.headers().authorization).toBe('Bearer candidate-plan');protectedCalls.push(p);
+  if(p.endsWith('/generations')){historyQueries.push(url.search);return route.fulfill({json:{items:[{generation:url.searchParams.has('before')?2:5,produced_revision:2,created_at:'2026-11-07T12:00:00Z',snapshot:fixture().snapshot}],nextCursor:url.searchParams.has('before')?null:3}})}
+  if(request.method()==='GET')return route.fulfill({json:plan});
+  const body=request.postDataJSON();mutations.push({path:p,body});
+  if(p.endsWith('/refresh')&&refreshFailures-- >0)return route.abort('failed');
+  if(p.includes('/steps/')&&options.conflict){plan.revision++;return route.fulfill({status:409,json:{detail:'O plano mudou. Recarregue os dados.'}})}
+  expect(body.expectedRevision).toBe(plan.revision);
+  if(p.endsWith('/objectives')){plan={...plan,exists:true,objectives:body.objectives,revision:plan.revision+1,snapshot:null,localInputsChanged:true,progress:[]};return route.fulfill({json:plan})}
+  if(p.endsWith('/refresh')){plan={...fixture(),objectives:plan.objectives,revision:plan.revision+1};return route.fulfill({json:{plan,replayed:false,generation:1,generatedRevision:plan.revision}})}
+  if(p.includes('/steps/')){plan={...plan,revision:plan.revision+1,progress:plan.progress?.map(row=>row.step_key===p.split('/').pop()?{...row,state:body.state}:row)};return route.fulfill({json:plan})}
+ }
+ if(p.startsWith('/api/capacita/learning'))throw new Error('Candidate token must not authenticate a student');
+ return route.fulfill({json:[]});
+ });return{mutations,protectedCalls,historyQueries};
+}
+for(const width of [320,375,768,1024,1440])test('plano acessível e progresso persistido em '+width+'px',async({page})=>{
+ await page.setViewportSize({width,height:950});await setup(page);await page.goto('/#oportunidades/plan');await expect(page.getByRole('heading',{name:'Meu Plano de Empregabilidade',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Vaga sintética isolada'})).toBeVisible();await expect(page.getByText('Compatibilidade na geração: 40%')).toBeVisible();
+ const select=page.getByRole('combobox',{name:'Meu acompanhamento: Revisar meu objetivo profissional',exact:true});await select.focus();await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');await expect(select).toHaveValue('IN_PROGRESS');await select.selectOption('DECLARED_DONE');await expect(page.getByText('1 de 4 etapas declaradas como concluídas.')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await page.reload();await expect(page.getByText('1 de 4 etapas declaradas como concluídas.')).toBeVisible();await page.getByRole('button',{name:'Abrir curso no Capacita',exact:true}).scrollIntoViewIfNeeded();await expect(page.getByRole('button',{name:'Abrir curso no Capacita',exact:true})).toBeVisible();
+ const axe=await new AxeBuilder({page}).include('main').withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();expect(axe.violations).toEqual([]);await page.screenshot({path:'test-results/employability-plan-'+width+'.png',fullPage:true});
+});
+test('define objetivo, escolhe competência real e gera etapas explicitamente',async({page})=>{
+ const {mutations}=await setup(page,{exists:false,revision:0,suggestedObjectives:{city:'Irecê',area:'Tecnologia'}});await page.goto('/#oportunidades/plan');await page.getByLabel('Ocupação desejada',{exact:true}).fill('Analista de teste');await page.getByText('Competências que quero desenvolver (opcional)',{exact:true}).click();await page.getByRole('combobox',{name:'Competência para meu objetivo',exact:true}).selectOption('sql');await page.getByRole('button',{name:'Adicionar competência ao objetivo'}).click();await page.getByRole('combobox',{name:'Nível desejado de SQL',exact:true}).selectOption('2');await page.getByRole('button',{name:'Salvar objetivo',exact:true}).click();await expect(page.getByText('Objetivo salvo. Agora gere as etapas para consultar suas recomendações.')).toBeVisible();expect(mutations).toHaveLength(1);expect(mutations[0].body.objectives).toMatchObject({occupation:'Analista de teste',skills:[{skillCode:'sql',level:2,requireEvidence:false}],jobs:[]});await page.getByRole('button',{name:'Gerar meu plano',exact:true}).click();await expect(page.getByRole('heading',{name:'Minha evolução',exact:true})).toBeVisible();expect(mutations[1].body.requestKey).toMatch(/^[a-f0-9-]{36}$/);
+});
+test('ausência de cursos e vagas tem estados vazios sem métricas inventadas',async({page})=>{
+ const plan=fixture();plan.snapshot!.analyses=[];plan.snapshot!.steps=[steps[0]];plan.progress=[];await setup(page,plan);await page.goto('/#oportunidades/plan');await expect(page.getByText(/Não há curso relacionado disponível nesta geração/)).toBeVisible();await expect(page.getByText(/Nenhuma oportunidade foi analisada nesta geração/)).toBeVisible();await expect(page.getByText(/Compatibilidade na geração:/)).toHaveCount(0);await expect(page.getByText('0 de 1 etapas declaradas como concluídas.')).toBeVisible();
+});
+test('falha de rede conserva chave de geração para tentar novamente sem duplicar',async({page})=>{
+ const {mutations}=await setup(page,fixture(),{refreshFailure:true});await page.goto('/#oportunidades/plan');await page.getByRole('button',{name:'Atualizar meu plano',exact:true}).click();await expect(page.getByRole('alert')).toBeVisible();await page.getByRole('button',{name:'Atualizar meu plano',exact:true}).click();await expect(page.getByText('Plano atualizado com os critérios e fontes disponíveis.')).toBeVisible();expect(mutations).toHaveLength(2);expect(mutations[0].body.requestKey).toBe(mutations[1].body.requestKey);
+});
+test('conflito não altera progresso e exige recuperar versão salva',async({page})=>{
+ await setup(page,fixture(),{conflict:true});await page.goto('/#oportunidades/plan');const select=page.getByRole('combobox',{name:'Meu acompanhamento: Revisar meu objetivo profissional',exact:true});await select.selectOption('DECLARED_DONE');await expect(page.getByRole('alert')).toContainText('O plano mudou');await expect(select).toBeDisabled();await expect(select).toHaveValue('NOT_STARTED');await expect(page.getByText('0 de 4 etapas declaradas como concluídas.')).toBeVisible();await page.getByRole('button',{name:'Recarregar versão salva e descartar edição local'}).click();await expect(select).toBeEnabled();
+});
+test('fontes parciais e perfil indisponível não impedem consulta; snapshot antigo não recebe progresso',async({page})=>{
+ const plan=fixture();plan.localInputsChanged=true;plan.snapshot!.partial=true;plan.snapshot!.truncated=true;await setup(page,plan,{profileFailure:true});await page.goto('/#oportunidades/plan');await expect(page.getByText(/Parte das fontes não pôde ser confirmada/)).toBeVisible();await expect(page.getByText(/Não foi possível atualizar as competências/)).toBeVisible();await expect(page.getByRole('combobox',{name:'Meu acompanhamento: Revisar meu objetivo profissional',exact:true})).toBeDisabled();await page.getByRole('button',{name:'Gerar recomendações atualizadas',exact:true}).click();await expect(page.getByRole('combobox',{name:'Meu acompanhamento: Revisar meu objetivo profissional',exact:true})).toBeEnabled();
+});
+test('curso usa encaminhamento existente sem criar sessão do Capacita',async({page})=>{
+ await setup(page);await page.goto('/#oportunidades/plan');await page.getByRole('button',{name:'Abrir curso no Capacita',exact:true}).click();await expect(page).toHaveURL(/#capacita/);expect(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('trampolim_capacita_course_intent')||'null'))).toEqual({courseId:17,moduleId:8});expect(await page.evaluate(()=>localStorage.getItem('trampolim_capacita_token'))).toBeNull();expect(await page.evaluate(()=>localStorage.getItem('trampolim_empresas_token'))).toBe('company-preserved');
+});
+test('histórico é carregado sob demanda, paginado e não sobrescreve o plano atual',async({page})=>{
+ const {historyQueries}=await setup(page);await page.goto('/#oportunidades/plan');await expect(page.getByRole('heading',{name:'Minha evolução'})).toBeVisible();expect(historyQueries).toHaveLength(0);await page.getByRole('button',{name:'Consultar gerações anteriores'}).click();await expect(page.getByText(/Geração 5 ·/)).toBeVisible();await page.getByRole('button',{name:'Carregar gerações anteriores',exact:true}).click();await expect(page.getByText(/Geração 2 ·/)).toBeVisible();expect(historyQueries[1]).toContain('before=3');await expect(page.getByText('0 de 4 etapas declaradas como concluídas.')).toBeVisible();
+});
+test('rota do plano participa da navegação, voltar e atualizar preservam o destino',async({page})=>{
+ await setup(page);await page.goto('/#oportunidades/plan');await page.getByRole('button',{name:'Consultar diagnóstico',exact:true}).click();await expect(page).toHaveURL(new RegExp('#oportunidades/diagnostic'));await page.goBack();await expect(page.getByRole('heading',{name:'Meu Plano de Empregabilidade'})).toBeVisible();await activate(page,'Meu Plano de Empregabilidade','Navegação da conta');await page.reload();await expect(page).toHaveURL(new RegExp('#oportunidades/plan'));
+});
+test('visitante não consulta a API privada do plano por acesso direto',async({page})=>{
+ const calls:string[]=[];await page.route('http://localhost:8080/api/**',route=>{calls.push(new URL(route.request().url()).pathname);return route.fulfill({json:[]})});await page.goto('/#oportunidades/plan');await expect(page.getByRole('heading',{name:'Meu Plano de Empregabilidade'})).toHaveCount(0);expect(calls.some(path=>path.startsWith('/api/employability-plan'))).toBe(false);
+});
+
+test('erro de leitura não inventa plano e permite recuperar dados salvos',async({page})=>{
+ await setup(page);let fail=true;await page.route('http://localhost:8080/api/employability-plan',route=>fail?route.fulfill({status:503,json:{detail:'Plano temporariamente indisponível.'}}):route.fallback());await page.goto('/#oportunidades/plan');await expect(page.getByRole('alert')).toContainText('Plano temporariamente indisponível.');await expect(page.getByRole('heading',{name:'Minha evolução'})).toHaveCount(0);fail=false;await page.getByRole('button',{name:'Recarregar plano salvo',exact:true}).click();await expect(page.getByRole('heading',{name:'Minha evolução'})).toBeVisible();
+});
+test('falha ao salvar mantém o objetivo preenchido para nova tentativa',async({page})=>{
+ await setup(page);await page.route('http://localhost:8080/api/employability-plan/objectives',route=>route.fulfill({status:503,json:{detail:'Não foi possível salvar o objetivo agora.'}}));await page.goto('/#oportunidades/plan');await page.getByRole('button',{name:'Editar objetivo',exact:true}).click();await page.getByLabel('Ocupação desejada',{exact:true}).fill('Objetivo revisado e não salvo');await page.getByRole('button',{name:'Salvar objetivo',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Não foi possível salvar o objetivo agora.');await expect(page.getByLabel('Ocupação desejada',{exact:true})).toHaveValue('Objetivo revisado e não salvo');await expect(page.getByRole('button',{name:'Salvar objetivo',exact:true})).toBeEnabled();
+});
+test('acesso negado pelo backend não mostra formulário nem progresso',async({page})=>{
+ await setup(page);await page.route('http://localhost:8080/api/employability-plan',route=>route.fulfill({status:403,json:{detail:'Use uma conta pessoal verificada de Oportunidades.'}}));await page.goto('/#oportunidades/plan');await expect(page.getByRole('alert')).toContainText('conta pessoal verificada');await expect(page.getByRole('form',{name:'Objetivos do meu plano'})).toHaveCount(0);await expect(page.getByRole('progressbar')).toHaveCount(0);
+});
+test('dashboard mantém plano sob demanda e sidebar abre a rota real',async({page})=>{
+ const {protectedCalls}=await setup(page),requests:string[]=[];page.on('request',r=>requests.push(r.url()));await page.goto('/#oportunidades/opportunities');await expect(page.getByRole('heading',{name:'Seu próximo passo',exact:true})).toBeVisible();expect(protectedCalls).toHaveLength(0);expect(requests.some(url=>url.includes('/features/planning/'))).toBe(false);await activate(page,'Meu Plano de Empregabilidade','Navegação da conta');await expect(page).toHaveURL(new RegExp('#oportunidades/plan'));await expect(page.getByRole('heading',{name:'Meu Plano de Empregabilidade',exact:true})).toBeVisible();expect(protectedCalls.length).toBeGreaterThan(0);
+});

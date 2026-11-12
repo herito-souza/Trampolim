@@ -39,13 +39,17 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults()) // Vai utilizar as configs do CorsConfig (WebMvcConfigurer)
+                // Credentials are supplied explicitly in Authorization; no cookie/Basic authentication.
                 .csrf(csrf -> csrf.disable())
+                .httpBasic(basic -> basic.disable())
+                .formLogin(form -> form.disable())
+                .logout(logout -> logout.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Only the completion redispatch of an already-authorized SSE request is anonymous.
                         .requestMatchers(request -> request.getDispatcherType()==jakarta.servlet.DispatcherType.ASYNC && request.getRequestURI().equals("/api/capacita/learning/notifications/stream")).permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/public/geography/**","/api/public/career/**","/api/public/skills/**","/api/public/skills","/api/public/capacita/radar/training","/api/public/hub/**","/api/public/capacita/hub/**","/api/public/capacita/passport/verify/**").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/integrations/career/**","/api/integrations/radar/award","/api/integrations/capacita/radar/evidence","/api/integrations/future/summary","/api/integrations/hub/candidates","/api/integrations/hub/learning","/api/integrations/capacita/passport/verify","/api/integrations/radar/invalidate").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/public/job-fairs/**","/api/public/geography/**","/api/public/career/**","/api/public/skills/**","/api/public/skills","/api/public/capacita/radar/training","/api/public/hub/**","/api/public/capacita/hub/**","/api/public/capacita/passport/verify/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/integrations/career/**","/api/integrations/radar/award","/api/integrations/capacita/radar/evidence","/api/integrations/future/summary","/api/integrations/hub/candidates","/api/integrations/hub/learning","/api/integrations/capacita/passport/verify","/api/integrations/capacita/passport/professional/verify","/api/integrations/radar/invalidate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/empresas/auth/**", "/api/capacita/auth/**").permitAll()
@@ -70,6 +74,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/public/profiles/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/companies/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/public/companies/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/integrations/job-fairs/opportunities/counts","/api/integrations/job-fairs/learning/counts").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

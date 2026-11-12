@@ -21,75 +21,75 @@ const q = (prompt: string, choices: [string, Weights][]): Question => ({ prompt,
 
 export const trackQuestions: Question[][] = [
   [
-    q('Em uma equipe, qual atividade mais combina com você?', [['Ouvir e orientar quem precisa de ajuda', { service: 2 }], ['Apresentar produtos e soluções', { sales: 2 }], ['Organizar pedidos e informações', { admin: 1, service: 1 }]]),
-    q('Qual habilidade você quer desenvolver?', [['Comunicação e escuta', { service: 2 }], ['Negociação e persuasão', { sales: 2 }], ['Organização de rotinas', { admin: 2 }]]),
-    q('Quando alguém tem um problema, você prefere...', [['Entender com calma o que aconteceu', { service: 2 }], ['Explicar opções e ajudar a decidir', { sales: 1, service: 1 }], ['Registrar as informações e encaminhar', { admin: 2 }]]),
-    q('Qual rotina parece mais interessante?', [['Atender pessoas diferentes', { service: 2 }], ['Trabalhar com metas e resultados', { sales: 2 }], ['Conferir documentos e processos', { admin: 2 }]]),
-    q('O que seria um bom dia de trabalho?', [['Ajudar alguém a resolver uma dúvida', { service: 2 }], ['Alcançar uma meta', { sales: 2 }], ['Deixar tudo organizado', { admin: 2 }]]),
-    q('Em qual ambiente você se imagina?', [['Recepção ou central de atendimento', { service: 2 }], ['Loja ou equipe comercial', { sales: 2 }], ['Escritório administrativo', { admin: 2 }]]),
-    q('Que desafio gostaria de aprender a resolver?', [['Atender reclamações com clareza', { service: 2 }], ['Entender o que o cliente procura', { sales: 2 }], ['Manter cadastros corretos', { admin: 2 }]]),
-    q('Qual tarefa escolheria primeiro?', [['Orientar o público', { service: 2 }], ['Ajudar a escolher um produto', { sales: 2 }], ['Atualizar planilhas e arquivos', { admin: 1, numbers: 1 }]]),
-    q('Qual função quer conhecer melhor?', [['Atendente ou recepcionista', { service: 2 }], ['Vendedor de loja', { sales: 2 }], ['Assistente administrativo', { admin: 2 }]]),
+    /* @__PURE__ */ q('Em uma equipe, qual atividade mais combina com você?', [['Ouvir e orientar quem precisa de ajuda', { service: 2 }], ['Apresentar produtos e soluções', { sales: 2 }], ['Organizar pedidos e informações', { admin: 1, service: 1 }]]),
+    /* @__PURE__ */ q('Qual habilidade você quer desenvolver?', [['Comunicação e escuta', { service: 2 }], ['Negociação e persuasão', { sales: 2 }], ['Organização de rotinas', { admin: 2 }]]),
+    /* @__PURE__ */ q('Quando alguém tem um problema, você prefere...', [['Entender com calma o que aconteceu', { service: 2 }], ['Explicar opções e ajudar a decidir', { sales: 1, service: 1 }], ['Registrar as informações e encaminhar', { admin: 2 }]]),
+    /* @__PURE__ */ q('Qual rotina parece mais interessante?', [['Atender pessoas diferentes', { service: 2 }], ['Trabalhar com metas e resultados', { sales: 2 }], ['Conferir documentos e processos', { admin: 2 }]]),
+    /* @__PURE__ */ q('O que seria um bom dia de trabalho?', [['Ajudar alguém a resolver uma dúvida', { service: 2 }], ['Alcançar uma meta', { sales: 2 }], ['Deixar tudo organizado', { admin: 2 }]]),
+    /* @__PURE__ */ q('Em qual ambiente você se imagina?', [['Recepção ou central de atendimento', { service: 2 }], ['Loja ou equipe comercial', { sales: 2 }], ['Escritório administrativo', { admin: 2 }]]),
+    /* @__PURE__ */ q('Que desafio gostaria de aprender a resolver?', [['Atender reclamações com clareza', { service: 2 }], ['Entender o que o cliente procura', { sales: 2 }], ['Manter cadastros corretos', { admin: 2 }]]),
+    /* @__PURE__ */ q('Qual tarefa escolheria primeiro?', [['Orientar o público', { service: 2 }], ['Ajudar a escolher um produto', { sales: 2 }], ['Atualizar planilhas e arquivos', { admin: 1, numbers: 1 }]]),
+    /* @__PURE__ */ q('Qual função quer conhecer melhor?', [['Atendente ou recepcionista', { service: 2 }], ['Vendedor de loja', { sales: 2 }], ['Assistente administrativo', { admin: 2 }]]),
   ],
   [
-    q('Que tipo de tarefa prefere organizar?', [['Documentos e agendas', { admin: 2 }], ['Contas e valores', { numbers: 2 }], ['Produtos e entregas', { logistics: 2 }]]),
-    q('Qual é um ponto forte seu?', [['Perceber detalhes', { admin: 2 }], ['Fazer cálculos', { numbers: 2 }], ['Planejar etapas e prazos', { logistics: 2 }]]),
-    q('Qual atividade parece mais interessante?', [['Preparar documentos', { admin: 2 }], ['Acompanhar pagamentos', { numbers: 2 }], ['Controlar estoque e pedidos', { logistics: 2 }]]),
-    q('Com qual ferramenta gostaria de aprender?', [['Sistemas de cadastro', { admin: 2 }], ['Planilhas e controles', { numbers: 2 }], ['Sistemas de estoque', { logistics: 2 }]]),
-    q('O que mais importa em uma tarefa?', [['Informações organizadas', { admin: 2 }], ['Precisão nos cálculos', { numbers: 2 }], ['Cumprir prazos', { logistics: 2 }]]),
-    q('Qual curso escolheria primeiro?', [['Rotinas de escritório', { admin: 2 }], ['Excel e controles financeiros', { numbers: 2 }], ['Logística e estoque', { logistics: 2 }]]),
-    q('Você encontra uma informação divergente. O que faz?', [['Confere o cadastro', { admin: 2 }], ['Refaz a conta', { numbers: 2 }], ['Acompanha o pedido', { logistics: 2 }]]),
-    q('Qual resultado lhe daria satisfação?', [['Arquivos em dia', { admin: 2 }], ['Valores conferidos', { numbers: 2 }], ['Pedidos entregues corretamente', { logistics: 2 }]]),
-    q('Qual função quer conhecer melhor?', [['Auxiliar de escritório', { admin: 2 }], ['Auxiliar financeiro ou caixa', { numbers: 2 }], ['Auxiliar de estoque', { logistics: 2 }]]),
+    /* @__PURE__ */ q('Que tipo de tarefa prefere organizar?', [['Documentos e agendas', { admin: 2 }], ['Contas e valores', { numbers: 2 }], ['Produtos e entregas', { logistics: 2 }]]),
+    /* @__PURE__ */ q('Qual é um ponto forte seu?', [['Perceber detalhes', { admin: 2 }], ['Fazer cálculos', { numbers: 2 }], ['Planejar etapas e prazos', { logistics: 2 }]]),
+    /* @__PURE__ */ q('Qual atividade parece mais interessante?', [['Preparar documentos', { admin: 2 }], ['Acompanhar pagamentos', { numbers: 2 }], ['Controlar estoque e pedidos', { logistics: 2 }]]),
+    /* @__PURE__ */ q('Com qual ferramenta gostaria de aprender?', [['Sistemas de cadastro', { admin: 2 }], ['Planilhas e controles', { numbers: 2 }], ['Sistemas de estoque', { logistics: 2 }]]),
+    /* @__PURE__ */ q('O que mais importa em uma tarefa?', [['Informações organizadas', { admin: 2 }], ['Precisão nos cálculos', { numbers: 2 }], ['Cumprir prazos', { logistics: 2 }]]),
+    /* @__PURE__ */ q('Qual curso escolheria primeiro?', [['Rotinas de escritório', { admin: 2 }], ['Excel e controles financeiros', { numbers: 2 }], ['Logística e estoque', { logistics: 2 }]]),
+    /* @__PURE__ */ q('Você encontra uma informação divergente. O que faz?', [['Confere o cadastro', { admin: 2 }], ['Refaz a conta', { numbers: 2 }], ['Acompanha o pedido', { logistics: 2 }]]),
+    /* @__PURE__ */ q('Qual resultado lhe daria satisfação?', [['Arquivos em dia', { admin: 2 }], ['Valores conferidos', { numbers: 2 }], ['Pedidos entregues corretamente', { logistics: 2 }]]),
+    /* @__PURE__ */ q('Qual função quer conhecer melhor?', [['Auxiliar de escritório', { admin: 2 }], ['Auxiliar financeiro ou caixa', { numbers: 2 }], ['Auxiliar de estoque', { logistics: 2 }]]),
   ],
   [
-    q('Em qual ambiente gostaria de trabalhar?', [['Oficina ou manutenção', { maintenance: 2 }], ['Estoque ou depósito', { logistics: 2 }], ['Fábrica ou produção', { production: 2 }]]),
-    q('Qual atividade prática chama sua atenção?', [['Identificar defeitos e reparar', { maintenance: 2 }], ['Separar e movimentar materiais', { logistics: 2 }], ['Montar ou embalar produtos', { production: 2 }]]),
-    q('Que habilidade gostaria de aprender?', [['Usar ferramentas', { maintenance: 2 }], ['Conferir mercadorias', { logistics: 2 }], ['Operar máquinas com segurança', { production: 2 }]]),
-    q('Quando algo para de funcionar, prefere...', [['Investigar e consertar', { maintenance: 2 }], ['Conferir o fluxo de materiais', { logistics: 2 }], ['Ajudar a retomar a produção', { production: 2 }]]),
-    q('Qual rotina parece mais adequada?', [['Cuidar de equipamentos', { maintenance: 2 }], ['Separar pedidos e organizar o espaço', { logistics: 2 }], ['Executar etapas de fabricação', { production: 2 }]]),
-    q('O que valoriza em um trabalho prático?', [['Resolver problemas concretos', { maintenance: 2 }], ['Manter materiais disponíveis', { logistics: 2 }], ['Ver um produto pronto', { production: 2 }]]),
-    q('Qual curso escolheria primeiro?', [['Manutenção e ferramentas', { maintenance: 2 }], ['Logística e estoque', { logistics: 2 }], ['Operação e segurança', { production: 2 }]]),
-    q('Como prefere aprender uma tarefa nova?', [['Observando um reparo', { maintenance: 2 }], ['Praticando a separação de itens', { logistics: 2 }], ['Repetindo etapas de operação', { production: 2 }]]),
-    q('Qual resultado lhe daria satisfação?', [['Equipamento funcionando', { maintenance: 2 }], ['Estoque organizado', { logistics: 2 }], ['Produto finalizado com qualidade', { production: 2 }]]),
+    /* @__PURE__ */ q('Em qual ambiente gostaria de trabalhar?', [['Oficina ou manutenção', { maintenance: 2 }], ['Estoque ou depósito', { logistics: 2 }], ['Fábrica ou produção', { production: 2 }]]),
+    /* @__PURE__ */ q('Qual atividade prática chama sua atenção?', [['Identificar defeitos e reparar', { maintenance: 2 }], ['Separar e movimentar materiais', { logistics: 2 }], ['Montar ou embalar produtos', { production: 2 }]]),
+    /* @__PURE__ */ q('Que habilidade gostaria de aprender?', [['Usar ferramentas', { maintenance: 2 }], ['Conferir mercadorias', { logistics: 2 }], ['Operar máquinas com segurança', { production: 2 }]]),
+    /* @__PURE__ */ q('Quando algo para de funcionar, prefere...', [['Investigar e consertar', { maintenance: 2 }], ['Conferir o fluxo de materiais', { logistics: 2 }], ['Ajudar a retomar a produção', { production: 2 }]]),
+    /* @__PURE__ */ q('Qual rotina parece mais adequada?', [['Cuidar de equipamentos', { maintenance: 2 }], ['Separar pedidos e organizar o espaço', { logistics: 2 }], ['Executar etapas de fabricação', { production: 2 }]]),
+    /* @__PURE__ */ q('O que valoriza em um trabalho prático?', [['Resolver problemas concretos', { maintenance: 2 }], ['Manter materiais disponíveis', { logistics: 2 }], ['Ver um produto pronto', { production: 2 }]]),
+    /* @__PURE__ */ q('Qual curso escolheria primeiro?', [['Manutenção e ferramentas', { maintenance: 2 }], ['Logística e estoque', { logistics: 2 }], ['Operação e segurança', { production: 2 }]]),
+    /* @__PURE__ */ q('Como prefere aprender uma tarefa nova?', [['Observando um reparo', { maintenance: 2 }], ['Praticando a separação de itens', { logistics: 2 }], ['Repetindo etapas de operação', { production: 2 }]]),
+    /* @__PURE__ */ q('Qual resultado lhe daria satisfação?', [['Equipamento funcionando', { maintenance: 2 }], ['Estoque organizado', { logistics: 2 }], ['Produto finalizado com qualidade', { production: 2 }]]),
   ],
   [
-    q('Qual atividade digital mais desperta sua curiosidade?', [['Montar ou configurar computadores', { technology: 2 }], ['Criar sites ou aplicativos', { technology: 2 }], ['Organizar e analisar dados', { technology: 2, numbers: 1 }]]),
-    q('Que problema gostaria de resolver?', [['Ajudar alguém com computador ou celular', { technology: 2, service: 1 }], ['Encontrar um erro em um sistema', { technology: 2 }], ['Automatizar uma tarefa repetitiva', { technology: 2, admin: 1 }]]),
-    q('Qual ferramenta gostaria de aprender?', [['Suporte técnico e redes', { technology: 2 }], ['Programação', { technology: 2 }], ['Planilhas e análise de dados', { technology: 2, numbers: 1 }]]),
-    q('Como prefere trabalhar?', [['Ajudando usuários com tecnologia', { technology: 2, service: 1 }], ['Criando soluções digitais', { technology: 2 }], ['Testando sistemas e procurando falhas', { technology: 2 }]]),
-    q('Qual tarefa parece mais interessante?', [['Instalar programas e equipamentos', { technology: 2 }], ['Escrever instruções para um computador', { technology: 2 }], ['Conferir informações em sistemas', { technology: 2, admin: 1 }]]),
-    q('O que gostaria de aprender primeiro?', [['Fundamentos de informática', { technology: 2 }], ['Lógica de programação', { technology: 2 }], ['Segurança e boas práticas digitais', { technology: 2 }]]),
-    q('Quando um aplicativo apresenta um problema, você prefere...', [['Orientar a pessoa a usar o recurso', { technology: 2, service: 1 }], ['Investigar o que causou o erro', { technology: 2 }], ['Registrar o problema para a equipe', { technology: 2, admin: 1 }]]),
-    q('Qual resultado daria mais satisfação?', [['Computador funcionando corretamente', { technology: 2 }], ['Uma página ou programa criado por você', { technology: 2 }], ['Dados organizados e fáceis de entender', { technology: 2, numbers: 1 }]]),
-    q('Qual função gostaria de conhecer melhor?', [['Auxiliar de suporte de TI', { technology: 2 }], ['Desenvolvedor iniciante', { technology: 2 }], ['Auxiliar de dados ou testes', { technology: 2, numbers: 1 }]]),
+    /* @__PURE__ */ q('Qual atividade digital mais desperta sua curiosidade?', [['Montar ou configurar computadores', { technology: 2 }], ['Criar sites ou aplicativos', { technology: 2 }], ['Organizar e analisar dados', { technology: 2, numbers: 1 }]]),
+    /* @__PURE__ */ q('Que problema gostaria de resolver?', [['Ajudar alguém com computador ou celular', { technology: 2, service: 1 }], ['Encontrar um erro em um sistema', { technology: 2 }], ['Automatizar uma tarefa repetitiva', { technology: 2, admin: 1 }]]),
+    /* @__PURE__ */ q('Qual ferramenta gostaria de aprender?', [['Suporte técnico e redes', { technology: 2 }], ['Programação', { technology: 2 }], ['Planilhas e análise de dados', { technology: 2, numbers: 1 }]]),
+    /* @__PURE__ */ q('Como prefere trabalhar?', [['Ajudando usuários com tecnologia', { technology: 2, service: 1 }], ['Criando soluções digitais', { technology: 2 }], ['Testando sistemas e procurando falhas', { technology: 2 }]]),
+    /* @__PURE__ */ q('Qual tarefa parece mais interessante?', [['Instalar programas e equipamentos', { technology: 2 }], ['Escrever instruções para um computador', { technology: 2 }], ['Conferir informações em sistemas', { technology: 2, admin: 1 }]]),
+    /* @__PURE__ */ q('O que gostaria de aprender primeiro?', [['Fundamentos de informática', { technology: 2 }], ['Lógica de programação', { technology: 2 }], ['Segurança e boas práticas digitais', { technology: 2 }]]),
+    /* @__PURE__ */ q('Quando um aplicativo apresenta um problema, você prefere...', [['Orientar a pessoa a usar o recurso', { technology: 2, service: 1 }], ['Investigar o que causou o erro', { technology: 2 }], ['Registrar o problema para a equipe', { technology: 2, admin: 1 }]]),
+    /* @__PURE__ */ q('Qual resultado daria mais satisfação?', [['Computador funcionando corretamente', { technology: 2 }], ['Uma página ou programa criado por você', { technology: 2 }], ['Dados organizados e fáceis de entender', { technology: 2, numbers: 1 }]]),
+    /* @__PURE__ */ q('Qual função gostaria de conhecer melhor?', [['Auxiliar de suporte de TI', { technology: 2 }], ['Desenvolvedor iniciante', { technology: 2 }], ['Auxiliar de dados ou testes', { technology: 2, numbers: 1 }]]),
   ],
   [
-    q('Em qual ambiente de saúde se imagina trabalhando?', [['Recepção de clínica ou unidade de saúde', { health: 2, service: 1 }], ['Farmácia ou laboratório', { health: 2 }], ['Apoio administrativo em hospital', { health: 2, admin: 1 }]]),
-    q('Como gostaria de apoiar as pessoas?', [['Orientando sobre horários e atendimento', { health: 2, service: 1 }], ['Organizando informações e cadastros', { health: 2, admin: 1 }], ['Apoiando equipes com materiais e rotinas', { health: 2, logistics: 1 }]]),
-    q('Qual habilidade quer desenvolver?', [['Comunicação acolhedora', { health: 2, service: 1 }], ['Organização de registros', { health: 2, admin: 1 }], ['Higiene e segurança no ambiente', { health: 2 }]]),
-    q('Qual rotina parece mais interessante?', [['Receber e orientar pacientes', { health: 2, service: 1 }], ['Agendar consultas e atualizar cadastros', { health: 2, admin: 1 }], ['Controlar materiais e estoque', { health: 2, logistics: 1 }]]),
-    q('O que considera importante em um serviço de saúde?', [['Acolhimento e respeito', { health: 2, service: 1 }], ['Atenção aos detalhes e registros', { health: 2, admin: 1 }], ['Organização e cuidado com os materiais', { health: 2, logistics: 1 }]]),
-    q('Qual curso introdutório gostaria de explorar?', [['Atendimento em serviços de saúde', { health: 2, service: 1 }], ['Rotinas administrativas em clínicas', { health: 2, admin: 1 }], ['Noções de saúde e prevenção', { health: 2 }]]),
-    q('Se uma pessoa estiver com dúvida, você prefere...', [['Ouvir e explicar onde buscar atendimento', { health: 2, service: 1 }], ['Conferir o agendamento e os dados', { health: 2, admin: 1 }], ['Chamar a equipe responsável quando necessário', { health: 2, service: 1 }]]),
-    q('Qual tarefa escolheria?', [['Organizar prontuários e documentos', { health: 2, admin: 1 }], ['Receber pessoas na unidade', { health: 2, service: 1 }], ['Conferir materiais de uso da equipe', { health: 2, logistics: 1 }]]),
-    q('Qual função gostaria de conhecer melhor?', [['Recepcionista de clínica', { health: 2, service: 1 }], ['Auxiliar administrativo de saúde', { health: 2, admin: 1 }], ['Auxiliar de estoque hospitalar', { health: 2, logistics: 1 }]]),
+    /* @__PURE__ */ q('Em qual ambiente de saúde se imagina trabalhando?', [['Recepção de clínica ou unidade de saúde', { health: 2, service: 1 }], ['Farmácia ou laboratório', { health: 2 }], ['Apoio administrativo em hospital', { health: 2, admin: 1 }]]),
+    /* @__PURE__ */ q('Como gostaria de apoiar as pessoas?', [['Orientando sobre horários e atendimento', { health: 2, service: 1 }], ['Organizando informações e cadastros', { health: 2, admin: 1 }], ['Apoiando equipes com materiais e rotinas', { health: 2, logistics: 1 }]]),
+    /* @__PURE__ */ q('Qual habilidade quer desenvolver?', [['Comunicação acolhedora', { health: 2, service: 1 }], ['Organização de registros', { health: 2, admin: 1 }], ['Higiene e segurança no ambiente', { health: 2 }]]),
+    /* @__PURE__ */ q('Qual rotina parece mais interessante?', [['Receber e orientar pacientes', { health: 2, service: 1 }], ['Agendar consultas e atualizar cadastros', { health: 2, admin: 1 }], ['Controlar materiais e estoque', { health: 2, logistics: 1 }]]),
+    /* @__PURE__ */ q('O que considera importante em um serviço de saúde?', [['Acolhimento e respeito', { health: 2, service: 1 }], ['Atenção aos detalhes e registros', { health: 2, admin: 1 }], ['Organização e cuidado com os materiais', { health: 2, logistics: 1 }]]),
+    /* @__PURE__ */ q('Qual curso introdutório gostaria de explorar?', [['Atendimento em serviços de saúde', { health: 2, service: 1 }], ['Rotinas administrativas em clínicas', { health: 2, admin: 1 }], ['Noções de saúde e prevenção', { health: 2 }]]),
+    /* @__PURE__ */ q('Se uma pessoa estiver com dúvida, você prefere...', [['Ouvir e explicar onde buscar atendimento', { health: 2, service: 1 }], ['Conferir o agendamento e os dados', { health: 2, admin: 1 }], ['Chamar a equipe responsável quando necessário', { health: 2, service: 1 }]]),
+    /* @__PURE__ */ q('Qual tarefa escolheria?', [['Organizar prontuários e documentos', { health: 2, admin: 1 }], ['Receber pessoas na unidade', { health: 2, service: 1 }], ['Conferir materiais de uso da equipe', { health: 2, logistics: 1 }]]),
+    /* @__PURE__ */ q('Qual função gostaria de conhecer melhor?', [['Recepcionista de clínica', { health: 2, service: 1 }], ['Auxiliar administrativo de saúde', { health: 2, admin: 1 }], ['Auxiliar de estoque hospitalar', { health: 2, logistics: 1 }]]),
   ],
   [
-    q('Que parte do marketing mais desperta sua curiosidade?', [['Criar textos, imagens e vídeos', { marketing: 2 }], ['Planejar campanhas e ações', { marketing: 2, admin: 1 }], ['Entender resultados e métricas', { marketing: 2, numbers: 1 }]]),
-    q('Qual atividade gostaria de experimentar?', [['Criar publicações para redes sociais', { marketing: 2, technology: 1 }], ['Pesquisar o público e suas necessidades', { marketing: 2, sales: 1 }], ['Organizar um calendário de conteúdo', { marketing: 2, admin: 1 }]]),
-    q('Qual habilidade quer desenvolver primeiro?', [['Escrita e comunicação', { marketing: 2, service: 1 }], ['Design e edição de conteúdo', { marketing: 2, technology: 1 }], ['Análise de campanhas e dados', { marketing: 2, numbers: 1 }]]),
-    q('Uma pequena empresa quer divulgar um produto. O que você faria?', [['Prepararia uma publicação atraente', { marketing: 2 }], ['Identificaria quem pode se interessar', { marketing: 2, sales: 1 }], ['Acompanharia o alcance da divulgação', { marketing: 2, numbers: 1 }]]),
-    q('Que ferramenta teria vontade de aprender?', [['Redes sociais e agendamento de posts', { marketing: 2, technology: 1 }], ['Edição de imagens e vídeos', { marketing: 2, technology: 1 }], ['Planilhas e relatórios de campanha', { marketing: 2, numbers: 1 }]]),
-    q('Como prefere trabalhar em um projeto de divulgação?', [['Criando ideias e conteúdos', { marketing: 2 }], ['Conversando com clientes e parceiros', { marketing: 2, sales: 1 }], ['Organizando prazos e tarefas da equipe', { marketing: 2, admin: 1 }]]),
-    q('O que faria ao perceber que uma campanha teve pouco alcance?', [['Testaria outro formato de conteúdo', { marketing: 2, technology: 1 }], ['Reveria o público e a mensagem', { marketing: 2, sales: 1 }], ['Compararia os dados para encontrar ajustes', { marketing: 2, numbers: 1 }]]),
-    q('Qual resultado lhe daria mais satisfação?', [['Ver pessoas interagindo com o conteúdo', { marketing: 2, service: 1 }], ['Ajudar uma marca a ser reconhecida', { marketing: 2 }], ['Perceber melhoria nos resultados da campanha', { marketing: 2, numbers: 1 }]]),
-    q('Qual função gostaria de conhecer melhor?', [['Assistente de marketing digital', { marketing: 2 }], ['Assistente de conteúdo e redes sociais', { marketing: 2, technology: 1 }], ['Assistente de comunicação e campanhas', { marketing: 2, sales: 1 }]]),
+    /* @__PURE__ */ q('Que parte do marketing mais desperta sua curiosidade?', [['Criar textos, imagens e vídeos', { marketing: 2 }], ['Planejar campanhas e ações', { marketing: 2, admin: 1 }], ['Entender resultados e métricas', { marketing: 2, numbers: 1 }]]),
+    /* @__PURE__ */ q('Qual atividade gostaria de experimentar?', [['Criar publicações para redes sociais', { marketing: 2, technology: 1 }], ['Pesquisar o público e suas necessidades', { marketing: 2, sales: 1 }], ['Organizar um calendário de conteúdo', { marketing: 2, admin: 1 }]]),
+    /* @__PURE__ */ q('Qual habilidade quer desenvolver primeiro?', [['Escrita e comunicação', { marketing: 2, service: 1 }], ['Design e edição de conteúdo', { marketing: 2, technology: 1 }], ['Análise de campanhas e dados', { marketing: 2, numbers: 1 }]]),
+    /* @__PURE__ */ q('Uma pequena empresa quer divulgar um produto. O que você faria?', [['Prepararia uma publicação atraente', { marketing: 2 }], ['Identificaria quem pode se interessar', { marketing: 2, sales: 1 }], ['Acompanharia o alcance da divulgação', { marketing: 2, numbers: 1 }]]),
+    /* @__PURE__ */ q('Que ferramenta teria vontade de aprender?', [['Redes sociais e agendamento de posts', { marketing: 2, technology: 1 }], ['Edição de imagens e vídeos', { marketing: 2, technology: 1 }], ['Planilhas e relatórios de campanha', { marketing: 2, numbers: 1 }]]),
+    /* @__PURE__ */ q('Como prefere trabalhar em um projeto de divulgação?', [['Criando ideias e conteúdos', { marketing: 2 }], ['Conversando com clientes e parceiros', { marketing: 2, sales: 1 }], ['Organizando prazos e tarefas da equipe', { marketing: 2, admin: 1 }]]),
+    /* @__PURE__ */ q('O que faria ao perceber que uma campanha teve pouco alcance?', [['Testaria outro formato de conteúdo', { marketing: 2, technology: 1 }], ['Reveria o público e a mensagem', { marketing: 2, sales: 1 }], ['Compararia os dados para encontrar ajustes', { marketing: 2, numbers: 1 }]]),
+    /* @__PURE__ */ q('Qual resultado lhe daria mais satisfação?', [['Ver pessoas interagindo com o conteúdo', { marketing: 2, service: 1 }], ['Ajudar uma marca a ser reconhecida', { marketing: 2 }], ['Perceber melhoria nos resultados da campanha', { marketing: 2, numbers: 1 }]]),
+    /* @__PURE__ */ q('Qual função gostaria de conhecer melhor?', [['Assistente de marketing digital', { marketing: 2 }], ['Assistente de conteúdo e redes sociais', { marketing: 2, technology: 1 }], ['Assistente de comunicação e campanhas', { marketing: 2, sales: 1 }]]),
   ],
 ];
 
 export const trackNames = ['Atendimento e relacionamento', 'Organização e números', 'Atividades práticas e operação', 'Tecnologia e informática', 'Saúde e bem-estar', 'Marketing e comunicação'] as const;
-export const diagnosticQuestionCount = 10;
+export {diagnosticQuestionCount,loadDiagnosticResult} from './diagnosticStorage.ts';
 
 export const opportunities: Opportunity[] = [
   { id: 'customer-service', kind: 'course', title: 'Atendimento ao cliente', provider: 'SEBRAE · Cursos online', description: 'Desenvolva comunicação, escuta e relacionamento com clientes.', tags: ['service'], url: 'https://sebrae.com.br/sites/PortalSebrae/cursosonline' },
@@ -197,13 +197,4 @@ export function getRecommendationReason(result: DiagnosticResult, tags: Skill[])
     .sort((a, b) => b.points - a.points);
   if (!relevant.length) return null;
   return { skills: relevant.slice(0, 2).map(entry => entry.skill), points: relevant.reduce((total, entry) => total + entry.points, 0) };
-}
-
-export function loadDiagnosticResult(): DiagnosticResult | null {
-  try {
-    const raw = sessionStorage.getItem('trampolim_diagnostic_result');
-    if (!raw) return null;
-    const result = JSON.parse(raw) as DiagnosticResult;
-    return Array.isArray(result.answers) && result.answers.length === diagnosticQuestionCount && result.scores ? result : null;
-  } catch { return null; }
 }

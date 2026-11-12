@@ -24,10 +24,19 @@ export function AppLayout({trail,title,userName,userPhoto,onLogout,onProfile,onN
  const close=useCallback(()=>{setMobileOpen(false);setTabletOpen(false);requestAnimationFrame(()=>trigger.current?.focus())},[]);
  useEffect(()=>{setMobileOpen(false);setTabletOpen(false)},[mobile]);
  useLayoutEffect(()=>{if(!mobile||!mobileOpen)return;const element=dialog.current;if(!element)return;const original=document.body.style.overflow;document.body.style.overflow='hidden';element.showModal();element.querySelector<HTMLButtonElement>('button')?.focus();return()=>{element.close();document.body.style.overflow=original}},[mobile,mobileOpen]);
+ // Close transient menus on native history navigation as well as item selection.
+ useEffect(()=>{
+  if(!mobileOpen&&!tabletOpen)return;
+  const routeChanged=()=>{setMobileOpen(false);setTabletOpen(false);requestAnimationFrame(()=>content.current?.focus({preventScroll:true}))};
+  const escape=(event:KeyboardEvent)=>{if(event.key==='Escape'&&tabletOpen){event.preventDefault();close()}};
+  window.addEventListener('hashchange',routeChanged);window.addEventListener('popstate',routeChanged);document.addEventListener('keydown',escape);
+  return()=>{window.removeEventListener('hashchange',routeChanged);window.removeEventListener('popstate',routeChanged);document.removeEventListener('keydown',escape)};
+ },[mobileOpen,tabletOpen,close]);
  const select=useCallback((item:NavItem)=>{lastTrigger.current=document.activeElement instanceof HTMLElement?document.activeElement:null;item.onSelect();setMobileOpen(false);setTabletOpen(false);requestAnimationFrame(()=>content.current?.focus({preventScroll:true}))},[]);
  const context=useMemo(()=>({register,remove,notificationHost,select,returnTarget}),[register,remove,notificationHost,select,returnTarget]);
  const current=registrations.toReversed().flatMap(nav=>nav.groups.flatMap(group=>group.items).filter(item=>nav.active===item.id)).at(0)?.label||groups.flatMap(group=>group.items).find(item=>item.id===active)?.label||title;
  const name={oportunidades:'Oportunidades',empresas:'Empresas',capacita:'Capacita'}[trail];
+ useEffect(()=>{setMobileOpen(false);setTabletOpen(false)},[current]);
  const rootNavigation=groups.length?[{owner:'root',label:trail==='oportunidades'?'Navegação da conta':'Ambientes da trilha',groups,active}]:[];
  const navigations=trail==='oportunidades'?[...rootNavigation,...registrations]:[...registrations,...rootNavigation];
  const toggle=()=>{if(mobile){setMobileOpen(v=>!v);return}if(!wide){setTabletOpen(v=>!v);return}setCollapsed(value=>{try{localStorage.setItem('trampolim_sidebar_'+trail,value?'expanded':'collapsed')}catch{/* Navigation also works without browser storage. */}return !value})};
@@ -42,6 +51,9 @@ export function AppLayout({trail,title,userName,userPhoto,onLogout,onProfile,onN
 }
 function SidebarNavigation({navigations,expanded,onSelect}:{navigations:Navigation[];expanded:boolean;onSelect:(item:NavItem)=>void}){
  const [closed,setClosed]=useState<Set<string>>(()=>new Set()),id=useId();
+ // A history/deep-link change must reveal the new active destination.
+ const activeGroups=JSON.stringify(navigations.flatMap(nav=>nav.groups.filter(group=>group.items.some(item=>item.id===nav.active)).map(group=>({key:nav.owner+group.id,page:nav.active}))));
+ useEffect(()=>{const keys:{key:string;page:string}[]=JSON.parse(activeGroups);setClosed(previous=>{const next=new Set(previous);for(const {key} of keys)next.delete(key);return next.size===previous.size?previous:next})},[activeGroups]);
  return <div className="workspace-sidebar-scroll">{navigations.map(nav=><nav key={nav.owner} aria-label={nav.label}>{nav.groups.map(group=>{const key=nav.owner+group.id,open=!closed.has(key)||!expanded;return <section key={group.id} className="workspace-group">{expanded?<button type="button" className="workspace-group-toggle" aria-expanded={open} aria-controls={id+nav.owner+group.id} onClick={()=>setClosed(old=>{const next=new Set(old);if(next.has(key))next.delete(key);else next.add(key);return next})}>{group.label}<span aria-hidden="true">{open?'−':'+'}</span></button>:<h2 className="sr-only">{group.label}</h2>}<ul id={id+nav.owner+group.id} hidden={!open}>{group.items.map(item=><li key={item.id}><button type="button" title={!expanded?item.label:undefined} aria-label={item.label} aria-current={nav.active===item.id?'page':undefined} onClick={()=>onSelect(item)} onKeyDown={event=>{const direction=event.key==='ArrowDown'||event.key==='ArrowRight'?1:event.key==='ArrowUp'||event.key==='ArrowLeft'?-1:0;if(!direction&&event.key!=='Home'&&event.key!=='End')return;const buttons=Array.from(event.currentTarget.closest('nav')!.querySelectorAll<HTMLButtonElement>('.workspace-sidebar-item')).filter(button=>!button.disabled&&button.getClientRects().length>0);const index=buttons.indexOf(event.currentTarget);const next=event.key==='Home'?0:event.key==='End'?buttons.length-1:(index+direction+buttons.length)%buttons.length;event.preventDefault();buttons[next]?.focus()}} disabled={item.disabled} className="workspace-sidebar-item"><NavIcon name={item.icon||navigationIcon(item.id)}/><span className={expanded?'':'sr-only'}>{item.label}</span></button></li>)}</ul></section>})}</nav>)}</div>;
 }
 function ProfileMenu({name,photo,onProfile,onLogout,children,logoutLabel}:{logoutLabel:string;name?:string;photo?:string|null;onProfile?:()=>void;onLogout:()=>void;children?:ReactNode}){

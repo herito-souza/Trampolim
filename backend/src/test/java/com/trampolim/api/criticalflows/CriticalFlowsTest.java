@@ -84,12 +84,10 @@ class CriticalFlowsTest {
     }
 
     @Test
-    void publicCatalogOmitsExpiredAndUnapprovedItems() {
+    void publicCatalogMapsTheRepositoryVisibilityResult() {
         CatalogItemRepository items = mock(CatalogItemRepository.class);
         CatalogItem active = item(1L, true, "APPROVED", LocalDate.now().plusDays(3));
-        CatalogItem expired = item(2L, true, "APPROVED", LocalDate.now().minusDays(1));
-        CatalogItem pending = item(3L, false, "PENDING", null);
-        when(items.findAllByKindAndActiveTrueOrderByCreatedAtDesc("job")).thenReturn(List.of(active, expired, pending));
+        when(items.findPublic(org.mockito.ArgumentMatchers.eq("job"),org.mockito.ArgumentMatchers.any(),org.mockito.ArgumentMatchers.any())).thenReturn(List.of(active));
         CatalogController controller = new CatalogController(items, mock(JobApplicationRepository.class), mock(OpportunityAlertService.class), mock(com.trampolim.api.security.PlatformAccess.class));
 
         var result = controller.list("job");

@@ -1,6 +1,7 @@
+import { DashboardSkeleton } from '../dashboard/DashboardSkeleton';
 import {LegacyPageHeader} from '../../components/workspace/WorkspaceSlots';
 import { CandidateNextStep } from '../dashboard/CandidateNextStep';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getRecommendationReason, getRecommendations, loadDiagnosticResult } from '../diagnostic/recommendations';
 import { api } from './api';
 import type { Application, Profile, ProfileResponse } from './api';
@@ -14,6 +15,7 @@ import { RibbonStrip } from '../../components/ui/RibbonStrip';
 interface OpportunitiesPageProps {
   token: string;
   profile: Profile;
+  profileDetails?: ProfileResponse;
   onEditProfile: () => void;
   onLogout: () => void;
   onRetakeDiagnostic: () => void;
@@ -24,7 +26,10 @@ interface OpportunitiesPageProps {
 
 const buttonClass = 'inline-flex w-fit rounded-full bg-ink px-5 py-3 text-sm font-extrabold text-brand-white no-underline transition-transform hover:-translate-y-0.5';
 const skillLabels: Record<string, string> = { service: 'atendimento', sales: 'vendas', admin: 'organização', numbers: 'números', logistics: 'logística', maintenance: 'manutenção', production: 'produção', technology: 'tecnologia', health: 'saúde', marketing: 'marketing e comunicação' };
-export function OpportunitiesPage({ token, profile, onEditProfile, onLogout, onRetakeDiagnostic, onOpenCatalog, canManage, onNavigate }: OpportunitiesPageProps) {
+export function OpportunitiesPage({ token, profile, profileDetails, onEditProfile, onLogout, onRetakeDiagnostic, onOpenCatalog, canManage, onNavigate }: OpportunitiesPageProps) {
+  const snapshot=useRef({token,data:profileDetails});snapshot.current={token,data:profileDetails};
+  const journeyAbort=useRef<AbortController|null>(null);
+  const favoritesAbort=useRef<AbortController|null>(null);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [favoriteError, setFavoriteError] = useState('');
   const [journeyProfile, setJourneyProfile] = useState<ProfileResponse | null>(null);
@@ -38,26 +43,30 @@ export function OpportunitiesPage({ token, profile, onEditProfile, onLogout, onR
   const jobs = getRecommendations(diagnostic, 'job');
 
   const loadFavorites = useCallback(() => {
+    favoritesAbort.current?.abort();const abort=new AbortController();favoritesAbort.current=abort;
     setFavoriteError('');setFavoriteLoading(true);
-    return api<string[]>('/profile/favorites', token).then(setFavoriteIds).catch(() => setFavoriteError('Não foi possível carregar seus favoritos.')).finally(()=>setFavoriteLoading(false));
+    return api<string[]>('/profile/favorites', token,{signal:abort.signal}).then(ids=>{if(!abort.signal.aborted)setFavoriteIds(ids)}).catch(() => {if(!abort.signal.aborted)setFavoriteError('Não foi possível carregar seus favoritos.')}).finally(()=>{if(!abort.signal.aborted)setFavoriteLoading(false)});
   }, [token]);
 
-  const loadJourney = useCallback(() => {
+  const loadJourney = useCallback((refreshProfile=false) => {
+    journeyAbort.current?.abort();const abort=new AbortController();journeyAbort.current=abort;
     setJourneyLoading(true);
     setJourneyError('');
-    Promise.allSettled([api<ProfileResponse>('/profile', token), api<Application[]>('/profile/applications', token)])
+    Promise.allSettled([!refreshProfile&&snapshot.current.token===token&&snapshot.current.data?Promise.resolve(snapshot.current.data):api<ProfileResponse>('/profile', token,{signal:abort.signal}), api<Application[]>('/profile/applications', token,{signal:abort.signal})])
       .then(([saved, applications]) => {
+        if(abort.signal.aborted)return;
         setJourneyProfile(saved.status==='fulfilled'?saved.value:null);
         setJourneyApplications(applications.status==='fulfilled'?applications.value:null);
         setApplicationCount(applications.status==='fulfilled'?applications.value.length:null);
         if(saved.status==='rejected'||applications.status==='rejected')setJourneyError('Parte do resumo não pôde ser carregada. Os dados disponíveis continuam acessíveis. Tente novamente para atualizar.');
       })
-      .finally(() => setJourneyLoading(false));
+      .finally(() => {if(!abort.signal.aborted)setJourneyLoading(false)});
   }, [token]);
 
   useEffect(() => {
     void loadFavorites();
     loadJourney();
+    return()=>{journeyAbort.current?.abort();favoritesAbort.current?.abort()};
   }, [loadFavorites, loadJourney]);
 
   function toggleFavorite(id: string) {
@@ -89,11 +98,11 @@ export function OpportunitiesPage({ token, profile, onEditProfile, onLogout, onR
             <span className="inline-block rounded-full bg-brand-yellow px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-ink">{diagnostic ? `Trilha: ${diagnostic.trackName}` : 'Seu próximo passo'}</span>
             <h1 className="mt-5 text-4xl font-black leading-tight md:text-5xl">Oportunidades para você, {profile.name.split(' ')[0]}.</h1>
             <p className="mt-4 max-w-xl text-white/75">{diagnostic ? 'Cursos e áreas de trabalho selecionados a partir das suas respostas ao questionário.' : 'Explore todos os cursos e áreas de trabalho disponíveis no catálogo. Responda ao questionário quando quiser receber sugestões personalizadas.'}</p>
-            <div className="mt-7 flex flex-wrap gap-3"><button onClick={() => onOpenCatalog('course')} className="rounded-full border-0 bg-brand-yellow px-6 py-3 font-extrabold text-[#101725] cursor-pointer">Explorar cursos</button><button onClick={() => onOpenCatalog('job')} className="rounded-full border border-white/35 bg-transparent px-6 py-3 font-extrabold text-white cursor-pointer">Ver vagas</button><button onClick={onRetakeDiagnostic} className="rounded-full border border-white/35 bg-transparent px-6 py-3 font-extrabold text-white cursor-pointer">Refazer diagnóstico</button></div>
+            <div className="mt-7 flex flex-wrap gap-3"><button onClick={() => onOpenCatalog('course')} className="rounded-full border-0 bg-brand-yellow px-6 py-3 font-extrabold text-[#101725] cursor-pointer">Explorar cursos</button><button onClick={() => onOpenCatalog('job')} className="rounded-full border border-white/35 bg-transparent px-6 py-3 font-extrabold text-white cursor-pointer">Ver vagas</button><button onClick={onRetakeDiagnostic} className="rounded-full border border-white/35 bg-transparent px-6 py-3 font-extrabold text-white cursor-pointer">{diagnostic?'Refazer diagnóstico':'Iniciar diagnóstico'}</button></div>
           </div>
         </section>
 
-        <CandidateNextStep profile={journeyProfile?.profile||profile} hasDiagnostic={Boolean(diagnostic)} onProfile={onEditProfile} onDiagnostic={()=>diagnostic?onNavigate('diagnostic'):onRetakeDiagnostic()} onCatalog={onOpenCatalog} onNavigate={onNavigate}/>
+        <CandidateNextStep profile={journeyProfile?.profile||profile} hasDiagnostic={Boolean(diagnostic)} applicationCount={applicationCount} onProfile={onEditProfile} onDiagnostic={()=>diagnostic?onNavigate('diagnostic'):onRetakeDiagnostic()} onCatalog={onOpenCatalog} onNavigate={onNavigate}/>
         {!diagnostic && <div role="status" className="mt-7 rounded-2xl border border-brand-yellow/50 bg-brand-yellow/15 p-5 font-semibold">Você está vendo o catálogo completo. Faça o diagnóstico para filtrar cursos e vagas de acordo com seus interesses.</div>}
         {diagnostic && <GuidancePanel result={diagnostic} />}
         {favoriteError && <p role="alert" className="mt-5 rounded-xl bg-red-50 p-3 text-sm font-semibold text-brand-red">{favoriteError}</p>}
@@ -101,7 +110,7 @@ export function OpportunitiesPage({ token, profile, onEditProfile, onLogout, onR
 
         <section aria-labelledby="journey-title" className="mt-8 rounded-3xl border border-ink/10 bg-brand-white p-6 shadow-sm md:p-8">
           <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-extrabold uppercase tracking-[0.18em] text-brand-red">Seu painel</p><h2 id="journey-title" className="mt-1 text-2xl font-black md:text-3xl">Minha jornada</h2><p className="mt-2 text-sm text-ink/65">Acompanhe seu perfil, itens salvos e candidaturas em um só lugar.</p></div><button type="button" onClick={onEditProfile} className="rounded-full border border-ink/20 px-4 py-2 text-sm font-bold hover:border-brand-red focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue">Abrir meu perfil</button></div>
-          {journeyError && <div role="alert" className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 p-4 text-sm font-semibold text-brand-red"><span>{journeyError}</span><button type="button" onClick={loadJourney} className="rounded-full border border-brand-red/30 px-4 py-2 font-bold">Tentar novamente</button></div>}
+          {journeyError && <div role="alert" className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 p-4 text-sm font-semibold text-brand-red"><span>{journeyError}</span><button type="button" onClick={()=>loadJourney(true)} className="rounded-full border border-brand-red/30 px-4 py-2 font-bold">Tentar novamente</button></div>}
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <button type="button" onClick={onEditProfile} className="rounded-2xl bg-paper p-4 text-left transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"><span className="text-xs font-bold uppercase tracking-wider text-ink/55">Perfil</span><strong className="mt-2 block text-2xl">{journeyLoading ? '…' : profileCompletion === null ? '—' : `${profileCompletion}%`}</strong><span className="mt-1 block text-sm text-ink/65">{journeyProfile ? `${journeyProfile.experiences.length} experiências · ${journeyProfile.educations.length} formações` : 'Ver seus dados profissionais'}</span></button>
             <button type="button" onClick={onEditProfile} className="rounded-2xl bg-paper p-4 text-left transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"><span className="text-xs font-bold uppercase tracking-wider text-ink/55">Itens salvos</span><strong className="mt-2 block text-2xl">{favoriteLoading?'…':favoriteError?'—':favoriteIds.length}</strong><span className="mt-1 block text-sm text-ink/65">Cursos e áreas para consultar depois</span></button>
@@ -110,7 +119,7 @@ export function OpportunitiesPage({ token, profile, onEditProfile, onLogout, onR
           </div>
         </section>
 
-        <section aria-labelledby="recent-applications-title" className="mt-8 rounded-3xl border border-white/15 bg-surface p-5 md:p-7"><h2 id="recent-applications-title" className="text-2xl font-black">Candidaturas recentes</h2><p className="mt-2 text-sm text-ink/80">Acompanhamento registrado na sua conta de Oportunidades. Seleções feitas em portais externos podem ter histórico separado.</p>{journeyLoading?<p role="status" className="mt-4">Carregando seu acompanhamento…</p>:journeyApplications===null?<p role="status" className="mt-4">Histórico indisponível. Atualize o resumo da jornada para tentar novamente.</p>:journeyApplications.length?<ul className="mt-4 space-y-3">{[...journeyApplications].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,5).map(item=><li key={item.id} className="rounded-xl border border-white/15 p-4"><h3 className="font-bold">{item.title}</h3><p className="mt-1 text-sm text-ink/80">{item.provider}{item.location?' · '+item.location:''}</p><p className="mt-1 text-sm">Etapa: {({SAVED:'Salva para acompanhar',APPLIED:'Candidatura registrada',INTERVIEW:'Entrevista',OFFER:'Proposta recebida',REJECTED:'Não selecionada'} as Record<string,string>)[item.status]||item.status}</p></li>)}</ul>:<p className="mt-4">Você ainda não registrou candidaturas nesta conta.</p>}<button type="button" className="mt-4 min-h-11 rounded-full border border-white/25 px-4 py-2 font-bold" onClick={onEditProfile}>Gerenciar meu acompanhamento</button></section>
+        <section aria-labelledby="recent-applications-title" className="mt-8 rounded-3xl border border-white/15 bg-surface p-5 md:p-7"><h2 id="recent-applications-title" className="text-2xl font-black">Candidaturas recentes</h2><p className="mt-2 text-sm text-ink/80">Acompanhamento registrado na sua conta de Oportunidades. Seleções feitas em portais externos podem ter histórico separado.</p>{journeyLoading?<DashboardSkeleton label="Carregando seu acompanhamento…"/>:journeyApplications===null?<p role="status" className="mt-4">Histórico indisponível. Atualize o resumo da jornada para tentar novamente.</p>:journeyApplications.length?<ul className="mt-4 space-y-3">{[...journeyApplications].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,5).map(item=><li key={item.id} className="rounded-xl border border-white/15 p-4"><h3 className="font-bold">{item.title}</h3><p className="mt-1 text-sm text-ink/80">{item.provider}{item.location?' · '+item.location:''}</p><p className="mt-1 text-sm">Etapa: {({SAVED:'Salva para acompanhar',APPLIED:'Candidatura registrada',INTERVIEW:'Entrevista',OFFER:'Proposta recebida',REJECTED:'Não selecionada'} as Record<string,string>)[item.status]||item.status}</p></li>)}</ul>:<p className="mt-4">Você ainda não registrou candidaturas nesta conta.</p>}<button type="button" className="mt-4 min-h-11 rounded-full border border-white/25 px-4 py-2 font-bold" onClick={onEditProfile}>Gerenciar meu acompanhamento</button></section>
 
         <section id="cursos" className="scroll-mt-8 py-14 md:py-16">
           <p className="mb-2 text-[13px] font-extrabold uppercase tracking-[1.5px] text-brand-red">Aprenda e avance</p>

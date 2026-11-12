@@ -94,7 +94,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
-      - run: mvn --batch-mode -Dspring.jpa.hibernate.ddl-auto=validate test
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Audit resolved Java dependencies against OSV
+        run: |
+          mvn --batch-mode dependency:tree -DoutputType=json -DoutputFile=target/dependency-audit-tree.json
+          node ../ops/scripts/audit-java-dependencies.mjs target/dependency-audit-tree.json target/audit/dependency-vulnerabilities.json
+        working-directory: backend
+      - run: mvn --batch-mode -Dspring.jpa.hibernate.ddl-auto=validate verify
         working-directory: backend
 
       - name: Preserve synthetic query-plan evidence

@@ -1,0 +1,21 @@
+package com.trampolim.api.fairs;
+import java.util.Map;import static com.trampolim.api.fairs.FairRules.*;import org.springframework.web.bind.annotation.*;import org.springframework.security.core.annotation.AuthenticationPrincipal;import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+@RestController @RequestMapping("/api/empresas/hub/organizations/{org}/job-fairs") @ConditionalOnProperty(name="trampolim.datasource.empresas.enabled",havingValue="true")
+public class FairManagementController {
+ private final FairService service;public FairManagementController(FairService service){this.service=service;}
+ @GetMapping public Map<String,Object> list(@AuthenticationPrincipal String email,@PathVariable long org,@RequestParam(defaultValue="9223372036854775807")long before,@RequestParam(defaultValue="20")int limit,@RequestParam(defaultValue="")String status){return service.list(email,org,before,limit,status);}
+ @PostMapping public Map<String,Object> create(@AuthenticationPrincipal String email,@PathVariable long org,@RequestBody Definition input){return service.create(email,org,input);}
+ @GetMapping("/{id}")public Map<String,Object> get(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id){return service.detail(email,org,id);}
+ @PutMapping("/{id}")public Map<String,Object> update(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id,@RequestBody Definition input){return service.update(email,org,id,input);}
+ @PutMapping("/{id}/status")public Map<String,Object> publish(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id,@RequestBody Publication input){return service.publish(email,org,id,input);}
+ @GetMapping("/{id}/companies")public Map<String,Object> companies(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id,@RequestParam(defaultValue="9223372036854775807")long before,@RequestParam(defaultValue="20")int limit){return service.companies(email,org,id,before,limit);}
+ @PostMapping("/{id}/companies")public Map<String,Object> invite(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id,@RequestBody Reference input){return service.invite(email,org,id,input);}
+ @DeleteMapping("/{id}/companies/{company}")public Map<String,Object> removeCompany(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id,@PathVariable long company,@RequestParam long expectedRevision){return service.removeCompany(email,org,id,company,expectedRevision);}
+ @PostMapping("/{id}/jobs")public Map<String,Object> job(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id,@RequestBody Reference input){return service.linkJob(email,org,id,input);}
+ @PostMapping("/{id}/courses")public Map<String,Object> course(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id,@RequestBody Reference input){return service.linkCourse(email,org,id,input);}
+ @GetMapping("/{id}/sessions")public Map<String,Object> sessions(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id,@RequestParam(defaultValue="9223372036854775807")long before,@RequestParam(defaultValue="20")int limit){return service.sessions(email,org,id,before,limit,false);}
+ @PostMapping("/{id}/sessions")public Map<String,Object> session(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id,@RequestBody Session input){return service.session(email,org,id,0,input);}
+ @PutMapping("/{id}/sessions/{session}")public Map<String,Object> editSession(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id,@PathVariable long session,@RequestBody Session input){return service.session(email,org,id,session,input);}
+ @DeleteMapping("/{id}/{kind:jobs|courses|sessions}/{resource}")public Map<String,Object> unlink(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id,@PathVariable String kind,@PathVariable long resource,@RequestParam long expectedRevision){return service.remove(email,org,id,kind,resource,expectedRevision);}
+ @GetMapping("/{id}/indicators")public Map<String,Object> indicators(@AuthenticationPrincipal String email,@PathVariable long org,@PathVariable long id){return service.indicators(email,org,id);}
+}
