@@ -1,5 +1,9 @@
 import {useProfilePhoto} from './features/account/useProfilePhoto';
 import {AppLayout} from './components/workspace/AppLayout';
+import {scheduleOnboarding} from './components/workspace/onboardingModel';
+import type {UniversalSearchProvider} from './components/workspace/UniversalSearch';
+import {useTerritory} from './features/geography/territoryContext';
+import {territorialParams} from './features/geography/territory';
 import {accountGroups,isAccountView,readAccountView} from './features/account/accountNavigationModel';
 import type {AccountSurface} from './features/account/accountNavigationModel';
 const RecruiterPortfolio=lazy(()=>import('./features/career/PortfolioPanel').then(module=>({default:module.RecruiterPortfolio})));
@@ -14,6 +18,7 @@ const AuthScreen = lazy(() => import('./features/account/AuthScreen').then(modul
 import { api, confirmEmail, confirmTrailEmail, API_URL, revokeTrailSession } from './features/account/api';
 import type { AuthResponse, AuthTrail, Profile, ProfileResponse } from './features/account/api';
 const ProfilePage = lazy(() => import('./features/account/ProfilePage').then(module => ({ default: module.ProfilePage })));
+const ApplicationCenterPage = lazy(() => import('./features/account/ApplicationCenterPage').then(module => ({ default: module.ApplicationCenterPage })));
 const WelcomeScreen = lazy(() => import('./features/account/WelcomeScreen').then(module => ({ default: module.WelcomeScreen })));
 const loadOpportunitiesPage = () => import('./features/account/OpportunitiesPage').then(module => ({ default: module.OpportunitiesPage }));
 const OpportunitiesPage = lazy(loadOpportunitiesPage);
@@ -58,6 +63,7 @@ function readPublicArea(): PublicArea {
 }
 
 function App() {
+  const territory=useTerritory();
   const [token, setToken] = useState(() => localStorage.getItem('trampolim_account_type') === 'COMPANY' ? null : localStorage.getItem('trampolim_token'));
   const [companyToken, setCompanyToken] = useState(() => localStorage.getItem('trampolim_empresas_token'));
   const [studentToken, setStudentToken] = useState(() => localStorage.getItem('trampolim_capacita_token'));
@@ -111,7 +117,7 @@ function App() {
   useEffect(() => {
     if (!companyToken) { setAssociationSnapshot(null); return; }
     const abort=new AbortController();
-    api<Organization[]>('/empresas/association/organizations', companyToken,{signal:abort.signal}).then(items=>{if(!abort.signal.aborted)setAssociationSnapshot({token:companyToken,items})}).catch(cause=>{if(!abort.signal.aborted)setAssociationSnapshot({token:companyToken,items:[],error:cause instanceof Error?cause.message:'Não foi possível consultar sua organização.'})});
+    api<Organization[]>('/empresas/institutional/organizations', companyToken,{signal:abort.signal}).then(items=>{if(!abort.signal.aborted)setAssociationSnapshot({token:companyToken,items})}).catch(cause=>{if(!abort.signal.aborted)setAssociationSnapshot({token:companyToken,items:[],error:cause instanceof Error?cause.message:'Não foi possível consultar sua organização.'})});
     return()=>abort.abort();
   }, [companyToken]);
 
@@ -205,6 +211,11 @@ function App() {
   }, [token]);
 
   function onSuccess(result: AuthResponse, mode: 'login' | 'cadastro') {
+    const onboardingTrail = authTrail;
+    if (result.user?.email) {
+      if (mode === 'cadastro') scheduleOnboarding(onboardingTrail, result.user.email);
+      try { localStorage.setItem(`trampolim_${onboardingTrail}_email`, result.user.email.trim().toLowerCase()); } catch { /* This session remains usable without saved onboarding identity. */ }
+    }
     if (authTrail === 'empresas') {
       localStorage.setItem('trampolim_empresas_token', result.token);
       setCompanyToken(result.token);
@@ -323,6 +334,7 @@ function App() {
       if (destination === 'opportunities') { openOpportunities(); return; }
       if (destination === 'courses') { openCatalog('course'); return; }
       if (destination === 'jobs') { openCatalog('job'); return; }
+      if (destination === 'applications') { localStorage.setItem('trampolim_profile_step','applications'); setProfileView('applications'); return; }
       if (destination === 'career') { localStorage.setItem('trampolim_profile_step','career'); setProfileView('career'); return; }
       if (destination === 'future') { localStorage.setItem('trampolim_profile_step', 'future'); setProfileView('future'); return; }
       if (destination === 'plan') { setProfileView('plan'); return; }
@@ -344,6 +356,18 @@ function App() {
       if (destination === 'admin-capacita' && canManageCatalog) setProfileView('admin-capacita');
       if (destination === 'admin-saas' && canManageCatalog) setProfileView('admin-saas');
     };
+    const searchOpportunityResources:UniversalSearchProvider=async(query,signal)=>{
+      const params=territorialParams(territory.choice);params.set('q',query);params.set('limit','8');
+      const requests=await Promise.allSettled([
+        api<{items:{id:number;title:string;companyName:string;area:string;description:string;municipalityLabel?:string}[]}>('/public/companies/regional-opportunities?'+params,token,{signal}),
+        api<{items:{id:number;title:string;provider:string;area:string;description:string}[]}>('/opportunities/course/regional?'+params,token,{signal})
+      ]);
+      const results:import('./components/workspace/UniversalSearch').UniversalSearchResult[]=[];
+      const jobs=requests[0];if(jobs.status==='fulfilled')for(const item of jobs.value.items||[])results.push({id:`job-${item.id}`,category:'Vagas',title:item.title,description:[item.companyName,item.area,item.municipalityLabel].filter(Boolean).join(' · '),onSelect:()=>{try{sessionStorage.setItem('trampolim_universal_catalog_search',JSON.stringify({kind:'job',query:item.title}))}catch{}navigateAccount('jobs');window.dispatchEvent(new CustomEvent('trampolim:catalog-search',{detail:{kind:'job',query:item.title}}));}});
+      const courses=requests[1];if(courses.status==='fulfilled')for(const item of courses.value.items||[])results.push({id:`catalog-course-${item.id}`,category:'Cursos',title:item.title,description:[item.provider,item.area].filter(Boolean).join(' · '),onSelect:()=>{try{sessionStorage.setItem('trampolim_universal_catalog_search',JSON.stringify({kind:'course',query:item.title}))}catch{}navigateAccount('courses');window.dispatchEvent(new CustomEvent('trampolim:catalog-search',{detail:{kind:'course',query:item.title}}));}});
+      if(requests.every(result=>result.status==='rejected'))throw new Error('Busca indisponível');
+      return results;
+    };
     const accountContent=(()=>{
     if(['admin','admin-capacita','admin-saas'].includes(profileView)&&!canManageCatalog)return <main className="p-6"><section role="alert"><h1 className="text-2xl font-bold">Acesso restrito</h1><p>Sua conta não tem permissão para esta área.</p><button className="mt-4 rounded-full border border-white/20 p-3" onClick={()=>navigateAccount('opportunities')}>Voltar às oportunidades</button></section></main>;
     if (profileView === 'career') return <CareerPanel token={token} onNavigate={navigateAccount} onLogout={logout} canManage={canManageCatalog}/>;
@@ -362,13 +386,16 @@ function App() {
     if (profileView === 'diagnostic') return <Home isAuthenticated hasPreviousDiagnostic={Boolean(loadDiagnosticResult())} startNewTest={sessionStorage.getItem('trampolim_diagnostic_retake') === '1'} onAuth={() => { sessionStorage.removeItem('trampolim_diagnostic_retake'); openOpportunities(); }} onDiagnosticComplete={result => { sessionStorage.removeItem('trampolim_diagnostic_retake'); saveDiagnostic(result); }} onProfile={() => navigateAccount('profile')} onLogout={logout} accountNavigation={<AccountNavigation active="diagnostic" onNavigate={navigateAccount} canManage={canManageCatalog} hasAssociation={managedAssociations.length > 0} />} />;
     if (profileView === 'welcome') return <WelcomeScreen token={token} profile={profile.profile} onProfileChange={next => setProfile(current => current ? { ...current, profile: next } : current)} onContinue={openDetails} onLogout={logout} onNavigate={navigateAccount} canManage={canManageCatalog} />;
     if (profileView === 'opportunities') return <OpportunitiesPage token={token} profile={profile.profile} profileDetails={profile} onEditProfile={openDetails} onLogout={logout} onRetakeDiagnostic={retakeDiagnostic} onOpenCatalog={openCatalog} canManage={canManageCatalog} onNavigate={navigateAccount} />;
+    if (profileView === 'applications') return <ApplicationCenterPage token={token} onEditPersonalTracking={() => navigateAccount('profile')} />;
     if (profileView === 'premium') return <PremiumPage token={token} profile={profile} onLogout={logout} onNavigate={navigateAccount} />;
     if (profileView === 'catalog-courses' || profileView === 'catalog-jobs') return <CatalogPage key={profileView} kind={profileView === 'catalog-courses' ? 'course' : 'job'} token={token} profile={profile.profile} onLogout={logout} onRetakeDiagnostic={retakeDiagnostic} onNavigate={navigateAccount} canManage={canManageCatalog} />;
     return <ProfilePage token={token} onSnapshot={snapshot=>setProfile(current=>current?.profile.email===snapshot.profile.email?snapshot:current)} photoUrl={userPhoto} onPhotoChange={updatePhoto} onLogout={logout} onBack={openWelcome} onComplete={openOpportunities} onNavigate={navigateAccount} canManage={canManageCatalog} />;
     })();
     if(['ecosystem','company-entry','capacita','association'].includes(profileView))return accountContent;
     const active=({'catalog-courses':'courses','catalog-jobs':'jobs',details:'profile',welcome:'profile'} as Record<string,string>)[profileView]||profileView;
-    return <AppLayout trail="oportunidades" title={profileView==='plan'?'Meu Plano de Empregabilidade':'Trampolim Oportunidades'} userName={profile.profile.name} userPhoto={userPhoto} active={active} groups={accountGroups(navigateAccount,canManageCatalog,managedAssociations.length>0)} onProfile={()=>navigateAccount('profile')} onNotice={()=>navigateAccount('future')} onLogout={logout}>{accountContent}</AppLayout>;
+    const onboardingRole=canManageCatalog?'Administrador':'Candidato';
+    const onboardingSteps=canManageCatalog?[{title:'Conheça o painel administrativo',description:'Use a navegação lateral para acessar os recursos administrativos disponíveis para sua conta.',actionLabel:'Abrir administração',onAction:()=>navigateAccount('admin')},{title:'Confira as informações antes de publicar',description:'Revise cursos e oportunidades pelas telas de gestão já disponíveis. As permissões da sua conta continuam valendo.',actionLabel:'Ver oportunidades',onAction:()=>navigateAccount('opportunities')},{title:'Seu perfil e sua conta',description:'Atualize seus dados e consulte as opções de privacidade no seu perfil.',actionLabel:'Abrir meu perfil',onAction:()=>navigateAccount('profile')}]:[{title:'Complete seu perfil profissional',description:'Adicione suas informações e experiências para deixar seu perfil pronto para explorar oportunidades.',actionLabel:'Completar perfil',onAction:()=>navigateAccount('profile')},{title:'Descubra seu caminho',description:'O diagnóstico ajuda a organizar interesses e recomendações profissionais. Você pode refazê-lo quando quiser.',actionLabel:'Fazer diagnóstico',onAction:()=>navigateAccount('diagnostic')},{title:'Explore oportunidades e cursos',description:'Pesquise vagas, acompanhe candidaturas e encontre cursos disponíveis para desenvolver suas competências.',actionLabel:'Buscar oportunidades',onAction:()=>navigateAccount('jobs')}];
+    return <AppLayout trail="oportunidades" title={profileView==='plan'?'Meu Plano de Empregabilidade':profileView==='applications'?'Central de Candidaturas':'Trampolim Oportunidades'} userName={profile.profile.name} userPhoto={userPhoto} active={active} groups={accountGroups(navigateAccount,canManageCatalog,managedAssociations.length>0)} onboarding={{identity:profile.profile.email,role:onboardingRole,steps:onboardingSteps}} searchProvider={searchOpportunityResources} onProfile={()=>navigateAccount('profile')} onNotice={()=>navigateAccount('future')} onLogout={logout}>{accountContent}</AppLayout>;
 
   }
   if (publicArea === 'oportunidades') return <Home onAuth={mode => openAuth('oportunidades', mode)} />;

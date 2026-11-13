@@ -45,6 +45,11 @@ export function CatalogPage({ kind, token, profile, onLogout, onRetakeDiagnostic
   const requestSequence=useRef(0);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [query, setQuery] = useState(() => {const v=catalogDraft(kind).query;return typeof v==='string'&&v.length<=120?v:'';});
+  useEffect(()=>{
+    const apply=(value:unknown)=>{if(!value||typeof value!=='object')return;const detail=value as {kind?:unknown;query?:unknown};if(detail.kind===kind&&typeof detail.query==='string'&&detail.query.length<=120)setQuery(detail.query)};
+    try{const raw=sessionStorage.getItem('trampolim_universal_catalog_search');if(raw){const parsed=JSON.parse(raw);if(parsed?.kind===kind){apply(parsed);sessionStorage.removeItem('trampolim_universal_catalog_search')}}}catch{/* A direct search remains available if browser storage is disabled. */}
+    const handle=(event:Event)=>{apply((event as CustomEvent).detail);try{sessionStorage.removeItem('trampolim_universal_catalog_search')}catch{/* Ignore unavailable storage. */}};window.addEventListener('trampolim:catalog-search',handle);return()=>window.removeEventListener('trampolim:catalog-search',handle);
+  },[kind]);
   const [area, setArea] = useState<string>(() => {const v=catalogDraft(kind).area;return typeof v==='string'&&v.length<=120?v:'';});
   const [provider, setProvider] = useState(() => {const v=catalogDraft(kind).provider;return typeof v==='string'&&v.length<=120?v:'';});
   const [city, setCity] = useState(() => {const v=catalogDraft(kind).city;return typeof v==='string'&&v.length<=120?v:'';});

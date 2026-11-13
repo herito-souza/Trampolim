@@ -4,7 +4,7 @@ import type {NavGroup} from '../../components/workspace/workspaceContext';
 export function accountGroups(onNavigate:(destination:AccountDestination)=>void,canManage:boolean,hasAssociation:boolean):NavGroup[]{
  const item=(id:AccountDestination,label:string)=>({id,label,onSelect:()=>onNavigate(id)});
  return [
-  {id:'principal',label:'Principal',items:[item('opportunities','Oportunidades'),item('jobs','Vagas'),item('courses','Cursos')]},
+  {id:'principal',label:'Principal',items:[item('opportunities','Oportunidades'),item('jobs','Vagas'),item('applications','Candidaturas'),item('courses','Cursos')]},
   {id:'carreira',label:'Carreira e desenvolvimento',items:[item('plan','Meu Plano de Empregabilidade'),item('diagnostic','Diagnóstico'),item('radar','Radar de competências'),item('career','Carreira e projetos'),item('future','Talentos futuros'),item('premium','Premium')]},
   ...(canManage?[{id:'administracao',label:'Administração',items:[item('admin','Administração'),item('admin-capacita','Conteúdos Capacita'),item('admin-saas','Gestão SaaS')]}]:[]),
   ...(hasAssociation?[{id:'institucional',label:'Institucional',items:[item('association','Associação')]}]:[]),
@@ -13,7 +13,7 @@ export function accountGroups(onNavigate:(destination:AccountDestination)=>void,
  ];
 }
 
-export const accountViews=['plan','career','future','radar','welcome','details','opportunities','diagnostic','catalog-courses','catalog-jobs','premium','admin','admin-capacita','admin-saas'] as const;
+export const accountViews=['plan','career','future','radar','welcome','details','opportunities','applications','diagnostic','catalog-courses','catalog-jobs','premium','admin','admin-capacita','admin-saas'] as const;
 export type AccountView=typeof accountViews[number];
 export type AccountSurface=AccountView|'association'|'capacita'|'ecosystem'|'company-entry';
 export function isAccountView(value:unknown):value is AccountView{return typeof value==='string'&&(accountViews as readonly string[]).includes(value)}

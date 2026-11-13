@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-12",
+  "scope": "local source and isolated synthetic tests; no production deletion",
+  "backend": {
+    "initialSelection": {
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "finalSelection": {
+      "tests": 39,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "privacyTests": 14
+    },
+    "selectionsOverlap": true,
+    "mavenVerify": "passed"
+  },
+  "frontend": {
+    "lint": "passed",
+    "unitTests": 23,
+    "typecheckAndProductionBuild": "passed",
+    "preexistingWarnings": [
+      "Large map/PDF chunks"
+    ]
+  },
+  "playwright": {
+    "tests": 3,
+    "passed": 3,
+    "widths": [
+      320,
+      375,
+      1440
+    ],
+    "fixtures": "mocked API, no real users",
+    "keyboardCheckbox": true,
+    "axe": {
+      "scope": "privacy request component only",
+      "selectedRules": [
+        "wcag2a",
+        "wcag2aa",
+        "wcag22aa"
+      ],
+      "violations": 0
+    },
+    "screenReaderHumanValidation": false
+  },
+  "newMigrationVersions": {
+    "oportunidades": 25,
+    "empresas": 23,
+    "capacita": 26
+  },
+  "productionMigrationsApplied": false,
+  "productionDataDeleted": false,
+  "automaticPrivacyDisposal": false,
+  "knownLimits": [
+    "Account restriction does not freeze every retention job/file",
+    "No new administrative review UI",
+    "No generic cross-trail erasure",
+    "Retention/legal bases require controller approval",
+    "Backup erasure reconciliation not automated",
+    "No comprehensive legal compliance claim"
+  ]
+}

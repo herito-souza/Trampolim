@@ -1,0 +1,51 @@
+# Optional local monitoring; joins the application's private network.
+services:
+  prometheus:
+    image: prom/prometheus:v3.9.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=15d"]
+    ports: ["127.0.0.1:9090:9090"]
+    volumes:
+      - ../prometheus.example.yml:/etc/prometheus/prometheus.yml:ro
+      - ../alerts.example.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    secrets: [trampolim_monitoring_key]
+    networks: [application, monitoring]
+    restart: unless-stopped
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    ports: ["127.0.0.1:9093:9093"]
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alert_data:/alertmanager
+    networks: [monitoring]
+    restart: unless-stopped
+  grafana:
+    image: grafana/grafana:12.3.0
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    secrets: [grafana_admin_password]
+    volumes:
+      - ./datasource.yml:/etc/grafana/provisioning/datasources/trampolim.yml:ro
+      - ./provider.yml:/etc/grafana/provisioning/dashboards/trampolim.yml:ro
+      - ./dashboard.json:/var/lib/grafana/dashboards/trampolim.json:ro
+      - grafana_data:/var/lib/grafana
+    networks: [monitoring]
+    restart: unless-stopped
+networks:
+  application:
+    external: true
+    name: ${TRAMPOLIM_APP_NETWORK:?Informe a rede privada da aplicação}
+  monitoring: {}
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
+  alert_data: {}
+secrets:
+  trampolim_monitoring_key:
+    file: ${MONITORING_KEY_FILE:?Informe o arquivo privado contendo MONITORING_KEY}
+  grafana_admin_password:
+    file: ${GRAFANA_PASSWORD_FILE:?Informe um arquivo privado com a senha do painel}

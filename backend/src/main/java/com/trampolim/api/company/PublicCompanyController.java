@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 @ConditionalOnProperty(name = "trampolim.datasource.empresas.enabled", havingValue = "true")
 public class PublicCompanyController {
     private final JdbcTemplate jdbc;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.trampolim.api.events.DomainEventOutbox domainEvents;
     private final ConcurrentHashMap<String, RateWindow> rateLimits = new ConcurrentHashMap<>();
 
     public PublicCompanyController(@Qualifier("empresasJdbcTemplate") JdbcTemplate jdbc) { this.jdbc = jdbc; }
@@ -98,6 +99,7 @@ public class PublicCompanyController {
     }
 
     @PostMapping("/{slug}/listings/{listingId}/applications")
+    @org.springframework.transaction.annotation.Transactional(transactionManager="empresasTransactionManager")
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, String> apply(@PathVariable String slug, @PathVariable long listingId, @RequestBody ApplicationInput input, jakarta.servlet.http.HttpServletRequest request) {
         limitRequests(request.getRemoteAddr());
@@ -108,7 +110,8 @@ public class PublicCompanyController {
         if (input.phone() != null && input.phone().length() > 40) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O telefone deve ter até 40 caracteres.");
         if (input.message() != null && input.message().length() > 2000) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A mensagem deve ter até 2.000 caracteres.");
         try {
-            jdbc.update("INSERT INTO company_applications(listing_id,candidate_name,candidate_email,candidate_phone,message) VALUES (?,?,?,?,?)", listing, input.name().trim(), input.email().trim().toLowerCase(), clean(input.phone()), clean(input.message()));
+            Long applicationId=jdbc.queryForObject("INSERT INTO company_applications(listing_id,candidate_name,candidate_email,candidate_phone,message) VALUES (?,?,?,?,?) RETURNING id",Long.class, listing, input.name().trim(), input.email().trim().toLowerCase(), clean(input.phone()), clean(input.message()));
+            if(domainEvents!=null){Long companyId=jdbc.queryForObject("SELECT company_id FROM company_listings WHERE id=?",Long.class,listing);domainEvents.append(jdbc,"EMPRESAS","application.created.v1","application",applicationId.toString(),"application-created:"+applicationId,Map.of("applicationId",applicationId,"listingId",listing,"companyId",companyId));}
         } catch (org.springframework.dao.DuplicateKeyException ex) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Você já enviou uma candidatura para esta oportunidade.");
         }

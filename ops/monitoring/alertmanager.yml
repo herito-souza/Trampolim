@@ -1,0 +1,9 @@
+route:
+  receiver: local-only
+  group_by: [alertname, instance, trail]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+receivers:
+  - name: local-only
+# No external messages. Configure a real receiver before relying on paging.

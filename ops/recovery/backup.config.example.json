@@ -1,0 +1,35 @@
+{
+  "backupRoot": "D:\\TrampolimBackups",
+  "publicKeyFile": "D:\\TrampolimRecoveryKeys\\backup-public.pem",
+  "databases": [
+    {
+      "id": "oportunidades",
+      "container": "trampolim-db",
+      "database": "trampolim_db",
+      "username": "root"
+    },
+    {
+      "id": "empresas",
+      "container": "trampolim-empresas-db",
+      "database": "trampolim_empresas_db",
+      "username": "trampolim_empresas"
+    },
+    {
+      "id": "capacita",
+      "container": "trampolim-capacita-db",
+      "database": "trampolim_capacita_db",
+      "username": "trampolim_capacita"
+    }
+  ],
+  "assets": [
+    {
+      "id": "private-media",
+      "container": "api1",
+      "directory": "/app/storage"
+    },
+    {
+      "id": "recovery-config",
+      "directory": "D:\\TrampolimRecoveryConfig"
+    }
+  ]
+}

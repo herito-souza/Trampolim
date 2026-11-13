@@ -77,6 +77,7 @@ public class SaasOrganizationAdminController {
     public OrganizationView status(@AuthenticationPrincipal String email,@PathVariable long id,@RequestBody StatusInput input) {
         requireSuperAdmin(email);
         if(input==null||!Set.of("ACTIVE","PENDING","SUSPENDED").contains(input.status())) bad("Status de organização inválido.");
+        if("ACTIVE".equals(input.status())&&exists("SELECT COUNT(*) FROM enterprise_organizations WHERE id=? AND organization_type='EDUCATIONAL' AND verification_status<>'VERIFIED'",id)) bad("Verifique a instituição no painel do Hub antes de ativá-la.");
         if(jdbc.update("UPDATE enterprise_organizations SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?",input.status(),id)==0) notFound("Organização não encontrada.");
         audit(id,email,"ORGANIZATION_STATUS_CHANGED","ORGANIZATION",Long.toString(id));
         return byId(id);

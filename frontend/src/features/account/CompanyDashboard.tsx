@@ -85,6 +85,12 @@ export function CompanyDashboard({ token,initialCompany,onCompanyChange }: { tok
     return () => { window.removeEventListener('hashchange', syncPage); window.removeEventListener('popstate', syncPage); };
   }, []);
 
+  useEffect(()=>{
+    const apply=(query:unknown)=>{if(typeof query==='string'&&query.length<=180){setListingQuery(query);setListingStatusFilter('');}};
+    try{const pending=sessionStorage.getItem('trampolim_company_search');if(pending){sessionStorage.removeItem('trampolim_company_search');apply(pending)}}catch{/* Search remains available without saved browser state. */}
+    const handle=(event:Event)=>{apply((event as CustomEvent).detail);try{sessionStorage.removeItem('trampolim_company_search')}catch{/* Ignore unavailable storage. */}};window.addEventListener('trampolim:company-search',handle);return()=>window.removeEventListener('trampolim:company-search',handle);
+  },[]);
+
   useEffect(() => {
     if (page !== 'metrics') return;
     let active = true;

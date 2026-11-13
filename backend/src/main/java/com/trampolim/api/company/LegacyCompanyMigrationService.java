@@ -49,8 +49,8 @@ public class LegacyCompanyMigrationService {
             long id = number(row, "id", 0L);
             if (exists(empresas, "SELECT COUNT(*) FROM companies WHERE legacy_company_id=?", id)) continue;
             if (string(row, "email").isBlank() || !"COMPANY".equalsIgnoreCase(string(row, "account_type"))) { unmatched++; continue; }
-            String cnpj = string(row, "cnpj").replaceAll("[^A-Za-z0-9]", "").toUpperCase(Locale.ROOT);
-            if (!cnpj.matches("[0-9]{14}")) { invalidCnpj++; continue; }
+            String cnpj = com.trampolim.api.trust.Cnpj.normalize(string(row,"cnpj"));
+            if (!com.trampolim.api.trust.Cnpj.valid(cnpj)) { invalidCnpj++; continue; }
             if (exists(empresas, "SELECT COUNT(*) FROM companies WHERE cnpj=? AND legacy_company_id IS NULL", cnpj)) { conflicts++; continue; }
             if (exists(empresas, "SELECT COUNT(*) FROM companies c JOIN company_users u ON u.id=c.owner_user_id WHERE LOWER(u.email)=LOWER(?) AND c.cnpj<>?", string(row, "email").trim(), cnpj)) { ownerConflicts++; continue; }
             importable++;
@@ -93,7 +93,7 @@ public class LegacyCompanyMigrationService {
 
         String email = string(source, "legacy_owner_email").trim().toLowerCase(Locale.ROOT);
         String cnpj = string(source, "cnpj").replaceAll("[^A-Za-z0-9]", "").toUpperCase(Locale.ROOT);
-        if (email.isBlank() || !cnpj.matches("[0-9]{14}")) throw new IllegalStateException("Legacy company owner or CNPJ is not importable.");
+        if (email.isBlank() || !com.trampolim.api.trust.Cnpj.valid(cnpj)) throw new IllegalStateException("Legacy company owner or CNPJ is not importable.");
 
         List<Long> targetUser = empresas.query("SELECT id FROM company_users WHERE LOWER(email)=LOWER(?)", (rs, row) -> rs.getLong(1), email);
         long userId;

@@ -23,8 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class CompanyVerificationController {
     private final JdbcTemplate empresas;
     private final PlatformAccess platformAccess;
+    private final com.trampolim.api.trust.CompanyTrustService trust;
 
-    public CompanyVerificationController(@Qualifier("empresasJdbcTemplate") JdbcTemplate empresas, PlatformAccess platformAccess) {
+    public CompanyVerificationController(@Qualifier("empresasJdbcTemplate") JdbcTemplate empresas, PlatformAccess platformAccess, com.trampolim.api.trust.CompanyTrustService trust) {
+        this.trust = trust;
         this.empresas = empresas;
         this.platformAccess = platformAccess;
     }
@@ -46,14 +48,18 @@ public class CompanyVerificationController {
     public Map<String, String> review(@AuthenticationPrincipal String email, @PathVariable long companyId,
             @RequestBody VerificationInput input) {
         requireAdmin(email);
-        if (input == null || !List.of("APPROVED", "REJECTED", "SUSPENDED").contains(input.status()))
+        if (input == null || input.status()==null || !List.of("APPROVED", "REJECTED", "SUSPENDED").contains(input.status()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status de validação inválido.");
         String reason = input.reason() == null ? "" : input.reason().trim();
+        if (reason.length()<20) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Registre uma justificativa de ao menos vinte caracteres.");
+        if(empresas.queryForList("SELECT id FROM companies WHERE id=? FOR UPDATE",companyId).isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Empresa não encontrada.");
+        if (input.status().equals("APPROVED")&&!trust.proof(companyId)) throw new ResponseStatusException(HttpStatus.CONFLICT,"Conclua a revisão cadastral com comprovações antes de aprovar. CNPJ sintaticamente válido não basta.");
         if (reason.length() > 500) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A justificativa deve ter até 500 caracteres.");
         int updated = empresas.update("UPDATE companies SET verification_status=? WHERE id=?", input.status(), companyId);
         if (updated == 0) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Empresa não encontrada.");
-        empresas.update("INSERT INTO company_audit_events(company_id,event_type,details) VALUES (?, 'COMPANY_VERIFICATION_CHANGED', jsonb_build_object('status', ?, 'reason', ?))",
-                companyId, input.status(), reason);
+        empresas.update("INSERT INTO company_audit_events(company_id,event_type,details) VALUES (?, 'COMPANY_VERIFICATION_CHANGED', jsonb_build_object('status', ?, 'reason', ?, 'actor', ?))",
+                companyId, input.status(), reason,email);
+        empresas.update("INSERT INTO communication_events(source_key,kind,resource_id,scope_id) VALUES ('trust:legacy:'||?||':'||?||':'||md5(?),'TRUST_REVIEW',?,?) ON CONFLICT DO NOTHING",companyId,input.status(),reason,companyId,companyId);
         return Map.of("status", input.status());
     }
 

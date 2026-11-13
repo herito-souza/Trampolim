@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 @ConditionalOnProperty(name="trampolim.datasource.capacita.enabled",havingValue="true")
 public class LearningPlaybackController {
     private final JdbcTemplate jdbc;private final LearningAccess access;private final LearningController learning;private final LessonMediaController media;private final com.trampolim.api.security.TrailTokenService tokens;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private CourseCompletionEvents completionEvents;
     public LearningPlaybackController(@Qualifier("capacitaJdbcTemplate") JdbcTemplate jdbc,LearningAccess access,LearningController learning,LessonMediaController media,com.trampolim.api.security.TrailTokenService tokens) {this.jdbc=jdbc;this.access=access;this.learning=learning;this.media=media;this.tokens=tokens;}
     public record PlaybackInput(UUID sessionId,double positionSeconds,boolean playing) {}
     @PostMapping("/lessons/{id}/playback") @Transactional(transactionManager="capacitaTransactionManager")
@@ -54,6 +55,7 @@ public class LearningPlaybackController {
         double watched=Math.min(duration,frontier+valid);
         jdbc.update("UPDATE learning_lesson_progress SET position_seconds=?,watched_seconds=?,completed_at=CASE WHEN ?>=?*0.9 THEN COALESCE(completed_at,CURRENT_TIMESTAMP) ELSE completed_at END,updated_at=CURRENT_TIMESTAMP WHERE student_id=? AND lesson_id=?",position,watched,watched,duration,user.id(),id);
         jdbc.update("UPDATE learning_playback_sessions SET last_position=?,last_event_at=CURRENT_TIMESTAMP WHERE id=?",position,input.sessionId());
+        if(completionEvents!=null){Long course=jdbc.queryForObject("SELECT s.course_id FROM learning_lessons l JOIN learning_modules m ON m.id=l.module_id JOIN learning_subjects s ON s.id=m.subject_id WHERE l.id=?",Long.class,id);completionEvents.emitIfComplete(jdbc,user.id(),course);}
         return progress(user.id(),id);
     }
     private Map<String,Object> progress(long student,long lesson) {return jdbc.queryForList("SELECT position_seconds,watched_seconds,completed_at FROM learning_lesson_progress WHERE student_id=? AND lesson_id=?",student,lesson).stream().findFirst().orElse(Map.of("position_seconds",0,"watched_seconds",0));}

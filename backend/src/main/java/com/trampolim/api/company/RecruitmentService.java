@@ -19,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class RecruitmentService {
     public static final List<String> STAGES=List.of("RECEIVED","IN_REVIEW","INTERVIEW","ACCEPTED","DECLINED","CLOSED","CONTACTED");
     private final JdbcTemplate jdbc;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.trampolim.api.events.DomainEventOutbox domainEvents;
     private final int notesDays;
     public RecruitmentService(@Qualifier("empresasJdbcTemplate") JdbcTemplate jdbc,
             @Value("${recruitment.notes-retention-days:180}") int notesDays) {
@@ -140,6 +141,7 @@ public class RecruitmentService {
         // A versioned no-op is recorded so its requestKey remains idempotent after later changes.
         if(legacy&&input.requestKey()==null&&old.status().equals(input.status()))return new Mutation(old.status(),old.revision(),null,false);
         long revision=update(who,id,old,input.status());event(who,id,revision,"STAGE_CHANGED",old.status(),input.status(),input.requestKey(),hash,null);
+        if(domainEvents!=null&&!old.status().equals(input.status())) domainEvents.append(jdbc,"EMPRESAS","application.stage_changed.v1","application",Long.toString(id),"application-stage:"+id+":"+revision,Map.of("applicationId",id,"revision",revision,"previousStatus",old.status(),"status",input.status()));
         return new Mutation(input.status(),revision,null,false);
     }
     @Transactional("empresasTransactionManager")

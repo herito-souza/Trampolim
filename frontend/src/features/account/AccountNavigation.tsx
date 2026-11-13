@@ -1,5 +1,5 @@
 import {useWorkspace} from '../../components/workspace/workspaceContext';
-export type AccountDestination = 'plan' | 'career' | 'future' | 'radar' | 'home' | 'companies' | 'opportunities' | 'courses' | 'jobs' | 'profile' | 'diagnostic' | 'premium' | 'admin' | 'admin-capacita' | 'admin-saas' | 'association' | 'capacita';
+export type AccountDestination = 'plan' | 'career' | 'future' | 'radar' | 'home' | 'companies' | 'opportunities' | 'applications' | 'courses' | 'jobs' | 'profile' | 'diagnostic' | 'premium' | 'admin' | 'admin-capacita' | 'admin-saas' | 'association' | 'capacita';
 
 interface AccountNavigationProps {
   active: AccountDestination;

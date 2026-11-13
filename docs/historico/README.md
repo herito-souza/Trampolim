@@ -2,6 +2,8 @@
 
 Relatórios preservados por assunto e data. Eles descrevem a versão analisada naquele momento; resultados antigos não comprovam o estado atual. A referência atual é [Trampolim](../TRAMPOLIM.md). Evidências locais não versionadas foram identificadas no texto.
 
+- [PWA e uso offline — 12/11/2026](PWA_2026-11-12.md)
+
 - [ACCESSIBILITY.md](ACCESSIBILITY.md)
 - [AUDITORIA_DIAGNOSTICO_INICIAL.md](AUDITORIA_DIAGNOSTICO_INICIAL.md)
 - [AUDITORIA_ESCALABILIDADE.md](AUDITORIA_ESCALABILIDADE.md)
@@ -17,6 +19,8 @@ Relatórios preservados por assunto e data. Eles descrevem a versão analisada n
 - [DASHBOARDS_REGIONAIS.md](DASHBOARDS_REGIONAIS.md)
 - [DASHBOARDS_REVISAO_2026-11-06.md](DASHBOARDS_REVISAO_2026-11-06.md)
 - [DESAFIOS_PROFISSIONAIS_2026-11-11.md](DESAFIOS_PROFISSIONAIS_2026-11-11.md)
+- [EVENTOS_DOMINIO_2026-11-12.md](EVENTOS_DOMINIO_2026-11-12.md)
+- [FEATURE_FLAGS_2026-11-12.md](FEATURE_FLAGS_2026-11-12.md)
 - [DESEMPENHO_BACKEND_2026-11-06.md](DESEMPENHO_BACKEND_2026-11-06.md)
 - [DESEMPENHO_MOBILE_2026-11-06.md](DESEMPENHO_MOBILE_2026-11-06.md)
 - [DESEMPENHO_MOBILE_2026-11-07.md](DESEMPENHO_MOBILE_2026-11-07.md)
@@ -40,3 +44,22 @@ Relatórios preservados por assunto e data. Eles descrevem a versão analisada n
 - [SAAS_ARCHITECTURE.md](SAAS_ARCHITECTURE.md)
 - [SEGURANCA_BACKEND_2026-11-06.md](SEGURANCA_BACKEND_2026-11-06.md)
 - [TRAMPOLIM_HUB_PRIORIDADE3.md](TRAMPOLIM_HUB_PRIORIDADE3.md)
+
+- [Verificação empresarial e antifraude — 12/11/2026](VERIFICACAO_EMPRESARIAL_2026-11-12.md)
+
+- [Observabilidade — 12/11/2026](OBSERVABILIDADE_2026-11-12.md)
+
+- [Backup e recuperação — 12/11/2026](RECUPERACAO_2026-11-12.md)
+
+- [Privacidade e ciclo de vida — 12/11/2026](PRIVACIDADE_2026-11-12.md)
+- [Central de Candidaturas — 2026-11-12](CENTRAL_CANDIDATURAS_2026-11-12.md)
+- [Onboarding por perfil — 2026-11-12](ONBOARDING_2026-11-12.md)
+- [Busca universal por trilha — 2026-11-12](BUSCA_UNIVERSAL_2026-11-12.md)
+# Atualizações recentes
+
+- [Métricas de produto — 13/11/2026](METRICAS_PRODUTO_2026-11-13.md)
+- [Portfólio profissional compartilhável — 13/11/2026](PORTFOLIO_PROFISSIONAL_2026-11-13.md)
+- [Simulador de entrevistas — 13/11/2026](SIMULADOR_ENTREVISTAS_2026-11-13.md)
+- [Jornada do primeiro emprego — 13/11/2026](PRIMEIRO_EMPREGO_2026-11-13.md)
+- [Mentoria profissional — 13/11/2026](MENTORIA_PROFISSIONAL_2026-11-13.md)
+- [Parcerias com instituições de ensino — 13/11/2026](PARCERIAS_INSTITUICOES_ENSINO_2026-11-13.md)

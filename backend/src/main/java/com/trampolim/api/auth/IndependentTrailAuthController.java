@@ -155,7 +155,7 @@ public class IndependentTrailAuthController {
         String name = clean(request.name());
         String email = email(request.email());
         String password = request.password() == null ? "" : request.password();
-        String cnpj = clean(request.cnpj()).replaceAll("[^A-Za-z0-9]", "").toUpperCase(Locale.ROOT);
+        String cnpj = com.trampolim.api.trust.Cnpj.normalize(request.cnpj());
         if (name.isBlank() || name.length() > 120) bad("Informe o nome do responsável.");
         validateEmailAndPassword(email, password);
         if (!request.termsAccepted()) bad("Aceite os termos para criar sua conta empresarial.");
@@ -164,7 +164,7 @@ public class IndependentTrailAuthController {
                 || clean(request.address()).isBlank() || clean(request.city()).isBlank()
                 || request.state() == null || !request.state().matches("(?i)[a-z]{2}"))
             bad("Preencha os dados obrigatórios da empresa e do responsável.");
-        if (!cnpj.matches("[0-9]{14}")) bad("Informe um CNPJ com 14 dígitos.");
+        if (!com.trampolim.api.trust.Cnpj.valid(cnpj)) bad("Informe um CNPJ válido com 14 posições e dígitos verificadores corretos. Isso não confirma situação cadastral.");
         List<Object[]> pendingLegacyClaims = jdbc.query("""
                 SELECT u.id,u.token_version FROM company_users u
                 JOIN companies c ON c.owner_user_id=u.id
@@ -375,7 +375,12 @@ public class IndependentTrailAuthController {
     }
 
     private AuthResponse response(Trail trail, long id, String email, String name, boolean verified, int version, String status) {
-        return new AuthResponse(verified ? tokens.issue(trail, email, id, version) : "", new UserSummary(name, email), verified,
+        String token = verified ? tokens.issue(trail, email, id, version) : "";
+        if (!token.isEmpty()) {
+            JdbcTemplate db = database(trail == Trail.EMPRESAS ? empresasJdbc : capacitaJdbc, trail == Trail.EMPRESAS ? "Empresas" : "Capacita");
+            db.update("INSERT INTO product_usage_days(user_id,usage_day) VALUES (?,(CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo')::date) ON CONFLICT DO NOTHING", id);
+        }
+        return new AuthResponse(token, new UserSummary(name, email), verified,
                 trail == Trail.EMPRESAS ? "COMPANY" : "STUDENT", status);
     }
     private JdbcTemplate database(ObjectProvider<JdbcTemplate> provider, String name) {

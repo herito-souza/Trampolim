@@ -1,0 +1,88 @@
+{
+  "date": "2026-11-12T16:04:30.719Z",
+  "syntheticDataOnly": true,
+  "sourceDatabases": 3,
+  "artifacts": 5,
+  "backupSeconds": 1.588,
+  "restoreSeconds": 9.346,
+  "totalSeconds": 13.632,
+  "restoredDatabases": [
+    {
+      "id": "oportunidades",
+      "tables": 3,
+      "unvalidatedConstraints": 0,
+      "syntheticProof": {
+        "rows": 4,
+        "sum": 100,
+        "proof": "e49d4c03c4ee655c173ffd4b38abbb45"
+      },
+      "successfulMigrations": 1
+    },
+    {
+      "id": "empresas",
+      "tables": 3,
+      "unvalidatedConstraints": 0,
+      "syntheticProof": {
+        "rows": 4,
+        "sum": 100,
+        "proof": "e49d4c03c4ee655c173ffd4b38abbb45"
+      },
+      "successfulMigrations": 1
+    },
+    {
+      "id": "capacita",
+      "tables": 3,
+      "unvalidatedConstraints": 0,
+      "syntheticProof": {
+        "rows": 4,
+        "sum": 100,
+        "proof": "e49d4c03c4ee655c173ffd4b38abbb45"
+      },
+      "successfulMigrations": 1
+    }
+  ],
+  "assetsHashVerified": 2,
+  "network": "none",
+  "portsPublished": false,
+  "failedBackupRejected": true,
+  "corruptionRejected": true,
+  "realDataUsed": false,
+  "productionRestore": false,
+  "tests": {
+    "recoverySuite": {
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "backendIntegration": {
+      "passed": 4,
+      "failed": 0,
+      "build": "passed"
+    },
+    "scheduler": "WhatIf only; no task registered",
+    "powershellSyntax": "passed"
+  },
+  "actualSchemaRestores": [
+    {
+      "restoredIntoNewDatabase": true,
+      "successfulMigrations": 24,
+      "trail": "oportunidades",
+      "tables": 69
+    },
+    {
+      "restoredIntoNewDatabase": true,
+      "successfulMigrations": 22,
+      "trail": "empresas",
+      "tables": 64
+    },
+    {
+      "restoredIntoNewDatabase": true,
+      "successfulMigrations": 25,
+      "trail": "capacita",
+      "tables": 60
+    }
+  ],
+  "newMigrations": 0,
+  "backupScheduleActivated": false,
+  "offsiteConfigured": false
+}

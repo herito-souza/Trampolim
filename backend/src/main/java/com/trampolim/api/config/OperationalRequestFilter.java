@@ -23,6 +23,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class OperationalRequestFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(OperationalRequestFilter.class);
     private final byte[] monitoringKey;
+    @Value("${radar.bridge-secret:}") private String bridgeSecret="";
     public OperationalRequestFilter(@Value("${operations.monitoring-key:}") String key) {
         monitoringKey = key.getBytes(StandardCharsets.UTF_8);
     }
@@ -35,6 +36,10 @@ public class OperationalRequestFilter extends OncePerRequestFilter {
         String id = UUID.randomUUID().toString();
         response.setHeader("X-Request-ID", id);
         MDC.put("requestId", id);
+        String parent=request.getHeader("X-Trampolim-Correlation-ID");
+        boolean trusted=validMonitoringKey(bridgeSecret,request.getHeader("X-Trampolim-Bridge"));
+        String correlation=trusted && parent!=null && parent.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")?parent:id;
+        MDC.put("correlationId",correlation);
         long started = System.nanoTime();
         try {
             String path = request.getRequestURI();
@@ -56,6 +61,7 @@ public class OperationalRequestFilter extends OncePerRequestFilter {
                 log.warn("http_request_completed method={} status={} elapsed_ms={}", request.getMethod(), response.getStatus(), elapsed);
             }
             MDC.remove("requestId");
+            MDC.remove("correlationId");
         }
     }
 }

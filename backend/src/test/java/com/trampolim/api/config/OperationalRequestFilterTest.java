@@ -40,4 +40,13 @@ class OperationalRequestFilterTest {
             assertNotEquals("untrusted-id",response.getHeader("X-Request-ID"));assertNull(MDC.get("requestId"));assertFalse(appender.list.isEmpty());for(var event:appender.list){assertFalse(event.getFormattedMessage().contains("opaque-secret-ticket"));assertFalse(event.getFormattedMessage().contains("sensitive internal error"));assertEquals(response.getHeader("X-Request-ID"),event.getMDCPropertyMap().get("requestId"));}
         } finally {logger.detachAppender(appender);appender.stop();}
     }
+ @Test void onlySignedInternalRequestsCanSupplyCorrelationRoot() throws Exception {
+ var filter=new OperationalRequestFilter("monitoring-key-with-at-least-32-characters");
+ org.springframework.test.util.ReflectionTestUtils.setField(filter,"bridgeSecret","bridge-key-with-at-least-32-characters");
+ String parent="12345678-1234-1234-1234-123456789abc";
+ var request=new MockHttpServletRequest("POST","/api/internal/test");request.addHeader("X-Trampolim-Correlation-ID",parent);
+ filter.doFilter(request,new MockHttpServletResponse(),(a,b)->assertNotEquals(parent,MDC.get("correlationId")));
+ var trusted=new MockHttpServletRequest("POST","/api/internal/test");trusted.addHeader("X-Trampolim-Correlation-ID",parent);trusted.addHeader("X-Trampolim-Bridge","bridge-key-with-at-least-32-characters");
+ filter.doFilter(trusted,new MockHttpServletResponse(),(a,b)->{assertEquals(parent,MDC.get("correlationId"));assertNotEquals(parent,MDC.get("requestId"));});assertNull(MDC.get("correlationId"));
+ }
 }

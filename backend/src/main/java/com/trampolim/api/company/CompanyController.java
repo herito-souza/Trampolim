@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CompanyController {
     private final JdbcTemplate jdbc;
     private final RecruitmentService recruitment;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.trampolim.api.events.DomainEventOutbox domainEvents;
     @Value("${app.frontend-url:http://localhost:5173}") private String frontendUrl;
 
     public CompanyController(@Qualifier("empresasJdbcTemplate") JdbcTemplate jdbc, RecruitmentService recruitment) { this.jdbc = jdbc; this.recruitment = recruitment; }
@@ -56,6 +58,7 @@ public class CompanyController {
     public record AnalyticsDay(String date, long views, long clicks, long applications) {}
     public record ListingAnalytics(long listingId, String title, String kind, long views, long clicks, long applications) {}
     public record CompanyAnalytics(int days, List<AnalyticsDay> daily, List<ListingAnalytics> listings) {}
+    @Value("${trust.max-created-per-day:20}") private int maxCreatedPerDay=20;
     private record Membership(long companyId, String role) {}
 
     @GetMapping("/dashboard")
@@ -92,6 +95,8 @@ public class CompanyController {
     @ResponseStatus(HttpStatus.CREATED)
     public ListingView createListing(@AuthenticationPrincipal String email, @RequestBody ListingInput input) {
         Membership member = requireCompany(email); requireRole(member, "OWNER", "RECRUITER"); validate(input);
+        jdbc.queryForObject("SELECT id FROM companies WHERE id=? FOR UPDATE",Long.class,member.companyId());
+        if(jdbc.queryForObject("SELECT count(*) FROM company_listings WHERE company_id=? AND created_at>CURRENT_TIMESTAMP-INTERVAL '1 day'",Integer.class,member.companyId())>=Math.max(1,Math.min(maxCreatedPerDay,1000))) throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,"Limite diário de novos anúncios atingido; aguarde ou solicite revisão administrativa.");
         LocalDate deadline = input.applicationDeadline();
         LocalDate expiresAt = input.isInternship() ? (deadline == null ? today().plusDays(30) : deadline) : null;
         Long id = jdbc.queryForObject("INSERT INTO company_listings(company_id,kind,title,area,description,requirements,location,modality,url,contact_email,salary,contract_type,work_schedule,workload,prerequisites,benefits,course_price,certificate,payment_status,publication_status,is_internship,accepted_courses,headcount,application_deadline,expires_at,price_cents) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id",
@@ -114,7 +119,8 @@ public class CompanyController {
     @Transactional(transactionManager = "empresasTransactionManager")
     public ListingView updateStatus(@AuthenticationPrincipal String email, @PathVariable long id, @RequestBody StatusInput input) {
         Membership member = requireCompany(email); requireRole(member, "OWNER", "RECRUITER"); ownListing(member.companyId(), id);
-        if (input == null || !Set.of("DRAFT", "PUBLISHED", "PAUSED", "CLOSED").contains(input.status())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escolha um status de publicação válido.");
+        String previousStatus=jdbc.queryForObject("SELECT publication_status FROM company_listings WHERE id=? AND company_id=? FOR UPDATE",String.class,id,member.companyId());
+        if (input == null || input.status()==null || !Set.of("DRAFT", "PUBLISHED", "PAUSED", "CLOSED").contains(input.status())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escolha um status de publicação válido.");
         if ("PUBLISHED".equals(input.status())) {
             if (!companyApproved(member.companyId())) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "A empresa precisa ser aprovada antes de publicar oportunidades.");
             List<Object[]> details = jdbc.query("SELECT expires_at,is_internship,payment_status FROM company_listings WHERE id=?", (rs, row) -> new Object[]{rs.getDate(1) == null ? null : rs.getDate(1).toLocalDate(), rs.getBoolean(2), rs.getString(3)}, id);
@@ -123,6 +129,7 @@ public class CompanyController {
             if (expiry != null && expiry.isBefore(today())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Renove o prazo do anúncio antes de publicá-lo.");
         }
         jdbc.update("UPDATE company_listings SET publication_status=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?", input.status(), id, member.companyId());
+        if(domainEvents!=null&&"CLOSED".equals(input.status())&& !"CLOSED".equals(previousStatus)) domainEvents.append(jdbc,"EMPRESAS","vacancy.closed.v1","listing",Long.toString(id),"listing-closed:"+id+":"+UUID.randomUUID(),Map.of("listingId",id,"companyId",member.companyId()));
         return listing(member.companyId(), id);
     }
 
@@ -130,6 +137,7 @@ public class CompanyController {
     @Transactional(transactionManager = "empresasTransactionManager")
     public ListingView renew(@AuthenticationPrincipal String email, @PathVariable long id, @RequestBody RenewInput input) {
         Membership member = requireCompany(email); requireRole(member, "OWNER", "RECRUITER"); ownListing(member.companyId(), id);
+        if(!companyApproved(member.companyId())) throw new ResponseStatusException(HttpStatus.FORBIDDEN,"A empresa precisa de aprovação para renovar uma publicação.");
         if (jdbc.queryForObject("SELECT is_internship FROM company_listings WHERE id=?", Boolean.class, id)) throw new ResponseStatusException(HttpStatus.CONFLICT, "Para divulgar uma nova vaga de estágio, cadastre uma nova oportunidade e confirme a taxa de R$ 50,00.");
         if (input == null || input.expiresAt() == null || input.expiresAt().isBefore(today().plusDays(1))) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escolha uma nova data de encerramento no futuro.");
         jdbc.update("UPDATE company_listings SET expires_at=?, publication_status='PUBLISHED', updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?", input.expiresAt(), id, member.companyId());

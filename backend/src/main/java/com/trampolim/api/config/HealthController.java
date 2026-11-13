@@ -45,7 +45,8 @@ public class HealthController {
     }
 
     private String secondaryProbe(DataSource source, boolean enabled, String trail) {
-        if (!enabled || source == null) return "DISABLED";
+        if (!enabled) return "DISABLED";
+        if (source == null) return "DOWN";
         return probe(source, trail);
     }
 

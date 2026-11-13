@@ -18,9 +18,10 @@ import org.springframework.http.MediaType;
 import com.trampolim.api.BackendApplication;
 import com.trampolim.api.security.TrailTokenService;
 
-@SpringBootTest(classes=BackendApplication.class)
+@SpringBootTest(classes=BackendApplication.class,properties="radar.bridge-secret=synthetic-application-center-test-secret")
 class RecruitmentPostgresTest {
     @Autowired RecruitmentService service;
+    @Autowired CandidateApplicationCenterController applicationCenter;
     @Autowired RecruitmentRetention retention;
     @Autowired CompanyController legacy;
     @Autowired WebApplicationContext context;
@@ -94,6 +95,19 @@ class RecruitmentPostgresTest {
         assertEquals(0,service.applications(f.owner(),null,"CLOSED",0,25).totalElements());
         expectStatus(400,()->service.applications(f.owner(),null,null,-1,25));expectStatus(400,()->service.applications(f.owner(),null,null,0,101));
         expectStatus(400,()->service.applications(f.owner(),null,"IN_REVIEW' OR 1=1",0,25));expectStatus(400,()->service.change(f.owner(),f.application(),new RecruitmentService.Change("INTERVIEW",null,null,false)));
+    }
+    @Test void candidateTimelineUsesVerifiedAddressScopeAndNeverReturnsInternalNotes(){
+        var f=fixture();String email="verified-candidate-"+UUID.randomUUID()+"@example.test";long application=application(f.listing(),email);
+        service.change(f.owner(),application,change("IN_REVIEW",0));
+        service.addNote(f.owner(),application,new RecruitmentService.Note("Observação interna confidencial",1L,UUID.randomUUID()));
+        service.change(f.owner(),application,change("INTERVIEW",2));
+        var result=applicationCenter.query("synthetic-application-center-test-secret",new CandidateApplicationCenterController.Query(email,"INTERVIEW","teste isolada","sintética isolada",null,null,0,10));
+        assertEquals(1,result.totalElements());var item=result.items().getFirst();assertEquals("INTERVIEW",item.status());assertEquals(3,item.timeline().size());assertEquals("RECEIVED",item.timeline().getFirst().status());assertEquals("INTERVIEW",item.timeline().getLast().status());
+        var serialized=new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules().valueToTree(item).toString();assertFalse(serialized.contains("Observação interna confidencial"));assertFalse(serialized.contains(email));assertFalse(serialized.contains("phone"));
+        service.change(f.owner(),application,change("CLOSED",3));var closed=applicationCenter.query("synthetic-application-center-test-secret",new CandidateApplicationCenterController.Query(email,null,null,null,null,null,0,10)).items().getFirst();assertEquals("CLOSED",closed.status());assertEquals("CLOSED",closed.timeline().getLast().status());
+        assertEquals(0,applicationCenter.query("synthetic-application-center-test-secret",new CandidateApplicationCenterController.Query(email,"DECLINED",null,null,null,null,0,10)).totalElements());
+        assertEquals(0,applicationCenter.query("synthetic-application-center-test-secret",new CandidateApplicationCenterController.Query("other-"+email,null,null,null,null,null,0,10)).totalElements());
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,()->applicationCenter.query("wrong-secret",new CandidateApplicationCenterController.Query(email,null,null,null,null,null,0,10)));
     }
     @Test void concurrentRecruitersCannotOverwriteTheSameRevision()throws Exception{
         var f=fixture();String colleague=member(f,"RECRUITER");var ready=new CountDownLatch(2);var start=new CountDownLatch(1);

@@ -4,3 +4,7 @@
 /*
 !/.gitignore
 !/scripts/
+
+!/monitoring/
+
+!/recovery/

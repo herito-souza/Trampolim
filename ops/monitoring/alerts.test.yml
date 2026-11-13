@@ -1,0 +1,32 @@
+rule_files:
+  - ../alerts.example.yml
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{job="trampolim",instance="test:9001"}'
+        values: '1 0 0 0 1 1'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: TrampolimTargetDown
+        exp_alerts:
+          - exp_labels: {job: trampolim, instance: "test:9001", severity: critical}
+            exp_annotations: {summary: "API metrics unavailable; check process, network and monitoring key"}
+      - eval_time: 5m
+        alertname: TrampolimTargetDown
+        exp_alerts: []
+  - interval: 1m
+    input_series:
+      - series: 'trampolim_database_up{trail="capacita"}'
+        values: '1 0 0 1'
+      - series: 'trampolim_database_up{trail="empresas"}'
+        values: '-1 -1 -1 -1'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: TrampolimDatabaseDown
+        exp_alerts:
+          - exp_labels: {trail: capacita, severity: critical}
+            exp_annotations: {summary: "An enabled trail database is unavailable"}
+      - eval_time: 3m
+        alertname: TrampolimDatabaseDown
+        exp_alerts: []

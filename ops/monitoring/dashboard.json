@@ -1,0 +1,277 @@
+{
+  "uid": "trampolim-operations",
+  "title": "Trampolim — Operações",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Requisições por segundo",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "trampolim-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "trampolim:http_requests:rate5m",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{trail}} {{pool}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Proporção de erros 5xx",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "trampolim-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "trampolim:http_errors:ratio5m",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{trail}} {{pool}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Latência p95 (s)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "trampolim-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95,sum by(le,instance)(rate(http_server_requests_seconds_bucket{application=\"trampolim\",uri!~\"/actuator.*|/api/health|.*(stream|media|video|download).*\"}[5m])))",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{trail}} {{pool}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Bancos (1 disponível; 0 falha; -1 desativado)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "trampolim-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "trampolim_database_up",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{trail}} {{pool}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Conexões ativas",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "trampolim-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{trail}} {{pool}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Aguardando conexão",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "trampolim-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_pending",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{trail}} {{pool}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Mensagens pendentes",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "trampolim-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "communication_queue_pending",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{trail}} {{pool}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Atraso da próxima entrega (s)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "trampolim-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "communication_queue_oldest_due_seconds",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{trail}} {{pool}}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Entregas com falha",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "trampolim-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "communication_queue_failed",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{trail}} {{pool}}"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Fila observável (1 sim; 0 falha)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "trampolim-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "communication_queue_up",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{trail}} {{pool}}"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Heap JVM (bytes)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "trampolim-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by(instance)(jvm_memory_used_bytes{area=\"heap\"})",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{trail}} {{pool}}"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "CPU do processo",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "trampolim-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 40,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "process_cpu_usage",
+          "refId": "A",
+          "legendFormat": "{{instance}} {{trail}} {{pool}}"
+        }
+      ]
+    }
+  ]
+}

@@ -96,13 +96,13 @@ public class AuthController {
         limitRequests("company-register:" + servletRequest.getRemoteAddr(), 10, 60);
         String name = clean(request.name()); String email = normalizeEmail(request.email());
         String password = request.password() == null ? "" : request.password();
-        String cnpj = request.cnpj() == null ? "" : request.cnpj().replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+        String cnpj = com.trampolim.api.trust.Cnpj.normalize(request.cnpj());
         if (name.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome completo do responsável: preencha este campo.");
         if (!validEmail(email)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail: informe um endereço válido.");
         PasswordPolicy.validate(password);
         if (clean(request.legalName()).isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Razão social: preencha este campo.");
         if (clean(request.tradeName()).isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome fantasia: preencha este campo.");
-        if (cnpj.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CNPJ: preencha este campo para identificar a empresa.");
+        if (!com.trampolim.api.trust.Cnpj.valid(cnpj)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe CNPJ válido; dígitos corretos não comprovam verificação cadastral.");
         if (clean(request.phone()).isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Telefone: preencha este campo.");
         if (clean(request.industry()).isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Setor de atuação: preencha este campo.");
         if (clean(request.address()).isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Endereço: preencha este campo.");
@@ -238,6 +238,8 @@ public class AuthController {
 
     private AuthResponse responseFor(AppUser user) {
         String token = user.isEmailVerified() ? trailTokens.issue(Trail.OPORTUNIDADES, user.getEmail(), user.getId(), user.getTokenVersion()) : "";
+        if (!token.isEmpty() && "PERSON".equalsIgnoreCase(user.getAccountType()))
+            jdbc.update("INSERT INTO product_usage_days(user_id,usage_day) VALUES (?,(CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo')::date) ON CONFLICT DO NOTHING", user.getId());
         // Membership in the retired single-database company schema must never turn an
         // Oportunidades identity into an Empresas identity during login.
         return new AuthResponse(token, new UserSummary(user.getFullName(), user.getEmail()), user.isEmailVerified(), user.getAccountType());

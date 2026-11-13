@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-12",
+  "scope": "local isolated tests; no production deployment",
+  "backend": {
+    "focusedSuite": {
+      "tests": 32,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "verify": "passed"
+    },
+    "additionalIntegration": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "overlapsFocusedSuite": true
+    },
+    "databases": 3,
+    "schemas": "temporary; removed by harness"
+  },
+  "prometheus": {
+    "version": "3.9.0",
+    "ruleCount": 12,
+    "syntax": "passed",
+    "alertTests": "passed"
+  },
+  "composeConfiguration": "passed; services not started",
+  "grafana": {
+    "panels": 12,
+    "provisioningPrepared": true,
+    "visualValidation": false
+  },
+  "productionDeployment": false,
+  "externalNotificationsSent": false,
+  "newMigrations": 0,
+  "limitations": [
+    "No OTLP tracing exporter",
+    "No external paging receiver",
+    "No external uptime probe",
+    "Remaining outboxes/jobs need dedicated metrics",
+    "No measured production SLO"
+  ]
+}

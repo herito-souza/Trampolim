@@ -1,18 +1,57 @@
 groups:
   - name: trampolim
     rules:
+      - record: trampolim:http_requests:rate5m
+        expr: sum by (job) (rate(http_server_requests_seconds_count{application="trampolim",uri!~"/actuator.*|/api/health|.*(stream|media|video|download).*"}[5m]))
+      - record: trampolim:http_errors:ratio5m
+        expr: sum by (job) (rate(http_server_requests_seconds_count{application="trampolim",uri!~"/actuator.*|/api/health|.*(stream|media|video|download).*",status=~"5.."}[5m])) / trampolim:http_requests:rate5m
+      - alert: TrampolimTargetDown
+        expr: up{job="trampolim"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: "API metrics unavailable; check process, network and monitoring key"}
       - alert: TrampolimHighServerErrors
-        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count[5m])), 1) > 0.01
+        expr: trampolim:http_errors:ratio5m > 0.01 and on(job) trampolim:http_requests:rate5m > 0
         for: 5m
         labels: {severity: warning}
         annotations: {summary: "API server error rate above 1%"}
       - alert: TrampolimHighP95
-        expr: histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket[5m]))) > 0.5
+        expr: histogram_quantile(0.95, sum by (job,le) (rate(http_server_requests_seconds_bucket{application="trampolim",uri!~"/actuator.*|/api/health|.*(stream|media|video|download).*"}[5m]))) > 0.5
         for: 5m
         labels: {severity: warning}
-        annotations: {summary: "API p95 above 500ms; inspect endpoints and media separately"}
+        annotations: {summary: "API p95 above 500ms; excludes streams and media"}
+      - alert: TrampolimDatabaseDown
+        expr: trampolim_database_up == 0
+        for: 1m
+        labels: {severity: critical}
+        annotations: {summary: "An enabled trail database is unavailable"}
+      - alert: TrampolimPoolWaiting
+        expr: hikaricp_connections_pending > 0
+        for: 2m
+        labels: {severity: warning}
+        annotations: {summary: "Requests waiting for database connections"}
+      - alert: TrampolimCommunicationStalled
+        expr: communication_queue_oldest_due_seconds > 300
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: "Communication delivery overdue for more than five minutes"}
+      - alert: TrampolimQueueSamplingFailed
+        expr: communication_queue_up == 0
+        for: 2m
+        labels: {severity: warning}
+        annotations: {summary: "Communication queue status unknown"}
+      - alert: TrampolimCommunicationFailed
+        expr: communication_queue_failed > 0
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: "Communication deliveries exhausted retries"}
+      - alert: TrampolimWorkerFailures
+        expr: sum by (instance,trail) (increase(communication_worker_failures_total[5m])) > 0
+        for: 2m
+        labels: {severity: warning}
+        annotations: {summary: "Communication worker execution failed"}
       - alert: TrampolimSseNearCapacity
         expr: capacita_sse_connections / capacita_sse_capacity > 0.8
         for: 5m
         labels: {severity: warning}
-        annotations: {summary: "SSE instance above 80% of configured capacity"}
+        annotations: {summary: "SSE instance above 80% capacity"}

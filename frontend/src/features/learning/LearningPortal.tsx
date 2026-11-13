@@ -34,10 +34,11 @@ import { buttonClass, inputClass, statusLabel } from './types';
 type Account = { id: number; name: string; email: string; teacher: boolean; admin: boolean };
 const root = '/capacita/learning';
 
-export function LearningPortal({ token,navigationActive=true,onActivate,onName }: { token: string;navigationActive?:boolean;onActivate?:()=>void;onName?:(name:string)=>void }) {
+export function LearningPortal({ token,navigationActive=true,onActivate,onName,onAccount }: { token: string;navigationActive?:boolean;onActivate?:()=>void;onName?:(name:string)=>void;onAccount?:(account:{email:string;teacher:boolean;admin:boolean})=>void }) {
   const [notices,setNotices]=useState<{unread:number;items:Notice[]}|null>(null);
   const [activeModule, setActiveModule] = useState('courses');
   const nameCallback=useRef(onName);nameCallback.current=onName;
+  const accountCallback=useRef(onAccount);accountCallback.current=onAccount;
   function selectModule(id: string,write=true) {
     onActivate?.();
     if(write){const hash='#capacita/learning/'+id+(manage?'?mode=teacher':'');if(window.location.hash!==hash)window.history.pushState(null,'',window.location.pathname+window.location.search+hash)}
@@ -58,6 +59,7 @@ export function LearningPortal({ token,navigationActive=true,onActivate,onName }
   const [query, setQuery] = useState('');
   const [hasMore, setHasMore] = useState(false);
   useEffect(() => { if (search === query) return; const timer = setTimeout(() => { setQuery(search); setPage(0); }, 300); return () => clearTimeout(timer); }, [search, query]);
+  useEffect(()=>{const handle=(event:Event)=>{const value=(event as CustomEvent).detail;if(typeof value!=='string'||value.length>120)return;setCourse(null);setEditingCourse(false);setActiveModule('courses');setSearch(value);setQuery(value);setPage(0);try{sessionStorage.removeItem('trampolim_capacita_course_search')}catch{/* Ignore unavailable storage. */}};window.addEventListener('trampolim:capacita-course-search',handle);return()=>window.removeEventListener('trampolim:capacita-course-search',handle)},[]);
   const [account, setAccount] = useState<Account | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [manage, setManage] = useState(false);
@@ -81,11 +83,11 @@ export function LearningPortal({ token,navigationActive=true,onActivate,onName }
   useEffect(() => {
     let active = true;
     const abort = new AbortController();
-    api<Account>(`${root}/me`, token, { signal: abort.signal }).then(user => { if (active) {setAccount(user);if(user.name)nameCallback.current?.(user.name)} }).catch(failure => { if (active) setError(failure.message); });
+    api<Account>(`${root}/me`, token, { signal: abort.signal }).then(user => { if (active) {setAccount(user);if(user.name)nameCallback.current?.(user.name);accountCallback.current?.({email:user.email,teacher:user.teacher,admin:user.admin})} }).catch(failure => { if (active) setError(failure.message); });
     return () => { active = false; abort.abort(); };
   }, [token, revision]);
   const routeSelect=useRef(selectModule);routeSelect.current=selectModule;
-  useEffect(()=>{if(!account)return;const sync=()=>{const parts=window.location.hash.split('/');if(parts[0]!=='#capacita'||parts[1]!=='learning')return;const id=parts[2]?.split('?')[0]||'courses';const allowed=['courses','adaptive','passport','library','assessments','performance','observatory','young','hub','questions','support',...(account.teacher?['inbox']:[])];setManage(account.teacher&&new URLSearchParams(window.location.hash.split('?')[1]||'').get('mode')==='teacher');routeSelect.current(allowed.includes(id)?id:'courses',false)};sync();window.addEventListener('hashchange',sync);window.addEventListener('popstate',sync);return()=>{window.removeEventListener('hashchange',sync);window.removeEventListener('popstate',sync)}},[account]);
+  useEffect(()=>{if(!account)return;const sync=()=>{const parts=window.location.hash.split('/');if(parts[0]!=='#capacita'||parts[1]!=='learning')return;const id=parts[2]?.split('?')[0]||'courses';const allowed=['courses','adaptive','passport','library','assessments','performance','observatory','young','hub','questions','support',...(account.teacher?['inbox']:[]),...(account.admin?['admin']:[])];setManage(account.teacher&&new URLSearchParams(window.location.hash.split('?')[1]||'').get('mode')==='teacher');routeSelect.current(allowed.includes(id)?id:'courses',false)};sync();window.addEventListener('hashchange',sync);window.addEventListener('popstate',sync);return()=>{window.removeEventListener('hashchange',sync);window.removeEventListener('popstate',sync)}},[account]);
   useEffect(() => {
     let active = true; const abort = new AbortController(); setLoading(true); setError('');
     api<Course[]>(`${root}/courses?manage=${manage}&limit=25&offset=${page * 24}&q=${encodeURIComponent(query)}`, token, { signal: abort.signal })

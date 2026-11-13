@@ -61,10 +61,16 @@ public class EnterpriseOrganizationController {
                     (SELECT COUNT(*) FROM enterprise_organization_companies r WHERE r.organization_id=o.id AND r.status='ACTIVE'),o.created_at
                 FROM enterprise_organizations o JOIN enterprise_organization_members m ON m.organization_id=o.id
                 JOIN company_users u ON LOWER(u.email)=LOWER(m.email)
-                WHERE o.organization_type='ASSOCIATION' AND o.status='ACTIVE' AND LOWER(u.email)=LOWER(?) AND u.email_verified=TRUE AND u.account_status='ACTIVE'
+                WHERE o.status='ACTIVE' AND LOWER(u.email)=LOWER(?) AND u.email_verified=TRUE AND u.account_status='ACTIVE'
+                  AND ((o.organization_type='ASSOCIATION' AND m.role IN ('ASSOCIATION_ADMIN','ASSOCIATION_MEMBER'))
+                    OR (o.organization_type='EDUCATIONAL' AND o.verification_status='VERIFIED' AND m.role IN ('EDUCATION_ADMIN','CONTENT_EDITOR','PARTNER_MANAGER')))
                 ORDER BY o.name
                 """, (rs,row)->new OrganizationView(rs.getLong(1),rs.getString(2),rs.getString(3),rs.getString(4),null,rs.getLong(6),rs.getLong(7),rs.getTimestamp(8).toInstant().toString()),email);
     }
+
+    /** Backward-compatible route name; the result includes only authorized active association or verified school memberships. */
+    @GetMapping("/institutional/organizations")
+    public List<OrganizationView> myInstitutionalOrganizations(@AuthenticationPrincipal String email) { return myAssociations(email); }
 
     @org.springframework.transaction.annotation.Transactional("empresasTransactionManager")
     @PostMapping("/organizations/invites/accept")

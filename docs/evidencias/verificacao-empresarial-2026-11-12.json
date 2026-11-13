@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-12",
+  "scope": "Backend de verificação empresarial, moderação e denúncias; ajuste de teclado CNPJ.",
+  "fullRegression": {
+    "registered": 282,
+    "passed": 281,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1,
+    "skippedReason": "Ensaio opcional de carga não habilitado",
+    "realDataUsed": false,
+    "verifyExitCode": 0
+  },
+  "focusedAfterLockingChange": {
+    "passed": 41,
+    "failed": 0
+  },
+  "finalModuleChecks": {
+    "passed": 18,
+    "failed": 0,
+    "realDataUsed": false,
+    "verifyExitCode": 0
+  },
+  "frontend": {
+    "lint": "passed",
+    "unitTestsPassed": 23,
+    "buildAndTypecheck": "passed",
+    "endToEnd": "not rerun"
+  },
+  "externalRegistryQueries": false,
+  "realMessagesSent": false,
+  "productionDeployment": false,
+  "note": "Rodadas focadas se sobrepõem à suíte completa; não somar como testes únicos. Capacidade de carga e conformidade jurídica não foram comprovadas."
+}

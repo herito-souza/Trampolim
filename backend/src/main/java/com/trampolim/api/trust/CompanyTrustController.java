@@ -1,0 +1,27 @@
+package com.trampolim.api.trust;
+import java.util.*;import org.springframework.web.bind.annotation.*;import org.springframework.security.core.annotation.AuthenticationPrincipal;import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+@RestController @ConditionalOnProperty(name="trampolim.datasource.empresas.enabled",havingValue="true")
+public class CompanyTrustController {
+ private final CompanyTrustService service;public CompanyTrustController(CompanyTrustService service){this.service=service;}
+ @PostMapping("/api/empresas/trust/verification")public Map<String,Object> request(@AuthenticationPrincipal String email){return service.request(email);}
+ @GetMapping("/api/empresas/trust/verification")public List<Map<String,Object>> own(@AuthenticationPrincipal String email){return service.own(email);}
+ @GetMapping("/api/company/listings/{id}/trust")public Map<String,Object> listing(@AuthenticationPrincipal String email,@PathVariable long id){return service.listing(email,id);}
+ @PostMapping("/api/company/listings/{id}/trust/appeal")public Map<String,Object> appeal(@AuthenticationPrincipal String email,@PathVariable long id,@RequestBody CompanyTrustService.Appeal p){return service.appeal(email,id,p);}
+ @GetMapping("/api/public/companies/{slug}/verification")public org.springframework.http.ResponseEntity<Map<String,Object>> badge(@PathVariable String slug){return org.springframework.http.ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore()).body(service.badge(slug));}
+ @GetMapping("/api/admin/company-trust/cases")public Map<String,Object> queue(@AuthenticationPrincipal String email,@RequestParam(defaultValue="9223372036854775807")long before,@RequestParam(defaultValue="20")int limit){return service.queue(email,before,limit);}
+ @GetMapping("/api/admin/company-trust/cases/{id}")public Map<String,Object> inspect(@AuthenticationPrincipal String email,@PathVariable long id){return service.inspect(email,id);}
+ @PostMapping("/api/admin/company-trust/cases/{id}/decision")public Map<String,Object> decide(@AuthenticationPrincipal String email,@PathVariable long id,@RequestBody CompanyTrustService.Verification p){return service.decide(email,id,p);}
+ @GetMapping("/api/admin/company-trust/listings")public Map<String,Object> listings(@AuthenticationPrincipal String email,@RequestParam(defaultValue="9223372036854775807")long before,@RequestParam(defaultValue="20")int limit){return service.listings(email,before,limit);}
+ @PostMapping("/api/admin/company-trust/listings/{id}/decision")public Map<String,Object> moderate(@AuthenticationPrincipal String email,@PathVariable long id,@RequestBody CompanyTrustService.ListingDecision p){return service.moderate(email,id,p);}
+ @GetMapping("/api/admin/company-trust/appeals")public Map<String,Object> appeals(@AuthenticationPrincipal String email,@RequestParam(defaultValue="9223372036854775807")long before,@RequestParam(defaultValue="20")int limit){return service.appeals(email,before,limit);}
+ @GetMapping("/api/admin/company-trust/reports")public Map<String,Object> reports(@AuthenticationPrincipal String email,@RequestParam(defaultValue="9223372036854775807")long before,@RequestParam(defaultValue="20")int limit){return service.reports(email,before,limit);}
+ @GetMapping("/api/admin/company-trust/listings/{id}/reports")public List<Map<String,Object>> details(@AuthenticationPrincipal String email,@PathVariable long id,@RequestParam(required=false)UUID before,@RequestParam(defaultValue="20")int limit){return service.reportDetails(email,id,before,limit);}
+ @PostMapping("/api/admin/company-trust/reports/{receipt}/decision")public void reportDecision(@AuthenticationPrincipal String email,@PathVariable UUID receipt,@RequestBody CompanyTrustService.ReportDecision p){service.decideReport(email,receipt,p);}
+ @GetMapping("/api/admin/company-trust/companies/{id}/history")public List<Map<String,Object>> history(@AuthenticationPrincipal String email,@PathVariable long id,@RequestParam(defaultValue="9223372036854775807")long before,@RequestParam(defaultValue="20")int limit){return service.history(email,id,before,limit);}
+ @PostMapping("/api/integrations/company-trust/reports")public Map<String,Object> receive(@RequestHeader(value="X-Trampolim-Bridge",required=false)String key,@RequestBody CompanyTrustService.Report p){return service.receive(key,p);}
+ @PostMapping("/api/integrations/company-trust/reports/withdraw")public Map<String,Object> withdraw(@RequestHeader(value="X-Trampolim-Bridge",required=false)String key,@RequestBody CompanyTrustService.Withdrawal p){service.withdraw(key,p);return Map.of("status","WITHDRAWN");}
+ public record Version(long expectedRevision){}
+ @PostMapping("/api/admin/company-trust/cases/{id}/start")public Map<String,Object> start(@AuthenticationPrincipal String email,@PathVariable long id,@RequestBody Version p){if(p==null)throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST);return service.start(email,id,p.expectedRevision());}
+ @PostMapping("/api/admin/company-trust/listings/{id}/scan")public Map<String,Object> scan(@AuthenticationPrincipal String email,@PathVariable long id){return service.rescan(email,id);}
+ @PostMapping("/api/integrations/company-trust/reports/status")public Map<String,Object> status(@RequestHeader(value="X-Trampolim-Bridge",required=false)String key,@RequestBody CompanyTrustService.Withdrawal p){return service.reportStatus(key,p);}
+}

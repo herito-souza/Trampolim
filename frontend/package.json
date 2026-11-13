@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "test:e2e": "node --import ./playwright-env.mjs ./node_modules/@playwright/test/cli.js test",
+    "test:e2e:pwa": "npm run build && node ./scripts/test-pwa.mjs",
     "playwright:install": "node --import ./playwright-env.mjs ./node_modules/@playwright/test/cli.js install chromium",
     "lint": "oxlint",
     "preview": "vite preview"

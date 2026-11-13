@@ -1,0 +1,6 @@
+-- Private reporting in this trail; company receives no account ID or contact.
+CREATE TABLE listing_trust_reports(receipt UUID PRIMARY KEY,user_id BIGINT NOT NULL REFERENCES student_users(id) ON DELETE CASCADE,listing_id BIGINT NOT NULL CHECK(listing_id>0),reason VARCHAR(24) NOT NULL,details VARCHAR(1000) NOT NULL DEFAULT '',state VARCHAR(16) NOT NULL DEFAULT 'PENDING' CHECK(state IN ('PENDING','DELIVERED','FAILED','WITHDRAWN')),attempts INTEGER NOT NULL DEFAULT 0,next_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,consent_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,UNIQUE(user_id,listing_id));
+CREATE INDEX idx_trust_report_delivery ON listing_trust_reports(next_at) WHERE state='PENDING';
+CREATE TABLE listing_report_erasure(receipt UUID PRIMARY KEY,attempts INTEGER NOT NULL DEFAULT 0,next_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE FUNCTION trust_erase_reporter() RETURNS trigger AS $$ BEGIN INSERT INTO listing_report_erasure(receipt) SELECT receipt FROM listing_trust_reports WHERE user_id=OLD.id ON CONFLICT DO NOTHING;RETURN OLD;END $$ LANGUAGE plpgsql;
+CREATE TRIGGER trg_trust_erase_reporter BEFORE DELETE ON student_users FOR EACH ROW EXECUTE FUNCTION trust_erase_reporter();

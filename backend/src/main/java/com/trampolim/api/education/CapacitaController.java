@@ -57,10 +57,21 @@ public class CapacitaController {
         export.put("radarExports",jdbc.queryForList("SELECT id,award_id,status,consent_at,updated_at FROM learning_radar_exports WHERE student_id=? ORDER BY consent_at",account.get("id")));
         export.put("accessibilityPreferences",jdbc.queryForList("SELECT font_percent,high_contrast,reduced_motion,text_spacing,playback_speed,captions,muted,updated_at FROM student_accessibility_preferences WHERE user_id=?",account.get("id")));
         export.put("supportRequests",jdbc.queryForList("SELECT id,message,reply,status,consent_at,created_at,updated_at FROM learning_support_requests WHERE student_id=? ORDER BY id",account.get("id")));
+        export.put("teachingExport",java.util.Map.of("endpoint","/api/capacita/account/export/teaching","paginated",true,"sections",java.util.List.of("courses","materials")));
         export.put("assessmentAccommodations",jdbc.queryForList("SELECT assessment_id,extended_due_at,updated_at FROM learning_assessment_accommodations WHERE student_id=?",account.get("id")));return export;
     }
+    @GetMapping("/capacita/account/export/teaching")
+    public java.util.Map<String,Object> teachingExport(@AuthenticationPrincipal String email,@RequestParam(defaultValue="courses")String section,@RequestParam(defaultValue="0")int page){
+        if(email==null||email.isBlank())throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if(page<0||page>200||!java.util.Set.of("courses","materials").contains(section))throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        Long user=jdbc.queryForObject("SELECT id FROM student_users WHERE LOWER(email)=LOWER(?) AND account_status='ACTIVE'",Long.class,email);
+        String sql=section.equals("courses")?"SELECT id,title,description,status,created_at FROM learning_courses WHERE teacher_id=?":"SELECT id,course_id,title,description,topic,category,status,created_at FROM learning_materials WHERE teacher_id=?";
+        var data=jdbc.queryForList(sql+" ORDER BY id LIMIT 101 OFFSET ?",user,page*100);
+        return java.util.Map.of("section",section,"page",page,"items",data.stream().limit(100).toList(),"hasMore",data.size()>100);
+    }
     @GetMapping("/capacita/tracks")
-    public List<Track> tracks() {
+    public List<Track> tracks(jakarta.servlet.http.HttpServletResponse response) {
+        if (response != null) publicCatalogCache(response);
         List<Object[]> rows = jdbc.query("SELECT id,code,title,description FROM education_tracks ORDER BY sort_order,id",
                 (rs, row) -> new Object[]{rs.getLong(1), rs.getString(2), rs.getString(3), rs.getString(4)});
         return rows.stream().map(row -> {
@@ -71,10 +82,12 @@ public class CapacitaController {
         }).toList();
     }
 
-    public List<Content> contents(String stage) { return contents(stage,null,0,null); }
+    public List<Content> contents(String stage) { return contents(stage,null,0,null,null); }
     @GetMapping("/capacita/contents")
     public List<Content> contents(@RequestParam(required=false) String stage,@RequestParam(required=false) Integer limit,
-            @RequestParam(defaultValue="0") int offset,@RequestParam(required=false) String q) {
+            @RequestParam(defaultValue="0") int offset,@RequestParam(required=false) String q,
+            jakarta.servlet.http.HttpServletResponse response) {
+        if (response != null && (stage == null || stage.isBlank()) && limit == null && offset == 0 && (q == null || q.isBlank())) publicCatalogCache(response);
         if(limit!=null&&(limit<1||limit>200)||offset<0||offset>10000||q!=null&&q.length()>120) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Consulta inválida.");
         var parameters=new java.util.ArrayList<Object>();
         String sql=contentSql()+" WHERE ec.status='PUBLISHED'";
@@ -86,9 +99,19 @@ public class CapacitaController {
     }
 
     @GetMapping("/capacita/contents/{id}")
-    public Content content(@PathVariable long id) {
+    public Content content(@PathVariable long id, jakarta.servlet.http.HttpServletResponse response) {
+        if (response != null) publicCatalogCache(response);
         return jdbc.query(contentSql() + " WHERE ec.status='PUBLISHED' AND ec.id=?", contentMapper(), id).stream().findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Este conteúdo não está disponível."));
+    }
+
+    public List<Track> tracks() { return tracks(null); }
+
+    public Content content(long id) { return content(id, null); }
+
+    private static void publicCatalogCache(jakarta.servlet.http.HttpServletResponse response) {
+        response.setHeader("Cache-Control", "public, max-age=300");
+        response.setHeader("X-Content-Type-Options", "nosniff");
     }
 
     @GetMapping("/capacita/progress")
